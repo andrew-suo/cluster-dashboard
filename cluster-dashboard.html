@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>集群算存网可观测与网络优化控制台</title>
+<title>PD 分离集群 KV Cache 可观测与网络优化控制台</title>
 <style>
   /* ============ 设计令牌 ============ */
   :root {
@@ -198,6 +198,16 @@
   :root[data-widget-theme="dark"] .topo-layer-band { fill: rgba(255,255,255,0.03); }
   .topo-layer-label { fill: var(--text-dim); font-size: 10px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; }
 
+  /* PD 集群分区背景带 */
+  .cluster-band { fill-opacity: 0.06; stroke-width: 1.2; stroke-dasharray: 4 3; }
+  .cluster-band.prefill { fill: var(--brand); stroke: var(--brand); }
+  .cluster-band.share   { fill: var(--warn); stroke: var(--warn); }
+  .cluster-band.decode  { fill: var(--accent); stroke: var(--accent); }
+  .cluster-band-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .cluster-band-label.prefill { fill: var(--brand); }
+  .cluster-band-label.share   { fill: var(--warn); }
+  .cluster-band-label.decode  { fill: var(--accent); }
+
   /* NPU 卡 */
   .npu-card { fill: var(--bg-muted); stroke: var(--brand); stroke-width: 1; }
   .npu-card.warn { stroke: var(--warn); }
@@ -258,6 +268,18 @@
   .narration .narr-step .hl-warn { color: var(--warn); font-weight: 600; }
   .narration .narr-step .hl-danger { color: var(--danger); font-weight: 600; }
   .narration .narr-step .hl-brand { color: var(--brand); font-weight: 600; }
+  /* 三段式阶段标签 */
+  .narration .narr-stages {
+    display: flex; gap: 6px; margin-bottom: 8px; font-size: 10px;
+  }
+  .narration .narr-stage {
+    padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border);
+    color: var(--text-dim); background: var(--bg-muted);
+    transition: all .25s; letter-spacing: 0.04em;
+  }
+  .narration .narr-stage.active.problem  { color: #fff; background: var(--danger); border-color: var(--danger); }
+  .narration .narr-stage.active.handle   { color: #fff; background: var(--brand);  border-color: var(--brand); }
+  .narration .narr-stage.active.effect   { color: #fff; background: var(--accent); border-color: var(--accent); }
   .narration .narr-progress {
     height: 2px; background: var(--bg-muted); border-radius: 1px; margin-top: 10px; overflow: hidden;
   }
@@ -343,6 +365,83 @@
   .compare-popup .cp-row span:last-child { color: var(--text); font-family: var(--font-mono); }
   .compare-popup .cp-row.gain span:last-child { color: var(--accent); }
 
+  /* ============ 浮窗：算法决策演示 ============ */
+  .algo-popup {
+    position: absolute; z-index: 28; pointer-events: none;
+    background: rgba(22,27,46,0.96); border: 1px solid var(--brand);
+    border-radius: 10px; padding: 10px 12px 8px; font-size: 11px;
+    box-shadow: var(--shadow), 0 0 24px rgba(139,123,255,0.18);
+    backdrop-filter: blur(8px); display: none;
+    width: 360px;
+  }
+  .algo-popup.show { display: block; animation: panelIn .2s ease; }
+  .algo-popup .ap-title {
+    font-weight: 650; color: var(--brand); font-size: 12px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .algo-popup .ap-title .ap-icon {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--brand);
+    box-shadow: 0 0 5px var(--brand); animation: pulse 1.2s ease-in-out infinite;
+  }
+  /* 步骤标签栏 */
+  .algo-popup .ap-steps {
+    display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .algo-popup .ap-step {
+    font-size: 9.5px; padding: 2px 6px; border-radius: 3px;
+    border: 1px solid var(--border); color: var(--text-dim);
+    background: var(--bg-muted); transition: all .2s; letter-spacing: 0.02em;
+  }
+  .algo-popup .ap-step.active {
+    color: #fff; background: var(--brand); border-color: var(--brand);
+    box-shadow: 0 0 4px var(--brand);
+  }
+  .algo-popup .ap-step.done {
+    color: var(--text-muted); background: var(--bg-muted);
+  }
+  /* 迷你 SVG 区域 */
+  .algo-popup .ap-svg-wrap {
+    background: rgba(11,16,32,0.6); border: 1px solid var(--border-soft);
+    border-radius: 6px; padding: 4px; margin-bottom: 6px;
+  }
+  .algo-popup .ap-svg { display: block; width: 100%; height: 90px; }
+  .algo-popup .ap-svg .mn-node { transition: all .3s; }
+  .algo-popup .ap-svg .mn-node.dim  { opacity: 0.25; }
+  .algo-popup .ap-svg .mn-node.psrc { fill: var(--brand); }
+  .algo-popup .ap-svg .mn-node.pdst { fill: var(--accent); }
+  .algo-popup .ap-svg .mn-node.pmid { fill: var(--warn); }
+  .algo-popup .ap-svg .mn-node.psh  { fill: var(--text-dim); }
+  .algo-popup .ap-svg .mn-label { fill: var(--text-muted); font-size: 7px; font-weight: 600; pointer-events: none; }
+  .algo-popup .ap-svg .mn-link {
+    fill: none; stroke: var(--text-dim); stroke-width: 0.8;
+    opacity: 0; transition: opacity .3s, stroke .3s, stroke-width .3s;
+  }
+  .algo-popup .ap-svg .mn-link.cand { opacity: 0.5; stroke-dasharray: 2 2; }
+  .algo-popup .ap-svg .mn-link.picked { opacity: 1; stroke-width: 1.8; }
+  .algo-popup .ap-svg .mn-link.picked.la { stroke: var(--brand); filter: drop-shadow(0 0 2px var(--brand)); }
+  .algo-popup .ap-svg .mn-link.picked.lb { stroke: var(--accent); filter: drop-shadow(0 0 2px var(--accent)); }
+  .algo-popup .ap-svg .mn-link.reserved { opacity: 1; stroke-width: 2.2; }
+  .algo-popup .ap-svg .mn-flow {
+    fill: none; stroke-width: 1.6; stroke-linecap: round;
+    stroke-dasharray: 3 4; animation: mnFlow 0.7s linear infinite;
+  }
+  @keyframes mnFlow { to { stroke-dashoffset: -14; } }
+  .algo-popup .ap-svg .mn-bw { fill: var(--accent); font-size: 6.5px; font-family: var(--font-mono); pointer-events: none; }
+  /* 底部说明 */
+  .algo-popup .ap-desc {
+    font-size: 10.5px; color: var(--text); line-height: 1.5;
+    border-top: 1px solid var(--border-soft); padding-top: 6px; min-height: 28px;
+  }
+  .algo-popup .ap-desc .hl { color: var(--accent); font-weight: 600; }
+  .algo-popup .ap-desc .hl-w { color: var(--warn); font-weight: 600; }
+  .algo-popup .ap-desc .hl-b { color: var(--brand); font-weight: 600; }
+  .algo-popup .ap-desc .hl-d { color: var(--danger); font-weight: 600; }
+  .algo-popup .ap-desc .step-label {
+    display: inline-block; font-size: 9px; padding: 1px 5px;
+    border-radius: 2px; background: var(--brand); color: #fff;
+    margin-right: 5px; font-weight: 600;
+  }
+
   /* ============ 详情面板（节点/链路下钻） ============ */
   .detail-panel {
     position: absolute; top: 52px; right: 16px; z-index: 25;
@@ -408,7 +507,7 @@
 <div class="app">
   <!-- 顶部状态栏 -->
   <header class="topbar">
-    <div class="title"><span class="accent-dot"></span>集群算存网可观测与网络优化控制台</div>
+    <div class="title"><span class="accent-dot"></span>PD 分离集群 · KV Cache 可观测与网络优化控制台</div>
     <div class="spacer"></div>
     <div class="stat">
       <span class="label">集群健康</span>
@@ -430,37 +529,37 @@
 
     <div class="obs-card compute">
       <div class="oc-head">
-        <div class="oc-title"><span class="tag"></span>算力 · NPU</div>
-        <div class="oc-status">3 服务器 · 24 NPU</div>
+        <div class="oc-title"><span class="tag"></span>算力 · NPU (PD)</div>
+        <div class="oc-status">2 Prefill + 2 Decode</div>
       </div>
-      <div class="metric-row"><span class="m-label">NPU 利用率</span><span class="m-value" id="mNpuUtil">78%</span></div>
-      <div class="metric-row"><span class="m-label">HBM 占用</span><span class="m-value" id="mHbm">62%</span></div>
-      <div class="metric-row"><span class="m-label">Prefill 吞吐</span><span class="m-value accent" id="mPrefill">8.2k T/s</span></div>
-      <div class="metric-row"><span class="m-label">Decode 吞吐</span><span class="m-value accent" id="mDecode">14.6k T/s</span></div>
+      <div class="metric-row"><span class="m-label">Prefill NPU 利用率</span><span class="m-value" id="mNpuUtil">78%</span></div>
+      <div class="metric-row"><span class="m-label">Decode NPU 利用率</span><span class="m-value" id="mHbm">62%</span></div>
+      <div class="metric-row"><span class="m-label">KV 生成速率 (P)</span><span class="m-value accent" id="mPrefill">12.4 GB/s</span></div>
+      <div class="metric-row"><span class="m-label">KV 消费速率 (D)</span><span class="m-value accent" id="mDecode">9.6 GB/s</span></div>
       <svg class="spark" id="sparkCompute" preserveAspectRatio="none"></svg>
     </div>
 
     <div class="obs-card storage">
       <div class="oc-head">
-        <div class="oc-title"><span class="tag"></span>存储 · KV 缓存池</div>
-        <div class="oc-status">DRAM 分层</div>
+        <div class="oc-title"><span class="tag"></span>存储 · KV Cache 池</div>
+        <div class="oc-status">5 池 · PD 分层</div>
       </div>
       <div class="metric-row"><span class="m-label">KV 命中率</span><span class="m-value" id="mKvHit">91%</span></div>
-      <div class="metric-row"><span class="m-label">KV 读写带宽</span><span class="m-value" id="mBw">64 GB/s</span></div>
+      <div class="metric-row"><span class="m-label">KV 池读写带宽</span><span class="m-value" id="mBw">64 GB/s</span></div>
+      <div class="metric-row"><span class="m-label">KV 池占用</span><span class="m-value" id="mItl">62%</span></div>
       <div class="metric-row"><span class="m-label">TTFT 首字延迟</span><span class="m-value" id="mTtft">186ms</span></div>
-      <div class="metric-row"><span class="m-label">ITL Token 间延迟</span><span class="m-value" id="mItl">28ms</span></div>
       <svg class="spark" id="sparkStorage" preserveAspectRatio="none"></svg>
     </div>
 
     <div class="obs-card network">
       <div class="oc-head">
-        <div class="oc-title"><span class="tag"></span>网络</div>
-        <div class="oc-status">12 链路</div>
+        <div class="oc-title"><span class="tag"></span>网络 · KV 迁移网</div>
+        <div class="oc-status">19 链路 · 跨集群</div>
       </div>
-      <div class="metric-row"><span class="m-label">链路利用率</span><span class="m-value" id="mLinkUtil">73%</span></div>
-      <div class="metric-row"><span class="m-label">RTT</span><span class="m-value" id="mRtt">38µs</span></div>
+      <div class="metric-row"><span class="m-label">KV 迁移吞吐</span><span class="m-value accent" id="mLinkUtil">128 GB/s</span></div>
       <div class="metric-row"><span class="m-label">KV 迁移延迟</span><span class="m-value" id="mKvMig">42ms</span></div>
-      <div class="metric-row"><span class="m-label">QoS 队列</span><span class="m-value" id="mCwnd">64</span></div>
+      <div class="metric-row"><span class="m-label">链路 RTT</span><span class="m-value" id="mRtt">38µs</span></div>
+      <div class="metric-row"><span class="m-label">QoS 队列深度</span><span class="m-value" id="mCwnd">64</span></div>
       <svg class="spark" id="sparkNetwork" preserveAspectRatio="none"></svg>
     </div>
   </aside>
@@ -481,8 +580,14 @@
     <canvas id="particleCanvas"></canvas>
     <div class="node-tooltip" id="nodeTooltip"></div>
     <div class="compare-popup" id="comparePopup"></div>
+    <div class="algo-popup" id="algoPopup"></div>
     <div class="narration" id="narration">
       <div class="narr-head"><span class="narr-icon"></span><span id="narrTitle">演示解说</span></div>
+      <div class="narr-stages" id="narrStages">
+        <span class="narr-stage problem" data-stage="problem">① 问题</span>
+        <span class="narr-stage handle"  data-stage="handle">② 处理</span>
+        <span class="narr-stage effect"  data-stage="effect">③ 效果</span>
+      </div>
       <div class="narr-step" id="narrStep">等待演示开始...</div>
       <div class="narr-progress"><i id="narrProgress"></i></div>
     </div>
@@ -494,7 +599,7 @@
       <div class="lg"><span class="dot-s" style="background:var(--brand)"></span>流动光点 = 实时流量</div>
     </div>
     <div class="scenario-bar">
-      <button class="sc-btn" data-sc="slicing"><span class="sc-dot" style="background:var(--accent)"></span>发起大模型传输</button>
+      <button class="sc-btn" data-sc="slicing"><span class="sc-dot" style="background:var(--accent)"></span>发起 KV 迁移</button>
       <button class="sc-btn" data-sc="selfheal"><span class="sc-dot" style="background:var(--danger)"></span>注入链路故障</button>
       <button class="sc-btn" data-sc="pipeline"><span class="sc-dot" style="background:var(--brand)"></span>触发流水线</button>
     </div>
@@ -514,7 +619,7 @@
   <footer class="throughput">
     <div class="tp-chart-wrap">
       <div class="tp-head">
-        <span class="ptitle">推理吞吐仪表盘 · 优化前/后对比</span>
+        <span class="ptitle">KV 迁移吞吐仪表盘 · 优化前/后对比</span>
         <div class="legend">
           <div class="lg"><span class="sw" style="background:#5C6488"></span>优化前</div>
           <div class="lg"><span class="sw" style="background:var(--brand)"></span>优化后</div>
@@ -526,7 +631,7 @@
       <div class="kpi-card"><div class="k-label">Tokens/s</div><div class="k-value" id="kpiTokens">+38%</div></div>
       <div class="kpi-card"><div class="k-label">TTFT 首字延迟</div><div class="k-value" id="kpiStep">-41%</div></div>
       <div class="kpi-card"><div class="k-label">KV 迁移时延</div><div class="k-value" id="kpiLatency">-52%</div></div>
-      <div class="kpi-card"><div class="k-label">链路利用</div><div class="k-value" id="kpiLink">+27%</div></div>
+      <div class="kpi-card"><div class="k-label">KV 命中率</div><div class="k-value" id="kpiLink">+18%</div></div>
     </div>
   </footer>
 </div>
@@ -545,11 +650,11 @@
     compareMode: true,
     // 优化能力开关（是否常驻生效）
     caps: {
-      orchestrate: { on: true, name: '自动拓扑编排', desc: '声明式构建 Prefill/Decode 推理拓扑' },
+      orchestrate: { on: true, name: '自动拓扑编排', desc: '声明式构建 Prefill→Decode KV 迁移拓扑' },
       routing:     { on: true, name: '多轨 QoS 选路', desc: 'KV 迁移按 QoS 优先级动态选路' },
-      slicing:     { on: false, name: '并行切片传输', desc: 'KV 缓存分片沿多路径并行迁移' },
-      selfheal:    { on: true, name: '链路故障自愈', desc: '推理链路异常毫秒级重路由保 SLA' },
-      pipeline:    { on: false, name: '计算-传输流水线', desc: 'Prefill 层间预取与计算重叠' }
+      slicing:     { on: false, name: '并行切片传输', desc: 'KV Cache 分片沿多路径并行迁移' },
+      selfheal:    { on: true, name: '链路故障自愈', desc: 'KV 迁移链路异常毫秒级重路由' },
+      pipeline:    { on: false, name: '计算-传输流水线', desc: 'Prefill 层间 KV 生成与迁移重叠' }
     },
     // 吞吐基线（优化前）与当前（优化后）
     baseline: 9000,    // tokens/s
@@ -560,45 +665,57 @@
   };
 
   /* ---------- 拓扑数据：Spine-Leaf-服务器-存储池 四层 ---------- */
-  // 节点坐标使用 viewBox 1000x720
+  // 节点坐标使用 viewBox 1080x720（左右分区：左 Prefill 紫 / 右 Decode 绿 / 中 共享池）
   const NODES = [
-    // Spine 层（骨干交换）
-    { id: 'spine0', type: 'spine', x: 300, y: 50, w: 120, h: 40, label: 'Spine-0', sub: '骨干 400G×8' },
-    { id: 'spine1', type: 'spine', x: 540, y: 50, w: 120, h: 40, label: 'Spine-1', sub: '骨干 400G×8' },
-    // Leaf 层（机柜接入）
-    { id: 'leaf0', type: 'leaf', x: 140, y: 150, w: 120, h: 40, label: 'Leaf-0', sub: '上行 2×400G' },
-    { id: 'leaf1', type: 'leaf', x: 400, y: 150, w: 120, h: 40, label: 'Leaf-1', sub: '上行 2×400G' },
-    { id: 'leaf2', type: 'leaf', x: 660, y: 150, w: 120, h: 40, label: 'Leaf-2', sub: '上行 2×400G' },
+    // Spine 层（骨干交换，跨集群共用）
+    { id: 'spine0', type: 'spine', x: 380, y: 50, w: 120, h: 40, label: 'Spine-0', sub: '骨干 400G×10' },
+    { id: 'spine1', type: 'spine', x: 580, y: 50, w: 120, h: 40, label: 'Spine-1', sub: '骨干 400G×10' },
+    // Leaf 层（按集群分组：P=Prefill / S=Share / D=Decode）
+    { id: 'leafP0', type: 'leaf', x: 40, y: 150, w: 120, h: 40, label: 'Leaf-P0', sub: '上行 2×400G', group: 'prefill' },
+    { id: 'leafP1', type: 'leaf', x: 240, y: 150, w: 120, h: 40, label: 'Leaf-P1', sub: '上行 2×400G', group: 'prefill' },
+    { id: 'leafShare', type: 'leaf', x: 480, y: 150, w: 120, h: 40, label: 'Leaf-Share', sub: '共享池接入', group: 'share' },
+    { id: 'leafD0', type: 'leaf', x: 640, y: 150, w: 120, h: 40, label: 'Leaf-D0', sub: '上行 2×400G', group: 'decode' },
+    { id: 'leafD1', type: 'leaf', x: 840, y: 150, w: 120, h: 40, label: 'Leaf-D1', sub: '上行 2×400G', group: 'decode' },
     // 服务器层（每台 8 NPU 卡）
-    { id: 'server0', type: 'server', x: 70, y: 240, w: 200, h: 175, label: 'Server-0', npuUtil: 72, leaf: 'leaf0' },
-    { id: 'server1', type: 'server', x: 360, y: 240, w: 200, h: 175, label: 'Server-1', npuUtil: 88, leaf: 'leaf1' },
-    { id: 'server2', type: 'server', x: 650, y: 240, w: 200, h: 175, label: 'Server-2', npuUtil: 65, leaf: 'leaf2' },
-    // 存储池层（DRAM 分层）
-    { id: 'st-hot', type: 'storage', tier: 'hot', x: 70, y: 470, w: 200, h: 95, label: 'KV 热缓存池', sub: '2TB · 200GB/s · 命中91%', cap: '2TB', bw: '200 GB/s', hit: 91 },
-    { id: 'st-warm', type: 'storage', tier: 'warm', x: 360, y: 470, w: 200, h: 95, label: 'KV 温缓存池', sub: '4TB · 150GB/s · 命中76%', cap: '4TB', bw: '150 GB/s', hit: 76 },
-    { id: 'st-prefetch', type: 'storage', tier: 'prefetch', x: 650, y: 470, w: 200, h: 95, label: '权重池', sub: '8TB · 120GB/s · 预加载', cap: '8TB', bw: '120 GB/s', hit: 62 }
+    { id: 'prefill0', type: 'server', x: 20, y: 240, w: 200, h: 175, label: 'Prefill-0', role: 'prefill', npuUtil: 82, leaf: 'leafP0' },
+    { id: 'prefill1', type: 'server', x: 240, y: 240, w: 200, h: 175, label: 'Prefill-1', role: 'prefill', npuUtil: 85, leaf: 'leafP1' },
+    { id: 'decode0', type: 'server', x: 620, y: 240, w: 200, h: 175, label: 'Decode-0', role: 'decode', npuUtil: 68, leaf: 'leafD0' },
+    { id: 'decode1', type: 'server', x: 840, y: 240, w: 200, h: 175, label: 'Decode-1', role: 'decode', npuUtil: 72, leaf: 'leafD1' },
+    // 存储池层（DRAM 分层：P 本地 ×2 / 共享 ×1 / D 本地 ×2）
+    { id: 'kvpP0', type: 'storage', tier: 'hot', x: 20, y: 470, w: 200, h: 95, label: 'Prefill-0 本地 KV 池', sub: '1TB · 200GB/s · 待迁移', cap: '1TB', bw: '200 GB/s', hit: 91 },
+    { id: 'kvpP1', type: 'storage', tier: 'hot', x: 240, y: 470, w: 200, h: 95, label: 'Prefill-1 本地 KV 池', sub: '1TB · 200GB/s · 待迁移', cap: '1TB', bw: '200 GB/s', hit: 88 },
+    { id: 'kvpShare', type: 'storage', tier: 'warm', x: 460, y: 470, w: 160, h: 95, label: '全局共享 KV 池', sub: '4TB · 150GB/s · 命中76%', cap: '4TB', bw: '150 GB/s', hit: 76 },
+    { id: 'kvpD0', type: 'storage', tier: 'prefetch', x: 620, y: 470, w: 200, h: 95, label: 'Decode-0 本地 KV 池', sub: '1TB · 180GB/s · 消费中', cap: '1TB', bw: '180 GB/s', hit: 85 },
+    { id: 'kvpD1', type: 'storage', tier: 'prefetch', x: 840, y: 470, w: 200, h: 95, label: 'Decode-1 本地 KV 池', sub: '1TB · 180GB/s · 消费中', cap: '1TB', bw: '180 GB/s', hit: 83 }
   ];
   // 服务器内 8 NPU 卡布局（相对服务器左上角）
   const NPU_LAYOUT = {
     cols: 4, rows: 2, cardW: 40, cardH: 30, gapX: 6, gapY: 6, startX: 12, startY: 44
   };
-  // 链路：layer 区分层级，track 表示多轨（A 主轨 / B 备轨）
+  // 链路：layer 区分层级。命名约定：SLxy=Spine-x↔Leaf-y，LSP=Leaf-P↔Prefill-Server，LSD=Leaf-D↔Decode-Server，ST=Storage↔Leaf
   const LINKS = [
-    // Spine ↔ Leaf（每 Leaf 双上联，共 6 条）
-    { id: 'SL00', from: 'spine0', to: 'leaf0', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
-    { id: 'SL10', from: 'spine1', to: 'leaf0', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.4 },
-    { id: 'SL01', from: 'spine0', to: 'leaf1', layer: 'spine-leaf', track: 'A', status: 'busy', utilization: 0.8 },
-    { id: 'SL11', from: 'spine1', to: 'leaf1', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
-    { id: 'SL02', from: 'spine0', to: 'leaf2', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.45 },
-    { id: 'SL12', from: 'spine1', to: 'leaf2', layer: 'spine-leaf', track: 'A', status: 'congested', utilization: 0.92 },
-    // Leaf ↔ Server（每服务器挂一台 Leaf，共 3 条）
-    { id: 'LS0', from: 'leaf0', to: 'server0', layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.72 },
-    { id: 'LS1', from: 'leaf1', to: 'server1', layer: 'leaf-server', track: 'A', status: 'busy', utilization: 0.85 },
-    { id: 'LS2', from: 'leaf2', to: 'server2', layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.65 },
-    // Storage ↔ Leaf（每存储池挂一台 Leaf，共 3 条）
-    { id: 'STL0', from: 'st-hot', to: 'leaf0', layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.6 },
-    { id: 'STL1', from: 'st-warm', to: 'leaf1', layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
-    { id: 'STL2', from: 'st-prefetch', to: 'leaf2', layer: 'storage-leaf', track: 'A', status: 'busy', utilization: 0.78 }
+    // Spine ↔ Leaf（每 Leaf 双上联，5 Leaf × 2 = 10 条）
+    { id: 'SL00', from: 'spine0', to: 'leafP0',  layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.50 },
+    { id: 'SL10', from: 'spine1', to: 'leafP0',  layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.40 },
+    { id: 'SL01', from: 'spine0', to: 'leafP1',  layer: 'spine-leaf', track: 'A', status: 'busy',      utilization: 0.78 },
+    { id: 'SL11', from: 'spine1', to: 'leafP1',  layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.50 },
+    { id: 'SL0S', from: 'spine0', to: 'leafShare', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.45 },
+    { id: 'SL1S', from: 'spine1', to: 'leafShare', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.42 },
+    { id: 'SL0D0', from: 'spine0', to: 'leafD0', layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.55 },
+    { id: 'SL1D0', from: 'spine1', to: 'leafD0', layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.48 },
+    { id: 'SL0D1', from: 'spine0', to: 'leafD1', layer: 'spine-leaf', track: 'A', status: 'healthy',   utilization: 0.52 },
+    { id: 'SL1D1', from: 'spine1', to: 'leafD1', layer: 'spine-leaf', track: 'A', status: 'congested', utilization: 0.88 },
+    // Leaf ↔ Server（每服务器挂一台 Leaf，4 条）
+    { id: 'LSP0', from: 'leafP0', to: 'prefill0', layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.72 },
+    { id: 'LSP1', from: 'leafP1', to: 'prefill1', layer: 'leaf-server', track: 'A', status: 'busy',    utilization: 0.85 },
+    { id: 'LSD0', from: 'leafD0', to: 'decode0',  layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.65 },
+    { id: 'LSD1', from: 'leafD1', to: 'decode1',  layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.68 },
+    // Storage ↔ Leaf（5 池各挂一 Leaf）
+    { id: 'STP0', from: 'kvpP0', to: 'leafP0',     layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.60 },
+    { id: 'STP1', from: 'kvpP1', to: 'leafP1',     layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.58 },
+    { id: 'STS',  from: 'kvpShare', to: 'leafShare', layer: 'storage-leaf', track: 'A', status: 'busy',    utilization: 0.78 },
+    { id: 'STD0', from: 'kvpD0', to: 'leafD0',     layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.62 },
+    { id: 'STD1', from: 'kvpD1', to: 'leafD1',     layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.60 }
   ];
 
   /* ---------- DOM 引用 ---------- */
@@ -613,7 +730,7 @@
   /* =========================================================
      1. 拓扑画布渲染
      ========================================================= */
-  const VB_W = 920, VB_H = 720;
+  const VB_W = 1080, VB_H = 720;
   topoSvg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
   topoSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
@@ -652,15 +769,23 @@
         <path d="M1 1 L7 4 L1 7 Z" fill="#8B93B0" />
       </marker>
     </defs>`;
-    // 层级背景带
-    html += `<rect class="topo-layer-band" x="20" y="30" width="960" height="80" rx="6"/>`;
-    html += `<text x="32" y="48" class="topo-layer-label">SPINE 层 · 骨干交换</text>`;
-    html += `<rect class="topo-layer-band" x="20" y="130" width="960" height="80" rx="6"/>`;
-    html += `<text x="32" y="148" class="topo-layer-label">LEAF 层 · 机柜接入</text>`;
-    html += `<rect class="topo-layer-band" x="20" y="225" width="960" height="210" rx="6"/>`;
-    html += `<text x="32" y="243" class="topo-layer-label">服务器层 · 8 NPU / 服务器</text>`;
-    html += `<rect class="topo-layer-band" x="20" y="455" width="960" height="130" rx="6"/>`;
-    html += `<text x="32" y="473" class="topo-layer-label">存储池 · DRAM 分层</text>`;
+    // 层级背景带（标题置于层带上方间隙 · 右对齐，避免被节点遮挡；集群标题在左侧）
+    html += `<text x="1060" y="22" text-anchor="end" class="topo-layer-label">SPINE 层 · 骨干交换（跨集群共用）</text>`;
+    html += `<rect class="topo-layer-band" x="10" y="30" width="1060" height="80" rx="6"/>`;
+    html += `<text x="1060" y="124" text-anchor="end" class="topo-layer-label">LEAF 层 · 机柜接入（按集群分组）</text>`;
+    html += `<rect class="topo-layer-band" x="10" y="130" width="1060" height="80" rx="6"/>`;
+    html += `<text x="1060" y="219" text-anchor="end" class="topo-layer-label">PD 节点层 · 8 NPU / 服务器 (Prefill×2 + Decode×2)</text>`;
+    html += `<rect class="topo-layer-band" x="10" y="225" width="1060" height="210" rx="6"/>`;
+    html += `<text x="1060" y="449" text-anchor="end" class="topo-layer-label">KV Cache 池 · DRAM 分层 (P 本地×2 / 共享×1 / D 本地×2)</text>`;
+    html += `<rect class="topo-layer-band" x="10" y="455" width="1060" height="130" rx="6"/>`;
+
+    // PD 集群分区背景带（视觉分组：左紫 Prefill / 右绿 Decode / 中 brand 共享）
+    html += `<rect class="cluster-band prefill" x="10" y="130" width="450" height="455" rx="8"/>`;
+    html += `<text x="20" y="125" class="cluster-band-label prefill">PREFILL 集群 · KV 生产</text>`;
+    html += `<rect class="cluster-band share" x="462" y="130" width="156" height="455" rx="8"/>`;
+    html += `<text x="472" y="125" class="cluster-band-label share">共享池</text>`;
+    html += `<rect class="cluster-band decode" x="620" y="130" width="450" height="455" rx="8"/>`;
+    html += `<text x="630" y="125" class="cluster-band-label decode">DECODE 集群 · KV 消费</text>`;
 
     // 链路（热区 + 可见）
     LINKS.forEach(link => {
@@ -692,17 +817,22 @@
           }
         }
         // 底部信息
-        html += `<text x="${node.x + 10}" y="${node.y + 124}" class="topo-sub">HBM 64GB×8</text>`;
+        const isPrefill = node.role === 'prefill';
+        const roleTag = isPrefill ? 'Prefill · KV 生成' : 'Decode · KV 消费';
+        const kvRate = isPrefill
+          ? (12 + computeBoost() * 6).toFixed(1) + ' GB/s ↑'
+          : (8 + computeBoost() * 4).toFixed(1) + ' GB/s ↓';
+        html += `<text x="${node.x + 10}" y="${node.y + 124}" class="topo-sub">${roleTag} · HBM 64GB×8</text>`;
         const utilCls = node.npuUtil >= 88 ? 'topo-sub-warn' : 'topo-sub-accent';
         html += `<text x="${node.x + 10}" y="${node.y + 142}" class="${utilCls}">NPU 利用率 ${Math.round(node.npuUtil)}%</text>`;
-        html += `<text x="${node.x + 10}" y="${node.y + 160}" class="topo-sub">Prefill ${(6.5 + computeBoost() * 3.5).toFixed(1)}k · Decode ${(11 + computeBoost() * 6).toFixed(1)}k T/s</text>`;
+        html += `<text x="${node.x + 10}" y="${node.y + 160}" class="topo-sub">KV ${kvRate}</text>`;
       } else if (node.type === 'storage') {
         html += `<rect class="topo-node storage" data-id="${node.id}" x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="8"/>`;
         html += `<text x="${cx}" y="${node.y + 22}" text-anchor="middle" class="topo-label">${node.label}</text>`;
         html += `<text x="${node.x + 12}" y="${node.y + 44}" class="topo-sub">容量 ${node.cap}</text>`;
         html += `<text x="${node.x + 12}" y="${node.y + 60}" class="topo-sub">带宽 ${node.bw}</text>`;
         html += `<text x="${node.x + 12}" y="${node.y + 76}" class="topo-sub-accent">命中率 ${node.hit}%</text>`;
-        const tierText = node.tier === 'hot' ? 'KV缓存/激活值' : node.tier === 'warm' ? '权重暂存/中间态' : '模型权重分片';
+        const tierText = node.tier === 'hot' ? 'Prefill 产出 · 待迁移' : node.tier === 'warm' ? '跨请求复用 · prefix cache' : 'Decode 活跃 · 消费中';
         html += `<text x="${node.x + 12}" y="${node.y + 90}" class="topo-sub-dim">${tierText}</text>`;
       } else {
         // Spine / Leaf
@@ -771,8 +901,8 @@
       html += `<div class="dp-row"><span class="k">类型</span><span class="v">骨干交换机</span></div>`;
       html += `<div class="dp-row"><span class="k">状态</span><span class="v accent">在线</span></div>`;
       html += `<div class="dp-section">端口</div>`;
-      html += `<div class="dp-row"><span class="k">骨干带宽</span><span class="v">400G×8</span></div>`;
-      html += `<div class="dp-row"><span class="k">下联 Leaf</span><span class="v">3 台</span></div>`;
+      html += `<div class="dp-row"><span class="k">骨干带宽</span><span class="v">400G×10</span></div>`;
+      html += `<div class="dp-row"><span class="k">下联 Leaf</span><span class="v">5 台（2P+1S+2D）</span></div>`;
       html += `<div class="dp-row"><span class="k">ECMP 轨数</span><span class="v">2 轨</span></div>`;
       html += `<div class="dp-section">实时负载</div>`;
       const spUtil = 45 + Math.random() * 30;
@@ -801,21 +931,29 @@
       const util = node.npuUtil;
       html += `<div class="dp-row"><span class="k">NPU 利用率</span><span class="v ${valColor(util,85,92)}">${Math.round(util)}%</span></div>`;
       html += `<div class="dp-bar"><i style="width:${util}%;background:${util>=92?'var(--danger)':util>=85?'var(--warn)':'var(--accent)'}"></i></div>`;
-      html += `<div class="dp-row" style="margin-top:6px"><span class="k">Prefill 吞吐</span><span class="v accent">${(6.5+boost*3.5).toFixed(1)}k T/s</span></div>`;
+      // PD 分离：区分 Prefill/Decode 角色的 KV 指标
+      if (node.role === 'prefill') {
+        html += `<div class="dp-row" style="margin-top:6px"><span class="k">角色</span><span class="v accent">Prefill · KV 生产</span></div>`;
+        html += `<div class="dp-row"><span class="k">KV 生成速率</span><span class="v accent">${(12+boost*6).toFixed(1)} GB/s ↑</span></div>`;
+      } else {
+        html += `<div class="dp-row" style="margin-top:6px"><span class="k">角色</span><span class="v accent">Decode · KV 消费</span></div>`;
+        html += `<div class="dp-row"><span class="k">KV 消费速率</span><span class="v accent">${(8+boost*4).toFixed(1)} GB/s ↓</span></div>`;
+      }
+      html += `<div class="dp-row"><span class="k">HBM KV 占用</span><span class="v">${(42+Math.floor(Math.random()*18))}%</span></div>`;
       html += `<div class="dp-row"><span class="k">芯片温度</span><span class="v">${52+Math.floor(Math.random()*12)}°C</span></div>`;
     } else if (node.type === 'storage') {
-      const tierName = node.tier === 'hot' ? 'KV 热缓存池' : node.tier === 'warm' ? 'KV 温缓存池' : '权重池';
-      const tierContent = node.tier === 'hot' ? 'KV缓存/激活值' : node.tier === 'warm' ? '权重暂存/中间态' : '模型权重分片';
+      const tierName = node.tier === 'hot' ? 'Prefill 本地 KV 池' : node.tier === 'warm' ? '全局共享 KV 池' : 'Decode 本地 KV 池';
+      const tierContent = node.tier === 'hot' ? 'Prefill 产出 · 待迁移' : node.tier === 'warm' ? '跨请求复用 · prefix cache' : 'Decode 活跃 · 消费中';
       html += `<div class="dp-row"><span class="k">类型</span><span class="v">DRAM ${tierName}</span></div>`;
       html += `<div class="dp-row"><span class="k">内容</span><span class="v">${tierContent}</span></div>`;
       html += `<div class="dp-section">容量与带宽</div>`;
       html += `<div class="dp-row"><span class="k">容量</span><span class="v">${node.cap}</span></div>`;
       html += `<div class="dp-row"><span class="k">读写带宽</span><span class="v accent">${node.bw}</span></div>`;
-      html += `<div class="dp-row"><span class="k">命中率</span><span class="v accent">${node.hit}%</span></div>`;
+      html += `<div class="dp-row"><span class="k">KV 命中率</span><span class="v accent">${node.hit}%</span></div>`;
       html += `<div class="dp-bar"><i style="width:${node.hit}%;background:var(--accent)"></i></div>`;
-      html += `<div class="dp-section">性能</div>`;
-      html += `<div class="dp-row"><span class="k">IOPS</span><span class="v">${(110+boost*40).toFixed(0)}k</span></div>`;
-      html += `<div class="dp-row"><span class="k">尾延迟</span><span class="v">${(50-boost*12).toFixed(0)}µs</span></div>`;
+      html += `<div class="dp-section">KV 迁移性能</div>`;
+      html += `<div class="dp-row"><span class="k">KV 迁移延迟</span><span class="v">${(55-boost*28).toFixed(0)}ms</span></div>`;
+      html += `<div class="dp-row"><span class="k">KV 迁移带宽</span><span class="v">${(120+boost*80).toFixed(0)} GB/s</span></div>`;
     }
     panel.innerHTML = html;
     panel.classList.add('show');
@@ -858,9 +996,11 @@
     let html = `<div class="tt-title">${node.label}</div>`;
     if (node.type === 'spine') {
       html += `<div class="tt-row"><span>类型</span><span>骨干交换机</span></div>`;
-      html += `<div class="tt-row"><span>带宽</span><span>400G×8</span></div>`;
-      html += `<div class="tt-row"><span>下联</span><span>3 Leaf</span></div>`;
+      html += `<div class="tt-row"><span>带宽</span><span>400G×10</span></div>`;
+      html += `<div class="tt-row"><span>下联</span><span>5 Leaf</span></div>`;
     } else if (node.type === 'leaf') {
+      const grpLabel = node.group === 'prefill' ? 'Prefill 集群' : node.group === 'decode' ? 'Decode 集群' : '共享池接入';
+      html += `<div class="tt-row"><span>归属</span><span>${grpLabel}</span></div>`;
       html += `<div class="tt-row"><span>类型</span><span>接入交换机</span></div>`;
       html += `<div class="tt-row"><span>上行</span><span>2×400G</span></div>`;
       html += `<div class="tt-row"><span>下行</span><span>200G</span></div>`;
@@ -964,8 +1104,10 @@
         });
       }
     }
-    // 推进
+    // 推进（支持 pauseUntil：停留期间不推进 t）
+    const now = performance.now();
     particles = particles.filter(p => {
+      if (p.pauseUntil && now < p.pauseUntil) return true; // 停留中
       p.t += p.speed * (dt / 16);
       return p.t < 1;
     });
@@ -987,12 +1129,29 @@
       const sx = samples[i0].x + (samples[i1].x - samples[i0].x) * frac;
       const sy = samples[i0].y + (samples[i1].y - samples[i0].y) * frac;
       const x = ox + sx * scale, y = oy + sy * scale;
+      // 停留期间闪烁（pauseUntil 未到）
+      const now = performance.now();
+      let isPaused = p.pauseUntil && now < p.pauseUntil;
+      let drawSize = p.size;
+      if (isPaused) {
+        // 闪烁：size 周期变化
+        const phase = (now % 400) / 400;
+        drawSize = p.size * (1 + 0.6 * Math.sin(phase * Math.PI * 2));
+        pctx.shadowBlur = 14;
+      }
       pctx.beginPath();
-      pctx.arc(x, y, p.size, 0, Math.PI * 2);
+      pctx.arc(x, y, drawSize, 0, Math.PI * 2);
       pctx.fillStyle = p.color;
       pctx.shadowColor = p.color;
-      pctx.shadowBlur = 8;
+      pctx.shadowBlur = isPaused ? 14 : 8;
       pctx.fill();
+      // 分片编号（如有）
+      if (p.label) {
+        pctx.shadowBlur = 0;
+        pctx.font = '7px "SF Mono", Menlo, monospace';
+        pctx.fillStyle = p.color;
+        pctx.fillText(p.label, x + 4, y - 3);
+      }
     });
     pctx.shadowBlur = 0;
   }
@@ -1042,34 +1201,34 @@
     `;
   }
 
-  // 指标更新（推理场景）
+  // 指标更新（PD 分离 KV Cache 场景）
   function updateMetrics() {
     const boost = computeBoost();
     const npuUtil = clamp(60 + Math.random() * 25 + boost * 8, 0, 99);
     const linkUtil = clamp(55 + Math.random() * 20 + (STATE.faultedLink ? 15 : 0) - boost * 5, 0, 99);
-    // 算力：NPU 利用率 / HBM / Prefill 吞吐 / Decode 吞吐
+    // 算力：Prefill/Decode NPU 利用率 + KV 生成/消费速率
     setVal('mNpuUtil', npuUtil.toFixed(0) + '%', valColor(npuUtil, 85, 92));
     setVal('mHbm', clamp(55 + Math.random() * 15, 0, 99).toFixed(0) + '%');
-    const prefill = (6.5 + boost * 3.5 + Math.random() * 0.6);
-    const decode = (11 + boost * 6 + Math.random() * 0.8);
-    setVal('mPrefill', prefill.toFixed(1) + 'k T/s', 'accent');
-    setVal('mDecode', decode.toFixed(1) + 'k T/s', 'accent');
+    const prefill = (12 + boost * 6 + Math.random() * 1.2);
+    const decode = (8 + boost * 4 + Math.random() * 0.8);
+    setVal('mPrefill', prefill.toFixed(1) + ' GB/s', 'accent');
+    setVal('mDecode', decode.toFixed(1) + ' GB/s', 'accent');
     pushSpark('compute', npuUtil);
 
-    // 存储：KV 命中率 / KV 读写带宽 / TTFT / ITL
+    // 存储：KV 命中率 / KV 池读写带宽 / KV 池占用 / TTFT
     setVal('mKvHit', clamp(88 + boost * 6 + Math.random() * 4, 0, 99).toFixed(0) + '%');
     setVal('mBw', (55 + boost * 25 + Math.random() * 8).toFixed(0) + ' GB/s');
+    const kvOccupy = clamp(62 + Math.random() * 18 + (STATE.faultedLink ? 8 : 0), 0, 99);
+    setVal('mItl', kvOccupy.toFixed(0) + '%', kvOccupy > 85 ? 'warn' : '');
     const ttft = (220 - boost * 90 + Math.random() * 20);
     setVal('mTtft', ttft.toFixed(0) + 'ms', ttft < 160 ? 'accent' : (ttft > 200 ? 'warn' : ''));
-    const itl = (38 - boost * 14 + Math.random() * 4);
-    setVal('mItl', itl.toFixed(0) + 'ms', itl < 28 ? 'accent' : '');
     pushSpark('storage', 55 + boost * 25 + Math.random() * 8);
 
-    // 网络：链路利用率 / RTT / KV 迁移延迟 / QoS 队列
-    setVal('mLinkUtil', linkUtil.toFixed(0) + '%', valColor(linkUtil, 85, 92));
-    setVal('mRtt', (42 - boost * 10 + Math.random() * 6).toFixed(0) + 'µs');
+    // 网络：KV 迁移吞吐 / KV 迁移延迟 / RTT / QoS 队列
+    setVal('mLinkUtil', (120 + boost * 180 + Math.random() * 20).toFixed(0) + ' GB/s', 'accent');
     const kvMig = (55 - boost * 28 + Math.random() * 8);
     setVal('mKvMig', kvMig.toFixed(0) + 'ms', kvMig < 35 ? 'accent' : (kvMig > 50 ? 'warn' : ''));
+    setVal('mRtt', (42 - boost * 10 + Math.random() * 6).toFixed(0) + 'µs');
     setVal('mCwnd', Math.floor(48 + boost * 32 + Math.random() * 8));
     pushSpark('network', linkUtil);
 
@@ -1271,15 +1430,15 @@
 
   function updateKPI() {
     const b = computeBoost();
-    // 根据提升系数换算百分比（推理场景）
+    // KV Cache 优化视角的 KPI
     const tokensPct = Math.round(b * 100 * 1.2);
     const ttftPct = -Math.round(b * 100 * 1.0);
     const kvMigPct = -Math.round(b * 100 * 1.3);
-    const linkPct = Math.round(b * 100 * 0.9);
+    const kvHitPct = Math.round(b * 100 * 0.6);
     document.getElementById('kpiTokens').textContent = '+' + tokensPct + '%';
     document.getElementById('kpiStep').textContent = ttftPct + '%';
     document.getElementById('kpiLatency').textContent = kvMigPct + '%';
-    document.getElementById('kpiLink').textContent = '+' + linkPct + '%';
+    document.getElementById('kpiLink').textContent = '+' + kvHitPct + '%';
     // 故障时 KPI 变差
     if (STATE.faultedLink) {
       document.getElementById('kpiTokens').className = 'k-value bad';
@@ -1291,12 +1450,13 @@
   /* =========================================================
      7.5 能力开关 → 画布实时效果联动
      ========================================================= */
-  // 链路默认状态（重置基准）
+  // 链路默认状态（重置基准，与 LINKS 初始值一致）
   const LINK_DEFAULTS = {
-    'SL00': ['healthy', 0.5], 'SL10': ['healthy', 0.4], 'SL01': ['busy', 0.8],
-    'SL11': ['healthy', 0.5], 'SL02': ['healthy', 0.45], 'SL12': ['congested', 0.92],
-    'LS0': ['healthy', 0.72], 'LS1': ['busy', 0.85], 'LS2': ['healthy', 0.65],
-    'STL0': ['healthy', 0.6], 'STL1': ['healthy', 0.5], 'STL2': ['busy', 0.78]
+    'SL00': ['healthy', 0.50], 'SL10': ['healthy', 0.40], 'SL01': ['busy', 0.78],
+    'SL11': ['healthy', 0.50], 'SL0S': ['healthy', 0.45], 'SL1S': ['healthy', 0.42],
+    'SL0D0': ['healthy', 0.55], 'SL1D0': ['healthy', 0.48], 'SL0D1': ['healthy', 0.52], 'SL1D1': ['congested', 0.88],
+    'LSP0': ['healthy', 0.72], 'LSP1': ['busy', 0.85], 'LSD0': ['healthy', 0.65], 'LSD1': ['healthy', 0.68],
+    'STP0': ['healthy', 0.60], 'STP1': ['healthy', 0.58], 'STS': ['busy', 0.78], 'STD0': ['healthy', 0.62], 'STD1': ['healthy', 0.60]
   };
   // 根据开关状态应用画布效果：链路状态/利用率/NPU/粒子密度/徽标
   function applyCapabilityEffects() {
@@ -1311,7 +1471,7 @@
 
     // 2. 自动拓扑编排：高亮 Leaf-Server 链路 + NPU 利用率提升
     if (caps.orchestrate.on) {
-      ['LS0', 'LS1', 'LS2'].forEach(id => {
+      ['LSP0', 'LSP1', 'LSD0', 'LSD1'].forEach(id => {
         const l = LINKS.find(x => x.id === id);
         if (l && l.status !== 'faulted') l.utilization = Math.min(0.95, l.utilization + 0.12);
       });
@@ -1319,13 +1479,13 @@
       NODES.filter(n => n.type === 'server').forEach(n => { n._capBoost = (n._capBoost || 0) + 8; });
     }
 
-    // 3. 多轨 QoS 选路：SL12 拥塞分流到 SL02 备轨
+    // 3. 多轨 QoS 选路：SL1D1 拥塞分流到 SL0D1 备轨（跨集群 Decode-1 接入）
     if (caps.routing.on) {
-      const sl12 = LINKS.find(l => l.id === 'SL12');
-      const sl02 = LINKS.find(l => l.id === 'SL02');
-      if (sl12 && sl12.status === 'congested' && !STATE.faultedLink) {
-        sl12.status = 'busy'; sl12.utilization = 0.62;
-        sl02.status = 'busy'; sl02.utilization = 0.78;
+      const sl1D1 = LINKS.find(l => l.id === 'SL1D1');
+      const sl0D1 = LINKS.find(l => l.id === 'SL0D1');
+      if (sl1D1 && sl1D1.status === 'congested' && !STATE.faultedLink) {
+        sl1D1.status = 'busy'; sl1D1.utilization = 0.62;
+        sl0D1.status = 'busy'; sl0D1.utilization = 0.78;
       }
     }
 
@@ -1339,7 +1499,7 @@
 
     // 应用 NPU 利用率变化（合并 boost，取整）
     NODES.filter(n => n.type === 'server').forEach(n => {
-      const base = { server0: 72, server1: 88, server2: 65 }[n.id] || 70;
+      const base = { prefill0: 72, prefill1: 88, decode0: 65, decode1: 70 }[n.id] || 70;
       const boost = n._capBoost || 0;
       n.npuUtil = Math.round(clamp(base + boost + (Math.random() - 0.5) * 4, 20, 99));
       n._capBoost = 0; // 重置，下次重新算
@@ -1350,8 +1510,8 @@
 
     // 7. 链路高亮 class（编排/切片激活的链路加 cap-active）
     clearCapActive();
-    if (caps.orchestrate.on) markCapActive(['LS0', 'LS1', 'LS2']);
-    if (caps.slicing.on) markCapActive(['STL2', 'SL12', 'SL02', 'SL10', 'SL00', 'LS0', 'LS1']);
+    if (caps.orchestrate.on) markCapActive(['LSP0', 'LSP1', 'LSD0', 'LSD1']);
+    if (caps.slicing.on) markCapActive(['LSP0', 'LSP1', 'LSD0', 'LSD1', 'SL00', 'SL10', 'SL01', 'SL11', 'SL0D0', 'SL1D1']);
 
     // 8. NPU 流水线脉冲
     topoSvg.querySelectorAll('.npu-card').forEach(el => {
@@ -1386,199 +1546,833 @@
     if (STATE.events.length > 6) STATE.events.shift();
   }
 
-  /* ---- 演示解说面板控制 ---- */
+  /* ---- 演示解说面板控制（三段式：问题 / 处理 / 效果） ---- */
   const narration = document.getElementById('narration');
   const narrTitle = document.getElementById('narrTitle');
   const narrStep = document.getElementById('narrStep');
   const narrProgress = document.getElementById('narrProgress');
+  const narrStages = document.getElementById('narrStages');
   let narrTimers = [];
   function narrShow(title) {
     narrTitle.textContent = title;
     narration.classList.add('show');
+    narrSetStage(null);
   }
   function narrSet(html, progress) {
     narrStep.innerHTML = html;
     if (progress != null) narrProgress.style.width = (progress * 100) + '%';
   }
+  // 高亮当前阶段：'problem' | 'handle' | 'effect' | null
+  function narrSetStage(stage) {
+    narrStages.querySelectorAll('.narr-stage').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-stage') === stage);
+    });
+  }
   function narrHide() {
     narrTimers.forEach(t => clearTimeout(t));
     narrTimers = [];
-    setTimeout(() => narration.classList.remove('show'), 1500);
+    setTimeout(() => { narration.classList.remove('show'); narrSetStage(null); }, 1500);
   }
-  // 按序播放多步解说
+  // 按序播放多步解说。steps[i].stage 可选 'problem'/'handle'/'effect'，控制阶段高亮
   function narrPlay(title, steps) {
     narrTimers.forEach(t => clearTimeout(t));
     narrTimers = [];
     narrShow(title);
     let elapsed = 0;
+    let curStage = null;
     steps.forEach((s, i) => {
-      const t = setTimeout(() => narrSet(s.text, (i + 1) / steps.length), s.at);
+      const t = setTimeout(() => {
+        if (s.stage && s.stage !== curStage) {
+          curStage = s.stage;
+          narrSetStage(curStage);
+        }
+        narrSet(s.text, (i + 1) / steps.length);
+      }, s.at);
       narrTimers.push(t);
       elapsed = Math.max(elapsed, s.at);
     });
     return elapsed + 500;
   }
 
-  // 演示：自动拓扑编排（权重预取池 → 3 服务器 24 NPU，沿四层逐段建链）
-  function demoOrchestrate() {
-    log('orchestrate', '声明意图：部署 LLM 推理服务 → Prefill + Decode 分离拓扑', 'brand');
-    narrPlay('① 自动拓扑编排 · Prefill/Decode 推理拓扑', [
-      { at: 0,    text: '用户声明意图：<span class="hl-brand">部署 LLM 推理服务</span>。引擎自动构建 Prefill 节点 + Decode 节点 + KV 池的分离拓扑。' },
-      { at: 600,  text: '建链中：<span class="hl-brand">权重池→Leaf2→Spine→Leaf0→Prefill 节点</span>，紫色流光表示正在建链。' },
-      { at: 1400, text: '同时构建 <span class="hl-brand">KV 池→Decode 节点</span> 迁移通道，形成 Prefill/Decode 解耦拓扑。' },
-      { at: 2200, text: '编排完成 <span class="hl">32ms</span>，24 NPU 分工就绪（16 Prefill + 8 Decode）。<span class="hl">推理服务启动时延从秒级降到毫秒级</span>。' }
-    ]);
-    const path = ['STL2', 'SL12', 'SL02', 'LS2', 'SL00', 'SL10', 'LS0', 'SL11', 'SL01', 'LS1'];
-    path.forEach((lid, i) => {
-      setTimeout(() => {
-        const el = document.getElementById(`link-${lid}`);
-        if (el) el.classList.add('building');
-        const link = LINKS.find(l => l.id === lid);
-        const a = NODES.find(n => n.id === link.from);
-        const b = NODES.find(n => n.id === link.to);
-        log('orchestrate', `构建 ${lid}: ${a.label}↔${b.label}`, 'brand');
-      }, i * 200);
+  /* ---- 通用对比浮窗：展示问题→效果的前后数值对比 ---- */
+  function showCompare(title, rows) {
+    // rows: [{ label, before, after, gain(true/false) }]
+    let rowsHtml = '';
+    rows.forEach(r => {
+      const cls = r.gain ? 'cp-row gain' : 'cp-row';
+      const val = r.before != null
+        ? `${r.before} → <b>${r.after}</b>`
+        : `<b>${r.after}</b>`;
+      rowsHtml += `<div class="${cls}"><span>${r.label}</span><span>${val}</span></div>`;
     });
-    setTimeout(() => {
-      path.forEach(lid => {
-        const el = document.getElementById(`link-${lid}`);
-        if (el) el.classList.remove('building');
-      });
-      log('orchestrate', '编排完成 32ms，Prefill/Decode 拓扑就绪', 'accent');
-      markEvent('编排生效', '#8B7BFF');
-      updateKPI();
-      narrHide();
-    }, path.length * 200 + 500);
+    comparePopup.innerHTML = `<div class="cp-title">${title}</div>${rowsHtml}`;
+    comparePopup.style.display = 'block';
+    const wrap = document.querySelector('.canvas-wrap').getBoundingClientRect();
+    comparePopup.style.left = (wrap.width - 240) + 'px';
+    comparePopup.style.top = '60px';
+    setTimeout(() => { comparePopup.style.display = 'none'; }, 5000);
   }
 
-  // 演示：多轨 QoS 选路（Prefill→Decode 的 KV 迁移遇拥塞，高优请求走备轨）
-  function demoRouting() {
-    const sl12 = LINKS.find(l => l.id === 'SL12');
-    const sl02 = LINKS.find(l => l.id === 'SL02');
-    const label12 = `${NODES.find(n => n.id === sl12.from).label}↔${NODES.find(n => n.id === sl12.to).label}`;
-    log('routing', `KV 迁移链路 ${sl12.id} (${label12}) 拥塞 95%`, 'warn');
-    sl12.status = 'congested'; sl12.utilization = 0.95;
-    refreshLinks();
-    narrPlay('② 多轨 QoS 选路 · KV 迁移分流', [
-      { at: 0,    text: '<span class="hl-danger">Spine1↔Leaf2 链路拥塞 95%</span>，变红。Prefill→Decode 的 KV 迁移排队，TTFT 飙升。' },
-      { at: 1200, text: '引擎启动 QoS 选路：<span class="hl-brand">高优请求的 KV 走备轨 Spine0↔Leaf2</span>，低优流仍在原轨。' },
-      { at: 2600, text: '原链路从红→黄→绿，<span class="hl">TTFT 下降 40%</span>，KV 迁移延迟回落。QoS 分级保证高优请求 SLA。' }
+  /* ---- 算法决策浮窗：展示能力背后的算法处理逻辑 ---- */
+  const algoPopup = document.getElementById('algoPopup');
+  let algoTimers = [];
+  // 显示算法浮窗，初始化标题、步骤标签、迷你 SVG
+  // steps: ['意图','发现','计算','优选','预留','下发']
+  // svgHtml: 迷你 SVG 内容（含所有元素，初始状态由 class 控制）
+  function showAlgoStart(title, steps, svgHtml) {
+    const stepsHtml = steps.map((s, i) =>
+      `<span class="ap-step" data-step="${i}">${i+1} ${s}</span>`
+    ).join('');
+    algoPopup.innerHTML =
+      `<div class="ap-title"><span class="ap-icon"></span>${title}</div>` +
+      `<div class="ap-steps">${stepsHtml}</div>` +
+      `<div class="ap-svg-wrap"><svg class="ap-svg" viewBox="0 0 340 90" preserveAspectRatio="xMidYMid meet">${svgHtml}</svg></div>` +
+      `<div class="ap-desc" id="algoDesc">准备算法决策...</div>`;
+    algoPopup.classList.add('show');
+    // 定位到画布左下角
+    const wrap = document.querySelector('.canvas-wrap').getBoundingClientRect();
+    algoPopup.style.left = '16px';
+    algoPopup.style.top = (wrap.height - 230) + 'px';
+  }
+  // 切换到第 stepIdx 步（0-based），更新标签栏状态和底部说明
+  function showAlgoStep(stepIdx, descHtml) {
+    algoPopup.querySelectorAll('.ap-step').forEach((el, i) => {
+      el.classList.remove('active', 'done');
+      if (i < stepIdx) el.classList.add('done');
+      else if (i === stepIdx) el.classList.add('active');
+    });
+    const desc = document.getElementById('algoDesc');
+    if (desc) desc.innerHTML = `<span class="step-label">步骤 ${stepIdx+1}</span>` + descHtml;
+  }
+  // 隐藏算法浮窗
+  function showAlgoEnd() {
+    algoTimers.forEach(t => clearTimeout(t));
+    algoTimers = [];
+    setTimeout(() => algoPopup.classList.remove('show'), 400);
+  }
+
+  // 演示：自动拓扑编排（构建 Prefill 集群 → Decode 集群的 KV 迁移拓扑）
+  function demoOrchestrate() {
+    log('orchestrate', '声明意图：建立 Prefill 集群 → Decode 集群的 KV Cache 迁移拓扑', 'brand');
+    narrPlay('① 自动拓扑编排 · PD 集群 KV 迁移拓扑构建', [
+      { at: 0,    stage: 'problem',  text: '<span class="hl-danger">问题</span>：PD 分离后，KV Cache 需跨集群从 Prefill 流向 Decode。传统方式需人工配置 19 条链路、选路径、分配带宽，<span class="hl-danger">耗时分钟级且易出错</span>，KV 迁移启动慢 → TTFT 高。' },
+      { at: 1200, stage: 'handle',   text: '<span class="hl-brand">处理</span>：声明意图「Prefill 集群 → Decode 集群的 KV 迁移」，引擎启动自动编排，<span class="hl-brand">算法决策过程见左下角浮窗</span>...' },
+      { at: 4200, stage: 'handle',   text: '算法完成路径优选，<span class="hl-brand">下发建链（紫色流光逐条点亮 13 条链路）</span>...' },
+      { at: 5500, stage: 'effect',   text: '<span class="hl">效果</span>：编排完成 <span class="hl">32ms</span>（vs 手动分钟级），13 条链路就绪，KV 迁移通道立即可用。' },
+      { at: 6500, stage: 'effect',   text: '<span class="hl">TTFT 从 312ms 降到 186ms</span>，跨集群 KV 迁移启动时延从秒级降到毫秒级。' }
     ]);
+
+    // —— 算法决策浮窗：6 步演化（每步间隔约 1 秒）——
+    // 迷你拓扑 SVG：P0/P1(源) - S0/S1(Spine) - D0/D1(目的)
+    const miniSvg = `
+      <!-- 8 条候选链路（初始隐藏） -->
+      <line id="mn-P0S0" class="mn-link" x1="25" y1="25" x2="170" y2="25"/>
+      <line id="mn-P0S1" class="mn-link" x1="25" y1="25" x2="170" y2="65"/>
+      <line id="mn-P1S0" class="mn-link" x1="25" y1="65" x2="170" y2="25"/>
+      <line id="mn-P1S1" class="mn-link" x1="25" y1="65" x2="170" y2="65"/>
+      <line id="mn-S0D0" class="mn-link" x1="170" y1="25" x2="315" y2="25"/>
+      <line id="mn-S0D1" class="mn-link" x1="170" y1="25" x2="315" y2="65"/>
+      <line id="mn-S1D0" class="mn-link" x1="170" y1="65" x2="315" y2="25"/>
+      <line id="mn-S1D1" class="mn-link" x1="170" y1="65" x2="315" y2="65"/>
+      <!-- 选中路径流光（下发时显示） -->
+      <path id="mn-flowA" class="mn-flow" style="stroke:var(--brand); opacity:0" d="M25,25 L170,25 L315,25"/>
+      <path id="mn-flowB" class="mn-flow" style="stroke:var(--accent); opacity:0" d="M25,65 L170,65 L315,65"/>
+      <!-- 带宽预留标注 -->
+      <text id="mn-bwA" class="mn-bw" x="170" y="18" text-anchor="middle" style="opacity:0">200G</text>
+      <text id="mn-bwB" class="mn-bw" x="170" y="82" text-anchor="middle" style="opacity:0">200G</text>
+      <!-- 6 个节点 -->
+      <circle id="mn-P0" class="mn-node psrc" cx="25" cy="25" r="5"/>
+      <text class="mn-label" x="25" y="13" text-anchor="middle">P0</text>
+      <circle id="mn-P1" class="mn-node psrc" cx="25" cy="65" r="5"/>
+      <text class="mn-label" x="25" y="82" text-anchor="middle">P1</text>
+      <circle id="mn-S0" class="mn-node psh dim" cx="170" cy="25" r="5"/>
+      <text class="mn-label" x="170" y="13" text-anchor="middle">S0</text>
+      <circle id="mn-S1" class="mn-node psh dim" cx="170" cy="65" r="5"/>
+      <text class="mn-label" x="170" y="82" text-anchor="middle">S1</text>
+      <circle id="mn-D0" class="mn-node pdst" cx="315" cy="25" r="5"/>
+      <text class="mn-label" x="315" y="13" text-anchor="middle">D0</text>
+      <circle id="mn-D1" class="mn-node pdst" cx="315" cy="65" r="5"/>
+      <text class="mn-label" x="315" y="82" text-anchor="middle">D1</text>
+      <!-- 区域标签 -->
+      <text x="25" y="88" text-anchor="middle" style="fill:var(--brand); font-size:6px; font-weight:600">Prefill</text>
+      <text x="170" y="88" text-anchor="middle" style="fill:var(--warn); font-size:6px; font-weight:600">Spine</text>
+      <text x="315" y="88" text-anchor="middle" style="fill:var(--accent); font-size:6px; font-weight:600">Decode</text>
+    `;
+
+    // 1.2s: 显示算法浮窗，Step 1 意图解析
     setTimeout(() => {
-      log('routing', 'QoS 选路：高优 KV 迁移切换到备轨', 'brand');
-      sl02.status = 'busy'; sl02.utilization = 0.82;
-      sl12.status = 'busy'; sl12.utilization = 0.6;
+      showAlgoStart('① 自动拓扑编排 · 算法决策', ['意图','发现','计算','优选','预留','下发'], miniSvg);
+      showAlgoStep(0, '<span class="hl-b">意图解析</span>：源 <span class="hl-b">Prefill×2</span> → 目 <span class="hl">Decode×2</span>，约束：最短路径 + 负载均衡');
+      log('orchestrate', '算法 Step1 意图解析：Prefill×2 → Decode×2', 'brand');
+    }, 1200);
+
+    // 2.2s: Step 2 拓扑发现，S0/S1 亮起
+    setTimeout(() => {
+      showAlgoStep(1, '<span class="hl-b">拓扑发现</span>：扫描 2 Spine + 5 Leaf，可用带宽 <span class="hl">400G/链路</span>');
+      document.getElementById('mn-S0').classList.remove('dim');
+      document.getElementById('mn-S1').classList.remove('dim');
+      log('orchestrate', '算法 Step2 拓扑发现：2 Spine + 5 Leaf', 'brand');
+    }, 2200);
+
+    // 3.2s: Step 3 路径计算，8 条候选虚线闪现
+    setTimeout(() => {
+      showAlgoStep(2, '<span class="hl-b">路径计算</span>：4 源目对 × 2 Spine = <span class="hl-w">8 条候选路径</span>（灰色虚线）');
+      ['mn-P0S0','mn-P0S1','mn-P1S0','mn-P1S1','mn-S0D0','mn-S0D1','mn-S1D0','mn-S1D1'].forEach(id => {
+        document.getElementById(id).classList.add('cand');
+      });
+      log('orchestrate', '算法 Step3 路径计算：生成 8 条候选', 'brand');
+    }, 3200);
+
+    // 4.2s: Step 4 路径优选，2 条高亮，其余淡出
+    setTimeout(() => {
+      showAlgoStep(3, '<span class="hl-b">路径优选</span>：策略 负载均衡+避开拥塞 → 选定 <span class="hl">P0→S0→D0</span> + <span class="hl">P1→S1→D1</span>');
+      ['mn-P0S0','mn-S0D0'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('cand');
+        el.classList.add('picked', 'la');
+      });
+      ['mn-P1S1','mn-S1D1'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('cand');
+        el.classList.add('picked', 'lb');
+      });
+      ['mn-P0S1','mn-P1S0','mn-S0D1','mn-S1D0'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('cand');
+        el.style.opacity = '0.12';
+      });
+      log('orchestrate', '算法 Step4 路径优选：P0→S0→D0 + P1→S1→D1', 'brand');
+    }, 4200);
+
+    // 5.2s: Step 5 资源预留，带宽标注出现
+    setTimeout(() => {
+      showAlgoStep(4, '<span class="hl-b">资源预留</span>：每路径预留 <span class="hl">200G</span> 带宽，标记 13 条链路为 active');
+      ['mn-P0S0','mn-S0D0'].forEach(id => document.getElementById(id).classList.add('reserved'));
+      ['mn-P1S1','mn-S1D1'].forEach(id => document.getElementById(id).classList.add('reserved'));
+      document.getElementById('mn-bwA').style.opacity = '1';
+      document.getElementById('mn-bwB').style.opacity = '1';
+      log('orchestrate', '算法 Step5 资源预留：每路径 200G', 'brand');
+    }, 5200);
+
+    // 6.2s: Step 6 下发建链，触发主拓扑 13 条链路逐条 building
+    setTimeout(() => {
+      showAlgoStep(5, '<span class="hl-b">下发建链 ▶</span>：触发主拓扑构建（紫色流光），13 条链路逐条点亮');
+      document.getElementById('mn-flowA').style.opacity = '1';
+      document.getElementById('mn-flowB').style.opacity = '1';
+      log('orchestrate', '算法 Step6 下发建链', 'brand');
+      const path = [
+        'LSP0', 'SL00', 'SL0D0', 'LSD0',
+        'LSP1', 'SL11', 'SL1D1', 'LSD1',
+        'STP0', 'SL0S', 'STS', 'STP1', 'SL1S'
+      ];
+      path.forEach((lid, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(`link-${lid}`);
+          if (el) el.classList.add('building');
+          const link = LINKS.find(l => l.id === lid);
+          const a = NODES.find(n => n.id === link.from);
+          const b = NODES.find(n => n.id === link.to);
+          log('orchestrate', `构建 ${lid}: ${a.label}↔${b.label}`, 'brand');
+        }, i * 120);
+      });
+      setTimeout(() => {
+        path.forEach(lid => {
+          const el = document.getElementById(`link-${lid}`);
+          if (el) el.classList.remove('building');
+        });
+      }, path.length * 120 + 400);
+    }, 6200);
+
+    // 7.5s: 算法浮窗淡出，进入效果段
+    setTimeout(() => {
+      showAlgoEnd();
+    }, 7500);
+
+    // 8.5s: 收益对比浮窗
+    setTimeout(() => {
+      log('orchestrate', '编排完成 32ms，PD 跨集群 KV 迁移拓扑就绪', 'accent');
+      markEvent('编排生效', '#8B7BFF');
+      updateKPI();
+      showCompare('① 自动拓扑编排 收益', [
+        { label: '编排耗时',   before: '分钟级', after: '32ms',  gain: true },
+        { label: 'TTFT',       before: '312ms',  after: '186ms', gain: true },
+        { label: '建链数',     before: '0',      after: '13 条', gain: true }
+      ]);
+      narrHide();
+    }, 8500);
+  }
+
+  // 演示：多轨 QoS 选路（Prefill→Decode 跨集群链路拥塞，高优请求走备轨）
+  function demoRouting() {
+    const sl1D1 = LINKS.find(l => l.id === 'SL1D1');
+    const sl0D1 = LINKS.find(l => l.id === 'SL0D1');
+    const label1D1 = `${NODES.find(n => n.id === sl1D1.from).label}↔${NODES.find(n => n.id === sl1D1.to).label}`;
+    log('routing', `跨集群 KV 迁移链路 ${sl1D1.id} (${label1D1}) 拥塞 95%`, 'warn');
+    sl1D1.status = 'congested'; sl1D1.utilization = 0.95;
+    refreshLinks();
+    narrPlay('② 多轨 QoS 选路 · 跨集群 KV 迁移分流', [
+      { at: 0,    stage: 'problem',  text: '<span class="hl-danger">问题</span>：<span class="hl-danger">Spine1↔Leaf-D1 跨集群链路拥塞 95%</span>（红色），Prefill→Decode-1 的 KV 迁移排队等待，TTFT 飙升至 320ms。' },
+      { at: 1000, stage: 'problem',  text: '观察：原链路带宽被打满，高优请求（首字延迟敏感）与低优流（后台批量）混在一起，<span class="hl-warn">无差别排队</span>。' },
+      { at: 2200, stage: 'handle',   text: '<span class="hl-brand">处理</span>：引擎识别请求优先级，启动多轨 QoS 选路，<span class="hl-brand">算法决策过程见左下角浮窗</span>...' },
+      { at: 6500, stage: 'handle',   text: '决策完成：<span class="hl-brand">高优流走备轨 Spine0↔Leaf-D1，低优流走原轨限速</span>，两轨并行。' },
+      { at: 7500, stage: 'effect',   text: '<span class="hl">效果</span>：原链路从红→黄→绿，利用率回落到 60%。高优请求不再排队。' },
+      { at: 8500, stage: 'effect',   text: '<span class="hl">TTFT 从 320ms 降到 192ms（-40%）</span>，跨集群 KV 迁移延迟回落，QoS 分级保证高优请求 SLA。' }
+    ]);
+
+    // —— 算法浮窗：QoS 选路 6 步决策 ——
+    // 迷你 SVG：左 Prefill → 中两条并行轨道(原轨/备轨) → 右 Decode
+    const miniSvg = `
+      <!-- 两条轨道（原轨上、备轨下） -->
+      <line id="mn-orig" class="mn-link" x1="40" y1="32" x2="300" y2="32" style="stroke:var(--danger); opacity:0.3"/>
+      <line id="mn-backup" class="mn-link" x1="40" y1="62" x2="300" y2="62" style="opacity:0"/>
+      <!-- 拥塞标记（原轨） -->
+      <text id="mn-congest" class="mn-label" x="170" y="24" text-anchor="middle" style="fill:var(--danger); opacity:0">拥塞 95%</text>
+      <!-- 高优/低优流量块（原轨混合） -->
+      <rect id="mn-flow-hi-orig" x="60" y="28" width="8" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-flow-lo-orig" x="75" y="28" width="8" height="8" rx="1" style="fill:var(--text-dim); opacity:0"/>
+      <!-- 切换后：高优到备轨，低优留原轨 -->
+      <rect id="mn-flow-hi-backup" x="60" y="58" width="8" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-flow-lo-orig2" x="75" y="28" width="8" height="8" rx="1" style="fill:var(--text-dim); opacity:0"/>
+      <!-- 带宽分配标注 -->
+      <text id="mn-bw-orig" class="mn-bw" x="170" y="48" text-anchor="middle" style="opacity:0">限速 60G</text>
+      <text id="mn-bw-backup" class="mn-bw" x="170" y="78" text-anchor="middle" style="opacity:0">独占 200G</text>
+      <!-- 流光（切换后显示） -->
+      <path id="mn-flowA" class="mn-flow" style="stroke:var(--accent); opacity:0" d="M40,62 L300,62"/>
+      <!-- 节点 -->
+      <circle class="mn-node psrc" cx="25" cy="47" r="5"/>
+      <text class="mn-label" x="25" y="35" text-anchor="middle">P</text>
+      <circle class="mn-node pdst" cx="315" cy="47" r="5"/>
+      <text class="mn-label" x="315" y="35" text-anchor="middle">D</text>
+      <!-- 轨道标签 -->
+      <text x="170" y="18" text-anchor="middle" style="fill:var(--danger); font-size:6px; font-weight:600">原轨 Spine1</text>
+      <text x="170" y="88" text-anchor="middle" style="fill:var(--accent); font-size:6px; font-weight:600">备轨 Spine0</text>
+    `;
+
+    // 2.2s: 显示算法浮窗，Step 1 检测拥塞
+    setTimeout(() => {
+      showAlgoStart('② 多轨 QoS 选路 · 算法决策', ['检测','分级','扫描','决策','分配','执行'], miniSvg);
+      showAlgoStep(0, '<span class="hl-d">检测拥塞</span>：原轨 <span class="hl-d">Spine1↔Leaf-D1 利用率 95%</span>，超过阈值 80%');
+      document.getElementById('mn-orig').style.opacity = '1';
+      document.getElementById('mn-congest').style.opacity = '1';
+      log('routing', '算法 Step1 检测拥塞：95%', 'brand');
+    }, 2200);
+
+    // 3.2s: Step 2 分级识别，高优/低优流量块出现
+    setTimeout(() => {
+      showAlgoStep(1, '<span class="hl-b">流量分级</span>：识别 <span class="hl-b">高优（首字延迟敏感）</span>与 <span class="hl-w">低优（后台批量）</span>两类 KV 流');
+      document.getElementById('mn-flow-hi-orig').style.opacity = '1';
+      document.getElementById('mn-flow-lo-orig').style.opacity = '1';
+      log('routing', '算法 Step2 流量分级：高优+低优', 'brand');
+    }, 3200);
+
+    // 4.2s: Step 3 备轨可用性扫描
+    setTimeout(() => {
+      showAlgoStep(2, '<span class="hl-b">备轨扫描</span>：检查 <span class="hl">Spine0↔Leaf-D1</span> 可用带宽 <span class="hl">200G</span>，可用');
+      document.getElementById('mn-backup').style.opacity = '0.5';
+      document.getElementById('mn-backup').style.strokeDasharray = '2 2';
+      log('routing', '算法 Step3 备轨扫描：Spine0 可用', 'brand');
+    }, 4200);
+
+    // 5.2s: Step 4 切换决策
+    setTimeout(() => {
+      showAlgoStep(3, '<span class="hl-b">切换决策</span>：高优流 → 备轨（独占），低优流 → 原轨（限速）');
+      // 高优块从原轨消失，出现在备轨
+      document.getElementById('mn-flow-hi-orig').style.opacity = '0';
+      document.getElementById('mn-flow-hi-backup').style.opacity = '1';
+      document.getElementById('mn-backup').style.opacity = '1';
+      document.getElementById('mn-backup').style.strokeDasharray = '';
+      document.getElementById('mn-backup').style.stroke = 'var(--accent)';
+      log('routing', '算法 Step4 切换决策：高优→备轨', 'brand');
+    }, 5200);
+
+    // 6.2s: Step 5 带宽分配
+    setTimeout(() => {
+      showAlgoStep(4, '<span class="hl-b">带宽分配</span>：原轨限速 <span class="hl-w">60G</span>，备轨独占 <span class="hl">200G</span>');
+      document.getElementById('mn-bw-orig').style.opacity = '1';
+      document.getElementById('mn-bw-backup').style.opacity = '1';
+      document.getElementById('mn-flow-lo-orig2').style.opacity = '1';
+      document.getElementById('mn-flow-lo-orig').style.opacity = '0';
+      log('routing', '算法 Step5 带宽分配：原轨60G + 备轨200G', 'brand');
+    }, 6200);
+
+    // 7.2s: Step 6 执行切换，触发主拓扑链路状态变化 + 粒子流
+    setTimeout(() => {
+      showAlgoStep(5, '<span class="hl-b">执行切换 ▶</span>：高优 KV 迁移切到备轨，原轨限速，<span class="hl">两轨并行</span>');
+      document.getElementById('mn-flowA').style.opacity = '1';
+      log('routing', '算法 Step6 执行切换', 'brand');
+      // 主拓扑：备轨变 busy，原轨利用率下降
+      sl0D1.status = 'busy'; sl0D1.utilization = 0.82;
+      sl1D1.status = 'busy'; sl1D1.utilization = 0.6;
       refreshLinks();
       markEvent('QoS 选路', '#2DD4A8');
       updateKPI();
-      setTimeout(() => {
-        sl12.status = 'healthy'; sl12.utilization = 0.5;
-        sl02.status = 'healthy'; sl02.utilization = 0.45;
-        refreshLinks();
-        narrHide();
-      }, 4000);
-    }, 1200);
+      // 备轨粒子流（绿色，停留 1 秒闪烁再移动）
+      const pauseUntil = performance.now() + 1000;
+      ['SL0D1'].forEach(lid => {
+        const link = LINKS.find(l => l.id === lid);
+        if (!link || link.status === 'faulted') return;
+        for (let k = 0; k < 3; k++) {
+          particles.push({
+            linkId: lid, t: 0.05 + k * 0.1, speed: 0.012, color: '#2DD4A8', size: 3.2,
+            label: k === 0 ? '高优' : null, pauseUntil: pauseUntil
+          });
+        }
+      });
+    }, 7200);
+
+    // 8.5s: 算法浮窗淡出
+    setTimeout(() => {
+      showAlgoEnd();
+    }, 8500);
+
+    // 9.5s: 链路恢复 + 收益对比浮窗
+    setTimeout(() => {
+      sl1D1.status = 'healthy'; sl1D1.utilization = 0.52;
+      sl0D1.status = 'healthy'; sl0D1.utilization = 0.48;
+      refreshLinks();
+      showCompare('② 多轨 QoS 选路 收益', [
+        { label: '原链路利用率', before: '95%',  after: '60%',  gain: true },
+        { label: 'TTFT',         before: '320ms', after: '192ms', gain: true },
+        { label: '高优 SLA',     before: '不保证', after: '保证',  gain: true }
+      ]);
+      narrHide();
+    }, 9500);
   }
 
-  // 演示：并行切片传输（长请求 KV 缓存分片沿 4 路并行迁移到 Decode 节点）
+  // 演示：并行切片传输（Prefill 集群产出的 KV Cache 分片沿 4 路并行迁移到 Decode 集群）
   function demoSlicing() {
-    log('slicing', '长请求 KV 缓存切片 32 份，沿 4 路并行迁移到 Decode 节点', 'brand');
-    narrPlay('③ 并行切片传输 · KV 缓存并行迁移', [
-      { at: 0,    text: '长请求的 <span class="hl-brand">KV 缓存被切成 32 个分片</span>，沿 4 条路径并行迁移到 Decode 节点（紫/绿/橙/粉 4 色粒子流）。' },
-      { at: 1000, text: '4 条路径：<span class="hl-brand">KV池→Leaf2→Spine→Leaf0→Decode</span> 等，每条走不同的 Spine-Leaf 组合。' },
-      { at: 2000, text: '单路径 200G，<span class="hl">4 路聚合达 800G</span>，KV 迁移耗时从 2.56s 降到 0.64s。' },
-      { at: 2800, text: 'KV 在 Decode 节点聚合，<span class="hl">TTFT 降低 75%</span>，长请求首字延迟大幅缩短，吞吐陡升。' }
+    log('slicing', 'Prefill 集群产出 KV Cache 切片 32 份，沿 4 路并行迁移到 Decode 集群', 'brand');
+    narrPlay('③ 并行切片传输 · KV Cache 跨集群并行迁移', [
+      { at: 0,    stage: 'problem',  text: '<span class="hl-danger">问题</span>：单条跨集群路径带宽 200G，Prefill 产出的 KV Cache（数十 GB）只能串行单路径迁移，<span class="hl-danger">耗时 2.56s</span>，Decode 节点空闲等待，吞吐低。' },
+      { at: 1500, stage: 'handle',   text: '<span class="hl-brand">处理</span>：将 KV Cache 切成 32 个分片，沿 <span class="hl-brand">4 路并行</span>迁移，<span class="hl-brand">算法决策过程见左下角浮窗</span>...' },
+      { at: 4500, stage: 'handle',   text: '4 路同时传输分片：<span class="hl-brand">每路 8 片，紫/绿/橙/粉 4 色粒子流带分片编号</span>，避开单路径瓶颈。' },
+      { at: 6500, stage: 'effect',   text: '<span class="hl">效果</span>：4 路聚合带宽 <span class="hl">800G</span>（vs 单路径 200G），KV 迁移耗时 <span class="hl">2.56s → 0.64s（-75%）</span>。' },
+      { at: 7500, stage: 'effect',   text: 'KV Cache 在 Decode 集群快速聚合，<span class="hl">TTFT 降低 75%</span>，长请求首字延迟大幅缩短，吞吐陡升。' }
     ]);
-    const paths = [
-      { name: '路径1', links: ['STL2', 'SL12', 'SL10', 'LS0'], color: '#8B7BFF' },
-      { name: '路径2', links: ['STL2', 'SL02', 'SL00', 'LS0'], color: '#2DD4A8' },
-      { name: '路径3', links: ['STL2', 'SL12', 'SL01', 'LS1'], color: '#FFB547' },
-      { name: '路径4', links: ['STL2', 'SL02', 'SL11', 'LS1'], color: '#FF7AB6' }
-    ];
-    let burst = 0;
-    const interval = setInterval(() => {
+
+    // —— 算法浮窗：KV 分片切分与并行分配 ——
+    // 迷你 SVG：左 KV 大块 → 中 32 格网格(4行×8列) → 右 Decode 聚合块
+    const shardColors = ['#8B7BFF', '#2DD4A8', '#FFB547', '#FF7AB6'];
+    let shardsSvg = '';
+    // 左：KV 大块（切分前）
+    shardsSvg += `<rect id="mn-kvblock" class="mn-node psrc" x="10" y="30" width="28" height="28" rx="2"/>`;
+    shardsSvg += `<text class="mn-label" x="24" y="68" text-anchor="middle">KV</text>`;
+    // 中：32 格网格（4 行 × 8 列），每行对应一路
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 8; col++) {
+        const idx = row * 8 + col;
+        const x = 55 + col * 9;
+        const y = 22 + row * 12;
+        shardsSvg += `<rect id="mn-shard-${idx}" class="mn-link" x="${x}" y="${y}" width="7" height="8" rx="1" style="opacity:0"/>`;
+      }
+    }
+    // 右：Decode 聚合块
+    shardsSvg += `<rect id="mn-decode" class="mn-node pdst" x="295" y="30" width="28" height="28" rx="2" style="opacity:0.3"/>`;
+    shardsSvg += `<text class="mn-label" x="309" y="68" text-anchor="middle">Decode</text>`;
+    // 4 条路径箭头（传输时显示）
+    shardsSvg += `<path id="mn-path0" class="mn-flow" style="stroke:${shardColors[0]}; opacity:0" d="M130,26 L290,40"/>`;
+    shardsSvg += `<path id="mn-path1" class="mn-flow" style="stroke:${shardColors[1]}; opacity:0" d="M130,38 L290,42"/>`;
+    shardsSvg += `<path id="mn-path2" class="mn-flow" style="stroke:${shardColors[2]}; opacity:0" d="M130,50 L290,46"/>`;
+    shardsSvg += `<path id="mn-path3" class="mn-flow" style="stroke:${shardColors[3]}; opacity:0" d="M130,62 L290,48"/>`;
+    // 标签
+    shardsSvg += `<text x="24" y="18" text-anchor="middle" style="fill:var(--brand); font-size:6px; font-weight:600">Prefill</text>`;
+    shardsSvg += `<text x="92" y="14" text-anchor="middle" style="fill:var(--text-dim); font-size:6px; font-weight:600">32 分片 · 4 路</text>`;
+    shardsSvg += `<text x="309" y="18" text-anchor="middle" style="fill:var(--accent); font-size:6px; font-weight:600">Decode</text>`;
+
+    // 1.5s: 显示算法浮窗，Step 1 识别 KV 块
+    setTimeout(() => {
+      showAlgoStart('③ 并行切片传输 · 算法决策', ['识别','切分','分配','传输','聚合'], shardsSvg);
+      showAlgoStep(0, '<span class="hl-b">识别</span>：Prefill 产出的 <span class="hl-b">KV Cache（数十 GB）</span>，单块迁移慢');
+      log('slicing', '算法 Step1 识别 KV Cache 单块', 'brand');
+    }, 1500);
+
+    // 2.5s: Step 2 切分，32 格逐一出现
+    setTimeout(() => {
+      showAlgoStep(1, '<span class="hl-b">切分</span>：KV Cache 切成 <span class="hl">32 个分片</span>（每片约 1GB），可独立传输');
+      const kvblock = document.getElementById('mn-kvblock');
+      if (kvblock) kvblock.style.opacity = '0.3';
+      for (let i = 0; i < 32; i++) {
+        setTimeout(() => {
+          const el = document.getElementById(`mn-shard-${i}`);
+          if (el) {
+            el.style.opacity = '0.6';
+            el.setAttribute('fill', 'var(--text-dim)');
+          }
+        }, i * 25);
+      }
+      log('slicing', '算法 Step2 切分：32 个分片', 'brand');
+    }, 2500);
+
+    // 3.7s: Step 3 分配，4 行分别染 4 色
+    setTimeout(() => {
+      showAlgoStep(2, '<span class="hl-b">路径分配</span>：32 片按 <span class="hl">4 路分配（每路 8 片）</span>，紫/绿/橙/粉 4 色');
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 8; col++) {
+          const idx = row * 8 + col;
+          const el = document.getElementById(`mn-shard-${idx}`);
+          if (el) {
+            el.setAttribute('fill', shardColors[row]);
+            el.style.opacity = '0.9';
+          }
+        }
+      }
+      log('slicing', '算法 Step3 分配：4 路 × 8 片', 'brand');
+    }, 3700);
+
+    // 4.9s: Step 4 并行传输，首批粒子停留 1 秒闪烁再开始移动
+    setTimeout(() => {
+      showAlgoStep(3, '<span class="hl-b">并行传输 ▶</span>：4 路首批分片 <span class="hl-w">闪烁就绪</span>，1 秒后开始传输，<span class="hl">聚合 800G</span>');
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById(`mn-path${i}`);
+        if (el) el.style.opacity = '1';
+      }
+      const dec = document.getElementById('mn-decode');
+      if (dec) dec.style.opacity = '1';
+      log('slicing', '算法 Step4 并行传输：首批分片就绪', 'brand');
+      // 主拓扑粒子流：4 路，首批粒子停留 1 秒闪烁
+      const paths = [
+        { links: ['LSP0', 'SL00', 'SL0D0', 'LSD0'], color: '#8B7BFF', start: 1 },
+        { links: ['LSP0', 'SL10', 'SL1D1', 'LSD1'], color: '#2DD4A8', start: 9 },
+        { links: ['LSP1', 'SL01', 'SL0D0', 'LSD0'], color: '#FFB547', start: 17 },
+        { links: ['LSP1', 'SL11', 'SL1D1', 'LSD1'], color: '#FF7AB6', start: 25 }
+      ];
+      // 首批：4 路各发 1 个带编号粒子，停留 1 秒闪烁
+      const pauseUntil = performance.now() + 1000;
       paths.forEach(p => {
         p.links.forEach(lid => {
           const link = LINKS.find(l => l.id === lid);
           if (!link || link.status === 'faulted') return;
-          particles.push({ linkId: lid, t: 0, speed: 0.014, color: p.color, size: 2.6 });
+          particles.push({
+            linkId: lid, t: 0, speed: 0.014, color: p.color, size: 3.2,
+            label: `#${p.start}`, pauseUntil: pauseUntil
+          });
         });
       });
-      burst++;
-      if (burst >= 18) {
-        clearInterval(interval);
-        log('slicing', 'KV 切片聚合完成，聚合 800G vs 单路径 200G', 'accent');
-        markEvent('KV 切片并行 ×4', '#2DD4A8');
-        updateKPI();
-        showComparePopup();
-        narrHide();
-      }
-    }, 120);
+      // 1 秒后开始连续发送后续分片
+      setTimeout(() => {
+        showAlgoStep(3, '<span class="hl-b">并行传输 ▶</span>：4 路同时发送 32 个分片，<span class="hl">聚合 800G</span>');
+        log('slicing', '首批分片闪烁完成，开始连续传输', 'brand');
+        let burst = 1; // 首批已发，从 1 开始
+        const interval = setInterval(() => {
+          paths.forEach(p => {
+            p.links.forEach(lid => {
+              const link = LINKS.find(l => l.id === lid);
+              if (!link || link.status === 'faulted') return;
+              particles.push({
+                linkId: lid, t: 0, speed: 0.014, color: p.color, size: 2.6,
+                label: burst < 8 ? `#${p.start + burst}` : null
+              });
+            });
+          });
+          burst++;
+          if (burst >= 8) {
+            clearInterval(interval);
+            log('slicing', '32 个分片全部发送完成', 'accent');
+          }
+        }, 300);
+      }, 1000);
+    }, 4900);
+
+    // 6.5s: Step 5 聚合，Decode 端 32 片重组
+    setTimeout(() => {
+      showAlgoStep(4, '<span class="hl">聚合</span>：32 片在 Decode 端 <span class="hl">重组完成</span>，KV Cache 立即可用');
+      log('slicing', '算法 Step5 聚合：32 片重组完成', 'accent');
+    }, 6500);
+
+    // 7.5s: 算法浮窗淡出
+    setTimeout(() => {
+      showAlgoEnd();
+    }, 7500);
+
+    // 8.5s: 收益对比浮窗
+    setTimeout(() => {
+      markEvent('KV 切片并行 ×4', '#2DD4A8');
+      updateKPI();
+      showCompare('③ 并行切片传输 收益', [
+        { label: '聚合带宽',   before: '200G',  after: '800G',  gain: true },
+        { label: '迁移耗时',   before: '2.56s', after: '0.64s', gain: true },
+        { label: 'TTFT 降低',  after: '-75%',   gain: true }
+      ]);
+      narrHide();
+    }, 8500);
   }
 
-  // 演示：链路故障自愈（推理链路故障，请求自动重路由，KV 副本切换）
+  // 演示：链路故障自愈（跨集群 KV 迁移链路故障，KV 副本自动重路由到备轨）
   function demoSelfheal() {
     if (STATE.faultedLink) { log('selfheal', '已有故障在处理中', 'warn'); return; }
-    const target = LINKS.find(l => l.id === 'SL00');
-    const backup = LINKS.find(l => l.id === 'SL10');
+    const target = LINKS.find(l => l.id === 'SL0D0');
+    const backup = LINKS.find(l => l.id === 'SL1D0');
     const label = `${NODES.find(n => n.id === target.from).label}↔${NODES.find(n => n.id === target.to).label}`;
     STATE.faultedLink = target.id;
     target.status = 'faulted';
     refreshLinks();
-    log('selfheal', `注入故障：推理链路 ${target.id} (${label}) 断开`, 'danger');
+    log('selfheal', `注入故障：跨集群 KV 迁移链路 ${target.id} (${label}) 断开`, 'danger');
     markEvent('故障注入', '#FF5C7A');
     updateKPI();
-    narrPlay('④ 链路故障自愈 · 推理 SLA 保障', [
-      { at: 0,    text: '<span class="hl-danger">Spine0↔Leaf0 链路故障断开</span>（红色虚线）。Prefill 节点的推理请求受阻，吞吐曲线出现凹陷。' },
-      { at: 300,  text: '引擎 8ms 检测到异常，启动自动重路由，KV 副本准备切换...' },
-      { at: 1500, text: '<span class="hl">推理请求重路由到备轨 Spine1↔Leaf0</span>，KV 副本同步切换，新链路亮起。自愈完成仅 18ms。' },
-      { at: 2600, text: '推理服务恢复，<span class="hl">吞吐凹陷后回升，SLA 不中断</span>。故障期间请求损失 < 3%。' }
+    narrPlay('④ 链路故障自愈 · 跨集群 KV 迁移 SLA 保障', [
+      { at: 0,    stage: 'problem',  text: '<span class="hl-danger">问题</span>：<span class="hl-danger">Spine0↔Leaf-D0 跨集群链路故障断开</span>（红色虚线），Prefill→Decode-0 的 KV Cache 迁移中断，吞吐出现凹陷。' },
+      { at: 1000, stage: 'problem',  text: '若不处理：Decode-0 节点 KV 消耗殆尽，需重新触发 Prefill 重算，<span class="hl-danger">SLA 中断、KV 丢失可达 12%</span>。' },
+      { at: 2200, stage: 'handle',   text: '<span class="hl-brand">处理</span>：引擎 <span class="hl-brand">8ms</span> 检测到链路异常，启动自动重路由，<span class="hl-brand">算法决策过程见左下角浮窗</span>...' },
+      { at: 6500, stage: 'handle',   text: '决策完成：<span class="hl-brand">KV 副本重路由到备轨 Spine1↔Leaf-D0</span>，新链路亮起，自愈完成仅 <span class="hl-brand">18ms</span>。' },
+      { at: 7500, stage: 'effect',   text: '<span class="hl">效果</span>：Decode 集群继续消费 KV，<span class="hl">无需重算 Prefill，SLA 不中断</span>。' },
+      { at: 8500, stage: 'effect',   text: '<span class="hl">故障期间 KV 丢失 12% → <3%</span>，恢复时间 18ms（vs 人工干预分钟级），跨集群迁移自动恢复。' }
     ]);
+
+    // —— 算法浮窗：故障自愈 6 步决策 ——
+    // 迷你 SVG：P → 主轨(故障) / 备轨(切换) → D，含 KV 副本块
+    const miniSvg = `
+      <!-- 主轨（故障，红色虚线） -->
+      <line id="mn-main" class="mn-link" x1="40" y1="32" x2="300" y2="32" style="stroke:var(--danger); stroke-dasharray:3 3; opacity:0"/>
+      <!-- 备轨（切换后亮起） -->
+      <line id="mn-backup" class="mn-link" x1="40" y1="62" x2="300" y2="62" style="opacity:0"/>
+      <!-- 故障标记（×符号） -->
+      <text id="mn-fault" x="170" y="36" text-anchor="middle" style="fill:var(--danger); font-size:10px; font-weight:700; opacity:0">×</text>
+      <!-- KV 副本块（主轨上，故障后丢失） -->
+      <rect id="mn-kv-main" x="100" y="28" width="10" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-kv-main2" x="120" y="28" width="10" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <!-- KV 副本块（备轨上，切换后出现） -->
+      <rect id="mn-kv-backup" x="100" y="58" width="10" height="8" rx="1" style="fill:var(--accent); opacity:0"/>
+      <rect id="mn-kv-backup2" x="120" y="58" width="10" height="8" rx="1" style="fill:var(--accent); opacity:0"/>
+      <!-- 检测时间标注 -->
+      <text id="mn-detect" class="mn-bw" x="170" y="18" text-anchor="middle" style="opacity:0; fill:var(--warn)">检测 8ms</text>
+      <!-- 恢复时间标注 -->
+      <text id="mn-recover" class="mn-bw" x="170" y="82" text-anchor="middle" style="opacity:0">恢复 18ms</text>
+      <!-- 备轨流光 -->
+      <path id="mn-flowA" class="mn-flow" style="stroke:var(--accent); opacity:0" d="M40,62 L300,62"/>
+      <!-- 节点 -->
+      <circle class="mn-node psrc" cx="25" cy="47" r="5"/>
+      <text class="mn-label" x="25" y="35" text-anchor="middle">P</text>
+      <circle class="mn-node pdst" cx="315" cy="47" r="5"/>
+      <text class="mn-label" x="315" y="35" text-anchor="middle">D</text>
+      <!-- 轨道标签 -->
+      <text x="170" y="14" text-anchor="middle" style="fill:var(--danger); font-size:6px; font-weight:600">主轨 Spine0 (故障)</text>
+      <text x="170" y="88" text-anchor="middle" style="fill:var(--accent); font-size:6px; font-weight:600">备轨 Spine1</text>
+    `;
+
+    // 2.2s: 显示算法浮窗，Step 1 故障检测
     setTimeout(() => {
-      log('selfheal', '检测异常 8ms，启动重路由', 'warn');
-    }, 300);
+      showAlgoStart('④ 链路故障自愈 · 算法决策', ['检测','分析','计算','决策','下发','确认'], miniSvg);
+      showAlgoStep(0, '<span class="hl-d">故障检测</span>：主轨 <span class="hl-d">Spine0↔Leaf-D0 链路断开</span>，8ms 内检测到异常');
+      document.getElementById('mn-main').style.opacity = '1';
+      document.getElementById('mn-fault').style.opacity = '1';
+      document.getElementById('mn-detect').style.opacity = '1';
+      document.getElementById('mn-kv-main').style.opacity = '1';
+      document.getElementById('mn-kv-main2').style.opacity = '1';
+      log('selfheal', '算法 Step1 故障检测：8ms', 'warn');
+    }, 2200);
+
+    // 3.2s: Step 2 影响分析
     setTimeout(() => {
+      showAlgoStep(1, '<span class="hl-b">影响分析</span>：受影响 KV 副本 <span class="hl-w">2 份</span>，若不恢复将丢失，<span class="hl-d">SLA 中断、KV 丢失 12%</span>');
+      // KV 副本块闪烁警示
+      document.getElementById('mn-kv-main').style.fill = 'var(--danger)';
+      document.getElementById('mn-kv-main2').style.fill = 'var(--danger)';
+      log('selfheal', '算法 Step2 影响分析：2 份 KV 副本受影响', 'brand');
+    }, 3200);
+
+    // 4.2s: Step 3 备轨计算
+    setTimeout(() => {
+      showAlgoStep(2, '<span class="hl-b">备轨计算</span>：扫描备轨 <span class="hl">Spine1↔Leaf-D0</span>，可用带宽 <span class="hl">200G</span>，满足重路由条件');
+      document.getElementById('mn-backup').style.opacity = '0.5';
+      document.getElementById('mn-backup').style.strokeDasharray = '2 2';
+      log('selfheal', '算法 Step3 备轨计算：Spine1 可用', 'brand');
+    }, 4200);
+
+    // 5.2s: Step 4 副本切换决策
+    setTimeout(() => {
+      showAlgoStep(3, '<span class="hl-b">副本切换决策</span>：KV 副本从主轨切换到备轨，<span class="hl-b">无需重算 Prefill</span>');
+      // KV 副本从主轨消失，备轨出现
+      document.getElementById('mn-kv-main').style.opacity = '0';
+      document.getElementById('mn-kv-main2').style.opacity = '0';
+      document.getElementById('mn-kv-backup').style.opacity = '1';
+      document.getElementById('mn-kv-backup2').style.opacity = '1';
+      document.getElementById('mn-backup').style.opacity = '1';
+      document.getElementById('mn-backup').style.strokeDasharray = '';
+      document.getElementById('mn-backup').style.stroke = 'var(--accent)';
+      log('selfheal', '算法 Step4 副本切换决策：主轨→备轨', 'brand');
+    }, 5200);
+
+    // 6.2s: Step 5 重路由下发，触发主拓扑变化 + 粒子流
+    setTimeout(() => {
+      showAlgoStep(4, '<span class="hl-b">重路由下发 ▶</span>：KV 迁移切到备轨 Spine1↔Leaf-D0，新链路亮起');
+      document.getElementById('mn-flowA').style.opacity = '1';
+      document.getElementById('mn-recover').style.opacity = '1';
+      log('selfheal', '算法 Step5 重路由下发', 'brand');
+      // 主拓扑：备轨变 busy
       backup.status = 'busy'; backup.utilization = 0.85;
       refreshLinks();
       STATE.faultedLink = null;
-      log('selfheal', `推理请求切到 ${backup.id}，自愈完成 18ms`, 'accent');
       markEvent('自愈恢复', '#2DD4A8');
       updateKPI();
-      setTimeout(() => {
-        target.status = 'healthy'; target.utilization = 0.5;
-        backup.status = 'healthy'; backup.utilization = 0.4;
-        refreshLinks();
-        narrHide();
-      }, 4000);
-    }, 1500);
-  }
-
-  // 演示：计算-传输流水线（Prefill 层间预取 + Decode 连续批处理）
-  function demoPipeline() {
-    log('pipeline', '启动 Prefill 层间流水线 + Decode 连续批处理', 'brand');
-    narrPlay('⑤ 计算-传输流水线 · Prefill 层间预取', [
-      { at: 0,    text: 'Prefill 阶段分层：<span class="hl-brand">Layer N 计算时，Layer N+1 的权重/KV 已在预取路上</span>。' },
-      { at: 800,  text: 'Server-0 传输 Layer 1 数据（紫色粒子流），同时 NPU 计算 Layer 0，两者时间重叠。' },
-      { at: 1600, text: '阶梯式推进：Server-0/1/2 依次进入下一层预取，<span class="hl-brand">层重叠度 62%</span>。Decode 侧连续批处理。' },
-      { at: 2400, text: 'NPU 利用率从"锯齿"变"平直高位"，<span class="hl">传输延迟藏在计算时间里，推理吞吐 +30%</span>。' }
-    ]);
-    const lsLinks = ['LS0', 'LS1', 'LS2'];
-    lsLinks.forEach((lid, i) => {
-      setTimeout(() => {
+      // 备轨粒子流（绿色，停留 1 秒闪烁）
+      const pauseUntil = performance.now() + 1000;
+      ['SL1D0'].forEach(lid => {
         const link = LINKS.find(l => l.id === lid);
         if (!link || link.status === 'faulted') return;
-        for (let k = 0; k < 10; k++) {
-          particles.push({ linkId: lid, t: 0, speed: 0.01, color: '#8B7BFF', size: 2.4 });
+        for (let k = 0; k < 3; k++) {
+          particles.push({
+            linkId: lid, t: 0.05 + k * 0.1, speed: 0.012, color: '#2DD4A8', size: 3.2,
+            label: k === 0 ? '副本' : null, pauseUntil: pauseUntil
+          });
         }
-        log('pipeline', `Prefill Layer ${i+1} 预取中，与 Layer ${i} 计算重叠`, 'brand');
-      }, i * 400);
-    });
+      });
+    }, 6200);
+
+    // 7.5s: Step 6 恢复确认
     setTimeout(() => {
-      log('pipeline', 'Prefill 层间重叠度 62%，推理吞吐提升', 'accent');
+      showAlgoStep(5, '<span class="hl">恢复确认</span>：KV 副本在备轨传输正常，<span class="hl">自愈完成 18ms</span>，SLA 不中断');
+      log('selfheal', '算法 Step6 恢复确认：18ms 完成', 'accent');
+    }, 7500);
+
+    // 8.5s: 算法浮窗淡出
+    setTimeout(() => {
+      showAlgoEnd();
+    }, 8500);
+
+    // 9.5s: 链路恢复 + 收益对比浮窗
+    setTimeout(() => {
+      target.status = 'healthy'; target.utilization = 0.55;
+      backup.status = 'healthy'; backup.utilization = 0.48;
+      refreshLinks();
+      showCompare('④ 链路故障自愈 收益', [
+        { label: '恢复时间',   before: '分钟级', after: '18ms',   gain: true },
+        { label: 'KV 丢失率',  before: '12%',    after: '<3%',    gain: true },
+        { label: 'SLA',        before: '中断',   after: '不中断', gain: true }
+      ]);
+      narrHide();
+    }, 9500);
+  }
+
+  // 演示：计算-传输流水线（Prefill 集群层间 KV 生成与跨集群迁移重叠）
+  function demoPipeline() {
+    log('pipeline', '启动 Prefill 集群层间 KV 生成与跨集群迁移流水线', 'brand');
+    narrPlay('⑤ 计算-传输流水线 · KV 生成与跨集群迁移重叠', [
+      { at: 0,    stage: 'problem',  text: '<span class="hl-danger">问题</span>：传统串行模式，Prefill 必须等所有 Layer 的 KV 全部生成完，才开始跨集群迁移到 Decode。<span class="hl-danger">迁移期间 NPU 空闲，Decode 等待 100% KV 迁移时间</span>。' },
+      { at: 1500, stage: 'handle',   text: '<span class="hl-brand">处理</span>：层间流水线，<span class="hl-brand">Layer N 生成 KV 时，Layer N-1 的 KV 已在跨集群迁移</span>，<span class="hl-brand">算法决策过程见左下角浮窗</span>...' },
+      { at: 5500, stage: 'handle',   text: '决策完成：<span class="hl-brand">阶梯式推进，Prefill-0/1 依次进入下一层 KV 迁移</span>，与 NPU 计算时间重叠。' },
+      { at: 6500, stage: 'effect',   text: '<span class="hl">效果</span>：KV 迁移延迟藏在 Prefill 计算时间里，<span class="hl">Decode 端到端等待 KV 的时间 -30%</span>。' },
+      { at: 7500, stage: 'effect',   text: '<span class="hl">推理吞吐 +30%</span>，NPU 利用率提升，跨集群迁移不再成为吞吐瓶颈。' }
+    ]);
+
+    // —— 算法浮窗：流水线 5 步决策 ——
+    // 迷你 SVG：左 NPU 计算(4 层) → 中时间轴(串行 vs 流水线) → 右 Decode
+    const miniSvg = `
+      <!-- 串行模式时间轴（上方，红色） -->
+      <text x="20" y="14" style="fill:var(--danger); font-size:6px; font-weight:600">串行</text>
+      <rect id="mn-ser-comp" x="50" y="20" width="60" height="8" rx="1" style="fill:var(--danger); opacity:0.4"/>
+      <text x="80" y="27" text-anchor="middle" style="fill:var(--text-dim); font-size:5px">计算</text>
+      <rect id="mn-ser-trans" x="115" y="20" width="60" height="8" rx="1" style="fill:var(--danger); opacity:0.4"/>
+      <text x="145" y="27" text-anchor="middle" style="fill:var(--text-dim); font-size:5px">迁移</text>
+      <text id="mn-ser-time" x="245" y="27" style="fill:var(--danger); font-size:6px; opacity:0">100%</text>
+
+      <!-- 流水线模式时间轴（下方，紫绿） -->
+      <text x="20" y="48" style="fill:var(--accent); font-size:6px; font-weight:600">流水线</text>
+      <!-- 4 层计算块（紫色，阶梯排列） -->
+      <rect id="mn-pl-comp0" x="50" y="54" width="20" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-pl-comp1" x="72" y="54" width="20" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-pl-comp2" x="94" y="54" width="20" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <rect id="mn-pl-comp3" x="116" y="54" width="20" height="8" rx="1" style="fill:var(--brand); opacity:0"/>
+      <!-- 4 层迁移块（绿色，与计算重叠） -->
+      <rect id="mn-pl-trans0" x="72" y="64" width="30" height="6" rx="1" style="fill:var(--accent); opacity:0"/>
+      <rect id="mn-pl-trans1" x="94" y="64" width="30" height="6" rx="1" style="fill:var(--accent); opacity:0"/>
+      <rect id="mn-pl-trans2" x="116" y="64" width="30" height="6" rx="1" style="fill:var(--accent); opacity:0"/>
+      <rect id="mn-pl-trans3" x="138" y="64" width="30" height="6" rx="1" style="fill:var(--accent); opacity:0"/>
+      <!-- 重叠度标注 -->
+      <text id="mn-overlap" x="245" y="62" style="fill:var(--accent); font-size:7px; font-weight:700; opacity:0">62%</text>
+      <text x="245" y="70" style="fill:var(--text-dim); font-size:5px">重叠</text>
+
+      <!-- 时间轴 -->
+      <line x1="50" y1="76" x2="180" y2="76" style="stroke:var(--text-dim); stroke-width:0.5"/>
+      <text x="50" y="84" style="fill:var(--text-dim); font-size:5px">t0</text>
+      <text x="170" y="84" style="fill:var(--text-dim); font-size:5px">t1</text>
+
+      <!-- NPU / Decode 标签 -->
+      <text x="40" y="58" text-anchor="middle" style="fill:var(--brand); font-size:5px; font-weight:600">NPU</text>
+      <text x="195" y="58" text-anchor="middle" style="fill:var(--accent); font-size:5px; font-weight:600">迁移</text>
+    `;
+
+    // 1.5s: 显示算法浮窗，Step 1 层间依赖分析（串行模式）
+    setTimeout(() => {
+      showAlgoStart('⑤ 计算-传输流水线 · 算法决策', ['依赖','窗口','调度','下发','监控'], miniSvg);
+      showAlgoStep(0, '<span class="hl-b">层间依赖分析</span>：串行模式 <span class="hl-d">计算→迁移 串行</span>，NPU 空闲等待 100%');
+      document.getElementById('mn-ser-comp').style.opacity = '1';
+      document.getElementById('mn-ser-trans').style.opacity = '1';
+      document.getElementById('mn-ser-time').style.opacity = '1';
+      log('pipeline', '算法 Step1 依赖分析：串行模式 100% 等待', 'brand');
+    }, 1500);
+
+    // 2.5s: Step 2 重叠窗口计算
+    setTimeout(() => {
+      showAlgoStep(1, '<span class="hl-b">重叠窗口计算</span>：Layer N 计算与 Layer N-1 迁移可重叠，理论重叠度 <span class="hl">62%</span>');
+      // 流水线计算块逐一出现
+      ['mn-pl-comp0','mn-pl-comp1','mn-pl-comp2','mn-pl-comp3'].forEach((id, i) => {
+        setTimeout(() => {
+          document.getElementById(id).style.opacity = '1';
+        }, i * 150);
+      });
+      log('pipeline', '算法 Step2 重叠窗口：理论 62%', 'brand');
+    }, 2500);
+
+    // 3.7s: Step 3 调度时序（迁移块与计算块重叠出现）
+    setTimeout(() => {
+      showAlgoStep(2, '<span class="hl-b">调度时序</span>：Layer N-1 迁移（绿）与 Layer N 计算（紫）<span class="hl-b">时间重叠</span>');
+      ['mn-pl-trans0','mn-pl-trans1','mn-pl-trans2','mn-pl-trans3'].forEach((id, i) => {
+        setTimeout(() => {
+          document.getElementById(id).style.opacity = '1';
+        }, i * 150);
+      });
+      document.getElementById('mn-overlap').style.opacity = '1';
+      log('pipeline', '算法 Step3 调度时序：层间重叠', 'brand');
+    }, 3700);
+
+    // 4.9s: Step 4 下发流水线，触发主拓扑粒子流（首批停留 1 秒）
+    setTimeout(() => {
+      showAlgoStep(3, '<span class="hl-b">下发流水线 ▶</span>：Prefill-0/1 依次进入下一层 KV 迁移，与计算重叠');
+      log('pipeline', '算法 Step4 下发流水线', 'brand');
+      // 主拓扑粒子流：分层推进，首批停留 1 秒闪烁
+      const lsLinks = ['LSP0', 'LSP1', 'LSD0', 'LSD1'];
+      const pauseUntil = performance.now() + 1000;
+      lsLinks.forEach((lid, i) => {
+        setTimeout(() => {
+          const link = LINKS.find(l => l.id === lid);
+          if (!link || link.status === 'faulted') return;
+          // 首批粒子停留闪烁
+          particles.push({
+            linkId: lid, t: 0, speed: 0.01, color: '#8B7BFF', size: 3.2,
+            label: `L${i+1}`, pauseUntil: pauseUntil
+          });
+          // 后续粒子正常流动
+          for (let k = 0; k < 8; k++) {
+            particles.push({ linkId: lid, t: 0, speed: 0.01, color: '#8B7BFF', size: 2.4 });
+          }
+          log('pipeline', `Prefill Layer ${i+1} KV 跨集群迁移中`, 'brand');
+        }, i * 400);
+      });
+    }, 4900);
+
+    // 6.5s: Step 5 重叠监控
+    setTimeout(() => {
+      showAlgoStep(4, '<span class="hl">重叠监控</span>：实际重叠度 <span class="hl">62%</span>，KV 迁移隐藏在计算时间里');
+      log('pipeline', '算法 Step5 重叠监控：62% 达成', 'accent');
+    }, 6500);
+
+    // 7.5s: 算法浮窗淡出
+    setTimeout(() => {
+      showAlgoEnd();
+    }, 7500);
+
+    // 8.5s: 收益对比浮窗
+    setTimeout(() => {
+      log('pipeline', 'Prefill 层间重叠度 62%，KV 迁移隐藏在计算中', 'accent');
       markEvent('Prefill 流水线 62%', '#8B7BFF');
       updateKPI();
+      showCompare('⑤ 计算-传输流水线 收益', [
+        { label: '层间重叠度',  after: '62%',   gain: true },
+        { label: '等待时间',    before: '100%', after: '38%',  gain: true },
+        { label: '推理吞吐',    before: '基准', after: '+30%', gain: true }
+      ]);
       narrHide();
-    }, lsLinks.length * 400 + 800);
+    }, 8500);
   }
 
   function runDemo(key) {
@@ -1588,11 +2382,11 @@
     btns.forEach(b => b.disabled = true);
     const done = () => { STATE.running = false; btns.forEach(b => b.disabled = false); };
     const map = {
-      orchestrate: () => { demoOrchestrate(); setTimeout(done, 2500); },
-      routing:     () => { demoRouting();     setTimeout(done, 6000); },
-      slicing:     () => { demoSlicing();     setTimeout(done, 3500); },
-      selfheal:    () => { demoSelfheal();    setTimeout(done, 6500); },
-      pipeline:    () => { demoPipeline();    setTimeout(done, 3500); }
+      orchestrate: () => { demoOrchestrate(); setTimeout(done, 9500); },
+      routing:     () => { demoRouting();     setTimeout(done, 10000); },
+      slicing:     () => { demoSlicing();     setTimeout(done, 9500); },
+      selfheal:    () => { demoSelfheal();    setTimeout(done, 10000); },
+      pipeline:    () => { demoPipeline();    setTimeout(done, 9500); }
     };
     (map[key] || done)();
   }
@@ -1693,10 +2487,11 @@
     clearSelection();
     // 重置所有链路到默认状态
     const defaults = {
-      'SL00': ['healthy', 0.5], 'SL10': ['healthy', 0.4], 'SL01': ['busy', 0.8],
-      'SL11': ['healthy', 0.5], 'SL02': ['healthy', 0.45], 'SL12': ['congested', 0.92],
-      'LS0': ['healthy', 0.72], 'LS1': ['busy', 0.85], 'LS2': ['healthy', 0.65],
-      'STL0': ['healthy', 0.6], 'STL1': ['healthy', 0.5], 'STL2': ['busy', 0.78]
+      'SL00': ['healthy', 0.50], 'SL10': ['healthy', 0.40], 'SL01': ['busy', 0.78],
+      'SL11': ['healthy', 0.50], 'SL0S': ['healthy', 0.45], 'SL1S': ['healthy', 0.42],
+      'SL0D0': ['healthy', 0.55], 'SL1D0': ['healthy', 0.48], 'SL0D1': ['healthy', 0.52], 'SL1D1': ['congested', 0.88],
+      'LSP0': ['healthy', 0.72], 'LSP1': ['busy', 0.85], 'LSD0': ['healthy', 0.65], 'LSD1': ['healthy', 0.68],
+      'STP0': ['healthy', 0.60], 'STP1': ['healthy', 0.58], 'STS': ['busy', 0.78], 'STD0': ['healthy', 0.62], 'STD1': ['healthy', 0.60]
     };
     LINKS.forEach(l => {
       const d = defaults[l.id] || ['healthy', 0.5];
@@ -1718,7 +2513,7 @@
     clearSelection();
     log('auto', '启动一键演示：依次展示五项网络优化能力', 'brand');
     const seq = ['orchestrate', 'routing', 'slicing', 'selfheal', 'pipeline'];
-    const durations = [2500, 6000, 3500, 6500, 3500];
+    const durations = [9500, 10000, 9500, 10000, 9500];
     let i = 0;
     autoDemoBtn.disabled = true;
     autoDemoBtn.textContent = '演示中 1/5';
@@ -1766,7 +2561,7 @@
       resizeCanvas();
     });
     // 初始日志
-    log('init', '可观测系统已上线：2 Spine / 3 Leaf / 3 服务器 24 NPU / 3 存储池', 'accent');
+    log('init', 'PD 分离集群可观测上线：2 Prefill(16 NPU) + 2 Decode(16 NPU) + 5 KV Cache 池 + 19 链路', 'accent');
     log('init', '网络优化引擎就绪：拓扑编排 + QoS 选路 + 切片 + 自愈 + 流水线', 'brand');
     applyCapabilityEffects();
     updateMetrics();
