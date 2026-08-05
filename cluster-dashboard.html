@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>集群算存网可观测与网络优化控制台</title>
+<style>
+  /* ============ 设计令牌 ============ */
+  :root {
+    --bg: #0B1020;
+    --bg-panel: #131A2E;
+    --bg-card: #161B2E;
+    --bg-muted: #1E2540;
+    --border: #2A3354;
+    --border-soft: #232B47;
+    --text: #E8EAF2;
+    --text-muted: #8B93B0;
+    --text-dim: #5C6488;
+    --brand: #8B7BFF;
+    --brand-dim: #6d5efc;
+    --accent: #2DD4A8;
+    --warn: #FFB547;
+    --danger: #FF5C7A;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --radius: 10px;
+    --radius-card: 12px;
+    --shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ 总体布局 ============ */
+  .app {
+    display: grid;
+    grid-template-rows: 56px 1fr 230px;
+    grid-template-columns: 248px 1fr 256px;
+    grid-template-areas:
+      "topbar topbar topbar"
+      "observe canvas console"
+      "throughput throughput throughput";
+    height: 100vh;
+    gap: 1px;
+    background: var(--border-soft);
+  }
+  .topbar { grid-area: topbar; background: var(--bg-panel); }
+  .observe { grid-area: observe; background: var(--bg-panel); overflow: auto; }
+  .canvas-wrap { grid-area: canvas; background: var(--bg); position: relative; overflow: hidden; }
+  .console { grid-area: console; background: var(--bg-panel); overflow: auto; }
+  .throughput { grid-area: throughput; background: var(--bg-panel); }
+
+  /* ============ 顶部状态栏 ============ */
+  .topbar {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .title {
+    font-weight: 650;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .topbar .title .accent-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--brand); margin-right: 10px; vertical-align: middle;
+    box-shadow: 0 0 8px var(--brand);
+  }
+  .topbar .spacer { flex: 1; }
+  .topbar .stat {
+    display: flex; flex-direction: column; align-items: flex-end;
+    margin-left: 24px;
+  }
+  .topbar .stat .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  .topbar .stat .value { font-family: var(--font-mono); font-size: 15px; font-weight: 650; color: var(--text); }
+  .topbar .stat .value.ok { color: var(--accent); }
+  .health-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); margin-right: 6px; vertical-align: middle;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .topbar .ctrl-btn {
+    margin-left: 12px; padding: 6px 12px; border-radius: 6px;
+    background: var(--bg-muted); border: 1px solid var(--border); color: var(--text);
+    font-size: 12px; cursor: pointer; transition: all .15s;
+    font-family: var(--font-sans);
+  }
+  .topbar .ctrl-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .topbar .ctrl-btn.active { background: var(--brand-dim); border-color: var(--brand); color: #fff; }
+
+  /* ============ 通用面板标题 ============ */
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+  .panel-head .ptitle { font-size: 13px; font-weight: 650; letter-spacing: 0.02em; }
+  .panel-head .psub { font-size: 11px; color: var(--text-dim); }
+
+  /* ============ 左：可观测三联 ============ */
+  .obs-card {
+    margin: 0 12px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 12px 14px;
+  }
+  .obs-card .oc-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .obs-card .oc-title {
+    font-size: 13px; font-weight: 650; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .obs-card .oc-title .tag {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .obs-card.compute .oc-title .tag { background: var(--brand); box-shadow: 0 0 6px var(--brand); }
+  .obs-card.storage .oc-title .tag { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .obs-card.network .oc-title .tag { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+  .obs-card .oc-status { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 4px 0;
+  }
+  .metric-row .m-label { font-size: 12px; color: var(--text-muted); }
+  .metric-row .m-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); }
+  .metric-row .m-value.accent { color: var(--accent); }
+  .metric-row .m-value.warn { color: var(--warn); }
+  .metric-row .m-value.danger { color: var(--danger); }
+  .spark { margin-top: 8px; height: 32px; width: 100%; display: block; }
+
+  /* ============ 中：拓扑画布 ============ */
+  .canvas-wrap .cv-head {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; z-index: 5; pointer-events: none;
+  }
+  .canvas-wrap .cv-head .ptitle { font-size: 14px; font-weight: 650; }
+  .canvas-wrap .cv-head .ptitle .accent-dot { background: var(--brand); box-shadow: 0 0 8px var(--brand); }
+  .canvas-wrap .cv-legend {
+    position: absolute; bottom: 12px; left: 18px; z-index: 5;
+    display: flex; gap: 16px; font-size: 11px; color: var(--text-muted);
+    background: rgba(11,16,32,0.6); padding: 6px 10px; border-radius: 6px;
+    border: 1px solid var(--border-soft); backdrop-filter: blur(4px);
+  }
+  .canvas-wrap .cv-legend .lg { display: flex; align-items: center; gap: 6px; }
+  .canvas-wrap .cv-legend .swatch { width: 10px; height: 3px; border-radius: 2px; }
+  .canvas-wrap .cv-legend .dot-s { width: 6px; height: 6px; border-radius: 50%; }
+  #topoSvg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #particleCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .node-tooltip {
+    position: absolute; z-index: 20; pointer-events: none;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; font-size: 12px;
+    box-shadow: var(--shadow); min-width: 160px; display: none;
+  }
+  .node-tooltip .tt-title { font-weight: 650; margin-bottom: 6px; }
+  .node-tooltip .tt-row { display: flex; justify-content: space-between; color: var(--text-muted); padding: 1px 0; }
+  .node-tooltip .tt-row span:last-child { color: var(--text); font-family: var(--font-mono); }
+
+  /* 拓扑 SVG 元素样式 */
+  .topo-node { fill: var(--bg-muted); stroke: var(--border); stroke-width: 1.2; transition: stroke .2s, filter .2s; cursor: pointer; }
+  .topo-node.npu { stroke: var(--brand); }
+  .topo-node.storage { stroke: var(--accent); }
+  .topo-node:hover { filter: drop-shadow(0 0 6px var(--brand)); stroke: var(--text); }
+  .topo-node.faulted { stroke: var(--danger) !important; animation: faultBlink 0.6s ease-in-out infinite; }
+  @keyframes faultBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .topo-label { fill: var(--text); font-size: 11px; font-weight: 600; pointer-events: none; }
+  .topo-sub { fill: var(--text-muted); font-size: 9px; pointer-events: none; }
+  .topo-link { fill: none; stroke: var(--border); stroke-width: 1.5; transition: stroke .3s, stroke-width .3s; cursor: pointer; }
+  .topo-link:hover { stroke-width: 3; filter: drop-shadow(0 0 4px currentColor); }
+  .topo-link.selected { stroke-width: 3; filter: drop-shadow(0 0 5px currentColor); }
+  .topo-node.selected { stroke: var(--brand) !important; stroke-width: 2.5; filter: drop-shadow(0 0 6px var(--brand)); }
+  .topo-link.healthy { stroke: var(--accent); }
+  .topo-link.busy { stroke: var(--warn); }
+  .topo-link.congested { stroke: var(--danger); }
+  .topo-link.faulted { stroke: var(--danger); stroke-dasharray: 4 4; opacity: 0.5; }
+  .topo-link.active-flow { stroke-width: 2.5; filter: drop-shadow(0 0 3px currentColor); }
+  .topo-link.building { stroke: var(--brand); stroke-width: 2; stroke-dasharray: 6 4; animation: dashBuild 0.8s linear infinite; }
+  @keyframes dashBuild { to { stroke-dashoffset: -20; } }
+
+  /* 层级背景带 */
+  .topo-layer-band { fill: rgba(255,255,255,0.025); }
+  :root[data-widget-theme="dark"] .topo-layer-band { fill: rgba(255,255,255,0.03); }
+  .topo-layer-label { fill: var(--text-dim); font-size: 10px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* NPU 卡 */
+  .npu-card { fill: var(--bg-muted); stroke: var(--brand); stroke-width: 1; }
+  .npu-card.warn { stroke: var(--warn); }
+  .npu-card.danger { stroke: var(--danger); }
+  .npu-id { fill: var(--text-muted); font-size: 8.5px; font-weight: 600; pointer-events: none; }
+  .npu-util { fill: var(--brand); font-size: 8.5px; font-family: var(--font-mono); pointer-events: none; }
+  .npu-card.warn .npu-util { fill: var(--warn); }
+  .npu-card.danger .npu-util { fill: var(--danger); }
+
+  /* 节点附加文本 */
+  .topo-sub-accent { fill: var(--accent); font-size: 9.5px; font-family: var(--font-mono); pointer-events: none; }
+  .topo-sub-warn { fill: var(--warn); font-size: 9.5px; font-family: var(--font-mono); pointer-events: none; }
+  .topo-sub-dim { fill: var(--text-dim); font-size: 9.5px; pointer-events: none; }
+
+  /* Spine/Leaf/Server 节点描边色 */
+  .topo-node.spine { stroke: var(--warn); stroke-width: 1.6; }
+  .topo-node.leaf { stroke: var(--accent); stroke-width: 1.5; }
+  .topo-node.server { stroke: var(--brand); stroke-width: 1.2; }
+
+  /* 能力激活态链路高亮 */
+  .topo-link.cap-active { stroke-width: 3; filter: drop-shadow(0 0 4px currentColor); }
+  /* 流水线激活态 NPU 脉冲 */
+  .npu-card.pipeline-on { animation: npuPulse 1.8s ease-in-out infinite; }
+  @keyframes npuPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  /* 能力徽标 */
+  .cap-badge {
+    position: absolute; top: 52px; left: 16px; z-index: 6;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .cap-badge .cb-item {
+    font-size: 10px; padding: 3px 8px; border-radius: 4px;
+    background: rgba(139,123,255,0.15); border: 1px solid var(--brand);
+    color: var(--brand); display: none; align-items: center; gap: 4px;
+    backdrop-filter: blur(4px);
+  }
+  .cap-badge .cb-item.show { display: flex; animation: panelIn .2s ease; }
+  .cap-badge .cb-item .cb-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 4px var(--brand); }
+
+  /* ============ 演示解说面板 ============ */
+  .narration {
+    position: absolute; bottom: 60px; left: 16px; right: 16px; z-index: 8;
+    background: rgba(22,27,46,0.94); border: 1px solid var(--brand);
+    border-radius: 10px; padding: 12px 16px; font-size: 12.5px;
+    backdrop-filter: blur(8px); box-shadow: var(--shadow), 0 0 24px rgba(139,123,255,0.15);
+    display: none; max-height: 150px; overflow: hidden;
+  }
+  .narration.show { display: block; animation: panelIn .25s ease; }
+  .narration .narr-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-weight: 650; color: var(--brand); font-size: 13px;
+  }
+  .narration .narr-head .narr-icon {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--brand);
+    box-shadow: 0 0 6px var(--brand); animation: pulse 1.2s ease-in-out infinite;
+  }
+  .narration .narr-step { color: var(--text); line-height: 1.7; }
+  .narration .narr-step .hl { color: var(--accent); font-weight: 600; }
+  .narration .narr-step .hl-warn { color: var(--warn); font-weight: 600; }
+  .narration .narr-step .hl-danger { color: var(--danger); font-weight: 600; }
+  .narration .narr-step .hl-brand { color: var(--brand); font-weight: 600; }
+  .narration .narr-progress {
+    height: 2px; background: var(--bg-muted); border-radius: 1px; margin-top: 10px; overflow: hidden;
+  }
+  .narration .narr-progress > i {
+    display: block; height: 100%; background: var(--brand); width: 0; transition: width .3s;
+  }
+
+  /* ============ 右：网络优化控制台 ============ */
+  .console .cap-list { padding: 4px 12px; }
+  .cap-item {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+    transition: border-color .15s;
+  }
+  .cap-item.on { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand-dim) inset; }
+  .cap-item .ci-top { display: flex; align-items: center; justify-content: space-between; }
+  .cap-item .ci-name { font-size: 12px; font-weight: 600; }
+  .cap-item .ci-btns { display: flex; gap: 6px; }
+  .cap-item .demo-btn {
+    font-size: 10px; padding: 3px 8px; border-radius: 4px;
+    background: var(--bg-muted); border: 1px solid var(--border); color: var(--text-muted);
+    cursor: pointer; font-family: var(--font-sans); transition: all .15s;
+  }
+  .cap-item .demo-btn:hover { color: var(--brand); border-color: var(--brand); }
+  .cap-item .demo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .toggle {
+    position: relative; width: 30px; height: 16px; border-radius: 999px;
+    background: var(--bg-muted); border: 1px solid var(--border); cursor: pointer;
+    transition: background .2s; flex-shrink: 0;
+  }
+  .toggle::after {
+    content: ''; position: absolute; top: 1px; left: 1px;
+    width: 12px; height: 12px; border-radius: 50%; background: var(--text-dim);
+    transition: transform .2s, background .2s;
+  }
+  .cap-item.on .toggle { background: var(--brand-dim); border-color: var(--brand); }
+  .cap-item.on .toggle::after { transform: translateX(14px); background: #fff; }
+  .cap-item .ci-desc { font-size: 10px; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+
+  .log-box {
+    margin: 8px 12px 12px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px;
+  }
+  .log-box .lb-title { font-size: 11px; font-weight: 650; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .log-stream {
+    height: 180px; overflow-y: auto; font-family: var(--font-mono); font-size: 10.5px;
+    line-height: 1.6;
+  }
+  .log-stream::-webkit-scrollbar { width: 4px; }
+  .log-stream::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-line { color: var(--text-muted); padding: 1px 0; }
+  .log-line .lt { color: var(--text-dim); margin-right: 6px; }
+  .log-line .lm { color: var(--text); }
+  .log-line.brand .lm { color: var(--brand); }
+  .log-line.accent .lm { color: var(--accent); }
+  .log-line.warn .lm { color: var(--warn); }
+  .log-line.danger .lm { color: var(--danger); }
+
+  /* ============ 底：吞吐仪表盘 ============ */
+  .throughput { display: grid; grid-template-columns: 1fr 280px; border-top: 1px solid var(--border); }
+  .tp-chart-wrap { padding: 12px 16px 8px; border-right: 1px solid var(--border-soft); position: relative; }
+  .tp-chart-wrap .tp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .tp-chart-wrap .tp-head .ptitle { font-size: 13px; font-weight: 650; }
+  .tp-chart-wrap .tp-head .legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); }
+  .tp-chart-wrap .tp-head .legend .lg { display: flex; align-items: center; gap: 6px; }
+  .tp-chart-wrap .tp-head .legend .sw { width: 14px; height: 2px; border-radius: 1px; }
+  #throughputChart { width: 100%; height: 160px; display: block; }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 16px 18px; gap: 12px 14px; align-content: start; }
+  .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .kpi-card .k-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.3; }
+  .kpi-card .k-value { font-family: var(--font-mono); font-size: 22px; font-weight: 650; color: var(--accent); margin-top: 4px; transition: color .3s; }
+  .kpi-card .k-value.bad { color: var(--danger); }
+
+  /* ============ 浮窗：对比信息 ============ */
+  .compare-popup {
+    position: absolute; z-index: 30; pointer-events: none;
+    background: var(--bg-card); border: 1px solid var(--brand);
+    border-radius: 8px; padding: 10px 12px; font-size: 11px;
+    box-shadow: var(--shadow); min-width: 180px; display: none;
+  }
+  .compare-popup .cp-title { font-weight: 650; color: var(--brand); margin-bottom: 6px; }
+  .compare-popup .cp-row { display: flex; justify-content: space-between; color: var(--text-muted); padding: 1px 0; }
+  .compare-popup .cp-row span:last-child { color: var(--text); font-family: var(--font-mono); }
+  .compare-popup .cp-row.gain span:last-child { color: var(--accent); }
+
+  /* ============ 详情面板（节点/链路下钻） ============ */
+  .detail-panel {
+    position: absolute; top: 52px; right: 16px; z-index: 25;
+    width: 248px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 12px 14px;
+    box-shadow: var(--shadow), 0 0 20px rgba(0,0,0,0.4); display: none;
+  }
+  .detail-panel.show { display: block; animation: panelIn .18s ease; }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .detail-panel .dp-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-soft);
+  }
+  .detail-panel .dp-title { font-size: 13px; font-weight: 650; display: flex; align-items: center; gap: 6px; }
+  .detail-panel .dp-title .dp-icon { width: 8px; height: 8px; border-radius: 50%; }
+  .detail-panel .dp-close {
+    width: 18px; height: 18px; border-radius: 4px; border: none; cursor: pointer;
+    background: var(--bg-muted); color: var(--text-muted); font-size: 12px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .detail-panel .dp-close:hover { color: var(--danger); }
+  .detail-panel .dp-row {
+    display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px;
+  }
+  .detail-panel .dp-row .k { color: var(--text-muted); }
+  .detail-panel .dp-row .v { color: var(--text); font-family: var(--font-mono); }
+  .detail-panel .dp-row .v.accent { color: var(--accent); }
+  .detail-panel .dp-row .v.warn { color: var(--warn); }
+  .detail-panel .dp-row .v.danger { color: var(--danger); }
+  .detail-panel .dp-bar {
+    height: 5px; background: var(--bg-muted); border-radius: 3px; margin-top: 3px; overflow: hidden;
+  }
+  .detail-panel .dp-bar > i { display: block; height: 100%; border-radius: 3px; transition: width .3s; }
+  .detail-panel .dp-section { margin-top: 10px; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ============ 场景触发浮窗 ============ */
+  .scenario-bar {
+    position: absolute; bottom: 12px; right: 16px; z-index: 6;
+    display: flex; gap: 8px;
+  }
+  .scenario-bar .sc-btn {
+    padding: 7px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    background: rgba(22,27,46,0.85); border: 1px solid var(--border); color: var(--text-muted);
+    font-family: var(--font-sans); transition: all .15s; backdrop-filter: blur(6px);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .scenario-bar .sc-btn:hover { color: var(--brand); border-color: var(--brand); background: var(--bg-card); }
+  .scenario-bar .sc-btn .sc-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* 顶栏一键演示按钮 */
+  .topbar .ctrl-btn.primary {
+    background: var(--brand-dim); border-color: var(--brand); color: #fff;
+  }
+  .topbar .ctrl-btn.primary:hover { background: var(--brand); }
+  .topbar .ctrl-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 顶部状态栏 -->
+  <header class="topbar">
+    <div class="title"><span class="accent-dot"></span>集群算存网可观测与网络优化控制台</div>
+    <div class="spacer"></div>
+    <div class="stat">
+      <span class="label">集群健康</span>
+      <span class="value ok"><span class="health-dot"></span><span id="healthText">良好</span></span>
+    </div>
+    <div class="stat">
+      <span class="label">实时吞吐</span>
+      <span class="value" id="topThroughput">12.4k T/s</span>
+    </div>
+    <button class="ctrl-btn primary" id="btnAutoDemo">一键演示</button>
+    <button class="ctrl-btn" id="btnCompare">对比模式</button>
+    <button class="ctrl-btn" id="btnPause">暂停</button>
+    <button class="ctrl-btn" id="btnReset">重置</button>
+  </header>
+
+  <!-- 左：可观测三联 -->
+  <aside class="observe">
+    <div class="panel-head"><span class="ptitle">可观测三联</span><span class="psub">实时指标</span></div>
+
+    <div class="obs-card compute">
+      <div class="oc-head">
+        <div class="oc-title"><span class="tag"></span>算力 · NPU</div>
+        <div class="oc-status">3 服务器 · 24 NPU</div>
+      </div>
+      <div class="metric-row"><span class="m-label">NPU 利用率</span><span class="m-value" id="mNpuUtil">78%</span></div>
+      <div class="metric-row"><span class="m-label">HBM 占用</span><span class="m-value" id="mHbm">62%</span></div>
+      <div class="metric-row"><span class="m-label">Prefill 吞吐</span><span class="m-value accent" id="mPrefill">8.2k T/s</span></div>
+      <div class="metric-row"><span class="m-label">Decode 吞吐</span><span class="m-value accent" id="mDecode">14.6k T/s</span></div>
+      <svg class="spark" id="sparkCompute" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="obs-card storage">
+      <div class="oc-head">
+        <div class="oc-title"><span class="tag"></span>存储 · KV 缓存池</div>
+        <div class="oc-status">DRAM 分层</div>
+      </div>
+      <div class="metric-row"><span class="m-label">KV 命中率</span><span class="m-value" id="mKvHit">91%</span></div>
+      <div class="metric-row"><span class="m-label">KV 读写带宽</span><span class="m-value" id="mBw">64 GB/s</span></div>
+      <div class="metric-row"><span class="m-label">TTFT 首字延迟</span><span class="m-value" id="mTtft">186ms</span></div>
+      <div class="metric-row"><span class="m-label">ITL Token 间延迟</span><span class="m-value" id="mItl">28ms</span></div>
+      <svg class="spark" id="sparkStorage" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="obs-card network">
+      <div class="oc-head">
+        <div class="oc-title"><span class="tag"></span>网络</div>
+        <div class="oc-status">12 链路</div>
+      </div>
+      <div class="metric-row"><span class="m-label">链路利用率</span><span class="m-value" id="mLinkUtil">73%</span></div>
+      <div class="metric-row"><span class="m-label">RTT</span><span class="m-value" id="mRtt">38µs</span></div>
+      <div class="metric-row"><span class="m-label">KV 迁移延迟</span><span class="m-value" id="mKvMig">42ms</span></div>
+      <div class="metric-row"><span class="m-label">QoS 队列</span><span class="m-value" id="mCwnd">64</span></div>
+      <svg class="spark" id="sparkNetwork" preserveAspectRatio="none"></svg>
+    </div>
+  </aside>
+
+  <!-- 中：拓扑画布 -->
+  <main class="canvas-wrap">
+    <div class="cv-head">
+      <div class="ptitle"><span class="accent-dot"></span>集群拓扑画布</div>
+    </div>
+    <div class="cap-badge" id="capBadge">
+      <div class="cb-item" data-cap="orchestrate"><span class="cb-dot"></span>拓扑编排生效</div>
+      <div class="cb-item" data-cap="routing"><span class="cb-dot"></span>QoS 选路生效</div>
+      <div class="cb-item" data-cap="slicing"><span class="cb-dot"></span>切片并行传输中</div>
+      <div class="cb-item" data-cap="selfheal"><span class="cb-dot"></span>自愈保护已激活</div>
+      <div class="cb-item" data-cap="pipeline"><span class="cb-dot"></span>计算-传输流水线</div>
+    </div>
+    <svg id="topoSvg"></svg>
+    <canvas id="particleCanvas"></canvas>
+    <div class="node-tooltip" id="nodeTooltip"></div>
+    <div class="compare-popup" id="comparePopup"></div>
+    <div class="narration" id="narration">
+      <div class="narr-head"><span class="narr-icon"></span><span id="narrTitle">演示解说</span></div>
+      <div class="narr-step" id="narrStep">等待演示开始...</div>
+      <div class="narr-progress"><i id="narrProgress"></i></div>
+    </div>
+    <div class="detail-panel" id="detailPanel"></div>
+    <div class="cv-legend">
+      <div class="lg"><span class="swatch" style="background:var(--accent)"></span>健康</div>
+      <div class="lg"><span class="swatch" style="background:var(--warn)"></span>繁忙</div>
+      <div class="lg"><span class="swatch" style="background:var(--danger)"></span>拥塞/故障</div>
+      <div class="lg"><span class="dot-s" style="background:var(--brand)"></span>流动光点 = 实时流量</div>
+    </div>
+    <div class="scenario-bar">
+      <button class="sc-btn" data-sc="slicing"><span class="sc-dot" style="background:var(--accent)"></span>发起大模型传输</button>
+      <button class="sc-btn" data-sc="selfheal"><span class="sc-dot" style="background:var(--danger)"></span>注入链路故障</button>
+      <button class="sc-btn" data-sc="pipeline"><span class="sc-dot" style="background:var(--brand)"></span>触发流水线</button>
+    </div>
+  </main>
+
+  <!-- 右：网络优化控制台 -->
+  <aside class="console">
+    <div class="panel-head"><span class="ptitle">网络优化控制台</span><span class="psub">五项能力</span></div>
+    <div class="cap-list" id="capList"></div>
+    <div class="log-box">
+      <div class="lb-title">优化日志流</div>
+      <div class="log-stream" id="logStream"></div>
+    </div>
+  </aside>
+
+  <!-- 底：吞吐仪表盘 -->
+  <footer class="throughput">
+    <div class="tp-chart-wrap">
+      <div class="tp-head">
+        <span class="ptitle">推理吞吐仪表盘 · 优化前/后对比</span>
+        <div class="legend">
+          <div class="lg"><span class="sw" style="background:#5C6488"></span>优化前</div>
+          <div class="lg"><span class="sw" style="background:var(--brand)"></span>优化后</div>
+        </div>
+      </div>
+      <canvas id="throughputChart"></canvas>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="k-label">Tokens/s</div><div class="k-value" id="kpiTokens">+38%</div></div>
+      <div class="kpi-card"><div class="k-label">TTFT 首字延迟</div><div class="k-value" id="kpiStep">-41%</div></div>
+      <div class="kpi-card"><div class="k-label">KV 迁移时延</div><div class="k-value" id="kpiLatency">-52%</div></div>
+      <div class="kpi-card"><div class="k-label">链路利用</div><div class="k-value" id="kpiLink">+27%</div></div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* =========================================================
+   集群算存网可观测与网络优化控制台
+   单文件实现：拓扑画布 + 可观测三联 + 优化控制台 + 吞吐仪表盘
+   ========================================================= */
+(function () {
+  'use strict';
+
+  /* ---------- 全局状态 ---------- */
+  const STATE = {
+    paused: false,
+    compareMode: true,
+    // 优化能力开关（是否常驻生效）
+    caps: {
+      orchestrate: { on: true, name: '自动拓扑编排', desc: '声明式构建 Prefill/Decode 推理拓扑' },
+      routing:     { on: true, name: '多轨 QoS 选路', desc: 'KV 迁移按 QoS 优先级动态选路' },
+      slicing:     { on: false, name: '并行切片传输', desc: 'KV 缓存分片沿多路径并行迁移' },
+      selfheal:    { on: true, name: '链路故障自愈', desc: '推理链路异常毫秒级重路由保 SLA' },
+      pipeline:    { on: false, name: '计算-传输流水线', desc: 'Prefill 层间预取与计算重叠' }
+    },
+    // 吞吐基线（优化前）与当前（优化后）
+    baseline: 9000,    // tokens/s
+    current: 12400,
+    events: [],        // 吞吐曲线事件标记
+    faultedLink: null,
+    running: false
+  };
+
+  /* ---------- 拓扑数据：Spine-Leaf-服务器-存储池 四层 ---------- */
+  // 节点坐标使用 viewBox 1000x720
+  const NODES = [
+    // Spine 层（骨干交换）
+    { id: 'spine0', type: 'spine', x: 300, y: 50, w: 120, h: 40, label: 'Spine-0', sub: '骨干 400G×8' },
+    { id: 'spine1', type: 'spine', x: 540, y: 50, w: 120, h: 40, label: 'Spine-1', sub: '骨干 400G×8' },
+    // Leaf 层（机柜接入）
+    { id: 'leaf0', type: 'leaf', x: 140, y: 150, w: 120, h: 40, label: 'Leaf-0', sub: '上行 2×400G' },
+    { id: 'leaf1', type: 'leaf', x: 400, y: 150, w: 120, h: 40, label: 'Leaf-1', sub: '上行 2×400G' },
+    { id: 'leaf2', type: 'leaf', x: 660, y: 150, w: 120, h: 40, label: 'Leaf-2', sub: '上行 2×400G' },
+    // 服务器层（每台 8 NPU 卡）
+    { id: 'server0', type: 'server', x: 70, y: 240, w: 200, h: 175, label: 'Server-0', npuUtil: 72, leaf: 'leaf0' },
+    { id: 'server1', type: 'server', x: 360, y: 240, w: 200, h: 175, label: 'Server-1', npuUtil: 88, leaf: 'leaf1' },
+    { id: 'server2', type: 'server', x: 650, y: 240, w: 200, h: 175, label: 'Server-2', npuUtil: 65, leaf: 'leaf2' },
+    // 存储池层（DRAM 分层）
+    { id: 'st-hot', type: 'storage', tier: 'hot', x: 70, y: 470, w: 200, h: 95, label: 'KV 热缓存池', sub: '2TB · 200GB/s · 命中91%', cap: '2TB', bw: '200 GB/s', hit: 91 },
+    { id: 'st-warm', type: 'storage', tier: 'warm', x: 360, y: 470, w: 200, h: 95, label: 'KV 温缓存池', sub: '4TB · 150GB/s · 命中76%', cap: '4TB', bw: '150 GB/s', hit: 76 },
+    { id: 'st-prefetch', type: 'storage', tier: 'prefetch', x: 650, y: 470, w: 200, h: 95, label: '权重池', sub: '8TB · 120GB/s · 预加载', cap: '8TB', bw: '120 GB/s', hit: 62 }
+  ];
+  // 服务器内 8 NPU 卡布局（相对服务器左上角）
+  const NPU_LAYOUT = {
+    cols: 4, rows: 2, cardW: 40, cardH: 30, gapX: 6, gapY: 6, startX: 12, startY: 44
+  };
+  // 链路：layer 区分层级，track 表示多轨（A 主轨 / B 备轨）
+  const LINKS = [
+    // Spine ↔ Leaf（每 Leaf 双上联，共 6 条）
+    { id: 'SL00', from: 'spine0', to: 'leaf0', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
+    { id: 'SL10', from: 'spine1', to: 'leaf0', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.4 },
+    { id: 'SL01', from: 'spine0', to: 'leaf1', layer: 'spine-leaf', track: 'A', status: 'busy', utilization: 0.8 },
+    { id: 'SL11', from: 'spine1', to: 'leaf1', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
+    { id: 'SL02', from: 'spine0', to: 'leaf2', layer: 'spine-leaf', track: 'A', status: 'healthy', utilization: 0.45 },
+    { id: 'SL12', from: 'spine1', to: 'leaf2', layer: 'spine-leaf', track: 'A', status: 'congested', utilization: 0.92 },
+    // Leaf ↔ Server（每服务器挂一台 Leaf，共 3 条）
+    { id: 'LS0', from: 'leaf0', to: 'server0', layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.72 },
+    { id: 'LS1', from: 'leaf1', to: 'server1', layer: 'leaf-server', track: 'A', status: 'busy', utilization: 0.85 },
+    { id: 'LS2', from: 'leaf2', to: 'server2', layer: 'leaf-server', track: 'A', status: 'healthy', utilization: 0.65 },
+    // Storage ↔ Leaf（每存储池挂一台 Leaf，共 3 条）
+    { id: 'STL0', from: 'st-hot', to: 'leaf0', layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.6 },
+    { id: 'STL1', from: 'st-warm', to: 'leaf1', layer: 'storage-leaf', track: 'A', status: 'healthy', utilization: 0.5 },
+    { id: 'STL2', from: 'st-prefetch', to: 'leaf2', layer: 'storage-leaf', track: 'A', status: 'busy', utilization: 0.78 }
+  ];
+
+  /* ---------- DOM 引用 ---------- */
+  const topoSvg = document.getElementById('topoSvg');
+  const particleCanvas = document.getElementById('particleCanvas');
+  const pctx = particleCanvas.getContext('2d');
+  const tooltip = document.getElementById('nodeTooltip');
+  const comparePopup = document.getElementById('comparePopup');
+  const logStream = document.getElementById('logStream');
+  const capList = document.getElementById('capList');
+
+  /* =========================================================
+     1. 拓扑画布渲染
+     ========================================================= */
+  const VB_W = 920, VB_H = 720;
+  topoSvg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  topoSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // 节点锚点：根据上下层关系返回 top/bottom
+  function nodeAnchor(node, side) {
+    const cx = node.x + node.w / 2, cy = node.y + node.h / 2;
+    if (side === 'bottom') return { x: cx, y: node.y + node.h };
+    if (side === 'top') return { x: cx, y: node.y };
+    return { x: cx, y: cy };
+  }
+  // 链路路径：根据 from/to 的 y 坐标判断垂直方向，多轨做水平偏移
+  function linkPath(link, track) {
+    const a = NODES.find(n => n.id === link.from);
+    const b = NODES.find(n => n.id === link.to);
+    // 判断方向：from 在上 → from bottom 到 to top
+    const aBottom = a.y + a.h, bTop = b.y;
+    let p0, p1;
+    if (aBottom <= bTop) {
+      p0 = nodeAnchor(a, 'bottom'); p1 = nodeAnchor(b, 'top');
+    } else {
+      p0 = nodeAnchor(a, 'top'); p1 = nodeAnchor(b, 'bottom');
+    }
+    const midY = (p0.y + p1.y) / 2;
+    let midX = (p0.x + p1.x) / 2;
+    // 备轨水平偏移
+    if (track === 'B') midX += 50;
+    return `M ${p0.x} ${p0.y} Q ${midX} ${midY} ${p1.x} ${p1.y}`;
+  }
+
+  // 渲染节点与链路
+  function renderTopo() {
+    let html = '';
+    // 箭头标记
+    html += `<defs>
+      <marker id="arrowEnd" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse" orient="auto">
+        <path d="M1 1 L7 4 L1 7 Z" fill="#8B93B0" />
+      </marker>
+    </defs>`;
+    // 层级背景带
+    html += `<rect class="topo-layer-band" x="20" y="30" width="960" height="80" rx="6"/>`;
+    html += `<text x="32" y="48" class="topo-layer-label">SPINE 层 · 骨干交换</text>`;
+    html += `<rect class="topo-layer-band" x="20" y="130" width="960" height="80" rx="6"/>`;
+    html += `<text x="32" y="148" class="topo-layer-label">LEAF 层 · 机柜接入</text>`;
+    html += `<rect class="topo-layer-band" x="20" y="225" width="960" height="210" rx="6"/>`;
+    html += `<text x="32" y="243" class="topo-layer-label">服务器层 · 8 NPU / 服务器</text>`;
+    html += `<rect class="topo-layer-band" x="20" y="455" width="960" height="130" rx="6"/>`;
+    html += `<text x="32" y="473" class="topo-layer-label">存储池 · DRAM 分层</text>`;
+
+    // 链路（热区 + 可见）
+    LINKS.forEach(link => {
+      const d = linkPath(link, link.track);
+      html += `<path class="topo-link-hit" data-linkid="${link.id}" d="${d}" stroke="transparent" stroke-width="16" fill="none" style="cursor:pointer"/>`;
+      html += `<path class="topo-link ${link.status}" id="link-${link.id}" d="${d}" marker-end="url(#arrowEnd)" pointer-events="none"/>`;
+    });
+
+    // 节点
+    NODES.forEach(node => {
+      const cx = node.x + node.w / 2;
+      if (node.type === 'server') {
+        // 服务器机箱
+        html += `<rect class="topo-node server" data-id="${node.id}" x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="8"/>`;
+        html += `<text x="${cx}" y="${node.y + 18}" text-anchor="middle" class="topo-label">${node.label}</text>`;
+        html += `<text x="${cx}" y="${node.y + 32}" text-anchor="middle" class="topo-sub">NIC 2×200G · DRAM 512GB</text>`;
+        // 8 NPU 卡 (4×2)
+        const L = NPU_LAYOUT;
+        for (let r = 0; r < L.rows; r++) {
+          for (let c = 0; c < L.cols; c++) {
+            const nx = node.x + L.startX + c * (L.cardW + L.gapX);
+            const ny = node.y + L.startY + r * (L.cardH + L.gapY);
+            const idx = r * L.cols + c;
+            const util = clamp(node.npuUtil + (Math.random() - 0.5) * 20, 20, 99);
+            const cls = util >= 90 ? 'npu-card danger' : util >= 80 ? 'npu-card warn' : 'npu-card';
+            html += `<rect class="${cls}" x="${nx}" y="${ny}" width="${L.cardW}" height="${L.cardH}" rx="3"/>`;
+            html += `<text x="${nx + L.cardW / 2}" y="${ny + 13}" text-anchor="middle" class="npu-id">N${idx}</text>`;
+            html += `<text x="${nx + L.cardW / 2}" y="${ny + 25}" text-anchor="middle" class="npu-util">${util.toFixed(0)}%</text>`;
+          }
+        }
+        // 底部信息
+        html += `<text x="${node.x + 10}" y="${node.y + 124}" class="topo-sub">HBM 64GB×8</text>`;
+        const utilCls = node.npuUtil >= 88 ? 'topo-sub-warn' : 'topo-sub-accent';
+        html += `<text x="${node.x + 10}" y="${node.y + 142}" class="${utilCls}">NPU 利用率 ${Math.round(node.npuUtil)}%</text>`;
+        html += `<text x="${node.x + 10}" y="${node.y + 160}" class="topo-sub">Prefill ${(6.5 + computeBoost() * 3.5).toFixed(1)}k · Decode ${(11 + computeBoost() * 6).toFixed(1)}k T/s</text>`;
+      } else if (node.type === 'storage') {
+        html += `<rect class="topo-node storage" data-id="${node.id}" x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="8"/>`;
+        html += `<text x="${cx}" y="${node.y + 22}" text-anchor="middle" class="topo-label">${node.label}</text>`;
+        html += `<text x="${node.x + 12}" y="${node.y + 44}" class="topo-sub">容量 ${node.cap}</text>`;
+        html += `<text x="${node.x + 12}" y="${node.y + 60}" class="topo-sub">带宽 ${node.bw}</text>`;
+        html += `<text x="${node.x + 12}" y="${node.y + 76}" class="topo-sub-accent">命中率 ${node.hit}%</text>`;
+        const tierText = node.tier === 'hot' ? 'KV缓存/激活值' : node.tier === 'warm' ? '权重暂存/中间态' : '模型权重分片';
+        html += `<text x="${node.x + 12}" y="${node.y + 90}" class="topo-sub-dim">${tierText}</text>`;
+      } else {
+        // Spine / Leaf
+        html += `<rect class="topo-node ${node.type}" data-id="${node.id}" x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="6"/>`;
+        html += `<text x="${cx}" y="${node.y + 18}" text-anchor="middle" class="topo-label">${node.label}</text>`;
+        if (node.sub) html += `<text x="${cx}" y="${node.y + 32}" text-anchor="middle" class="topo-sub">${node.sub}</text>`;
+      }
+    });
+
+    topoSvg.innerHTML = html;
+    bindNodeHover();
+  }
+
+  // 节点悬停 tooltip + 点击下钻
+  let selectedTarget = null; // {type:'node'|'link', id}
+  function clearSelection() {
+    topoSvg.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+    selectedTarget = null;
+    document.getElementById('detailPanel').classList.remove('show');
+  }
+  function bindNodeHover() {
+    topoSvg.querySelectorAll('.topo-node').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const id = el.getAttribute('data-id');
+        const node = NODES.find(n => n.id === id);
+        showTooltip(e, node);
+      });
+      el.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        selectTarget('node', id);
+      });
+    });
+    // 链路点击（命中透明热区）
+    topoSvg.querySelectorAll('.topo-link-hit').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-linkid');
+        selectTarget('link', id);
+      });
+    });
+  }
+  function selectTarget(type, id) {
+    clearSelection();
+    selectedTarget = { type, id };
+    if (type === 'node') {
+      const sel = topoSvg.querySelector(`.topo-node[data-id="${id}"]`);
+      if (sel) sel.classList.add('selected');
+      showNodeDetail(id);
+    } else {
+      const sel = document.getElementById(`link-${id}`);
+      if (sel) sel.classList.add('selected');
+      showLinkDetail(id);
+    }
+  }
+  function showNodeDetail(id) {
+    const node = NODES.find(n => n.id === id);
+    const panel = document.getElementById('detailPanel');
+    const colorMap = { spine: 'var(--warn)', leaf: 'var(--accent)', server: 'var(--brand)', storage: 'var(--accent)' };
+    const color = colorMap[node.type] || 'var(--brand)';
+    const boost = computeBoost();
+    let html = `<div class="dp-head">
+      <div class="dp-title"><span class="dp-icon" style="background:${color}"></span>${node.label}</div>
+      <button class="dp-close" id="dpClose">✕</button>
+    </div>`;
+    if (node.type === 'spine') {
+      html += `<div class="dp-row"><span class="k">类型</span><span class="v">骨干交换机</span></div>`;
+      html += `<div class="dp-row"><span class="k">状态</span><span class="v accent">在线</span></div>`;
+      html += `<div class="dp-section">端口</div>`;
+      html += `<div class="dp-row"><span class="k">骨干带宽</span><span class="v">400G×8</span></div>`;
+      html += `<div class="dp-row"><span class="k">下联 Leaf</span><span class="v">3 台</span></div>`;
+      html += `<div class="dp-row"><span class="k">ECMP 轨数</span><span class="v">2 轨</span></div>`;
+      html += `<div class="dp-section">实时负载</div>`;
+      const spUtil = 45 + Math.random() * 30;
+      html += `<div class="dp-row"><span class="k">交换吞吐</span><span class="v ${valColor(spUtil,80,92)}">${(spUtil * 3.2).toFixed(0)} Gb/s</span></div>`;
+      html += `<div class="dp-bar"><i style="width:${spUtil}%;background:${spUtil>=92?'var(--danger)':spUtil>=80?'var(--warn)':'var(--accent)'}"></i></div>`;
+    } else if (node.type === 'leaf') {
+      html += `<div class="dp-row"><span class="k">类型</span><span class="v">机柜接入交换机</span></div>`;
+      html += `<div class="dp-row"><span class="k">状态</span><span class="v accent">在线</span></div>`;
+      html += `<div class="dp-section">端口</div>`;
+      html += `<div class="dp-row"><span class="k">上行 Spine</span><span class="v">2×400G</span></div>`;
+      html += `<div class="dp-row"><span class="k">下行服务器</span><span class="v">1×200G</span></div>`;
+      html += `<div class="dp-row"><span class="k">下联存储</span><span class="v">1×200G</span></div>`;
+      html += `<div class="dp-section">实时负载</div>`;
+      const lfUtil = 50 + Math.random() * 30;
+      html += `<div class="dp-row"><span class="k">带宽占用</span><span class="v ${valColor(lfUtil,80,92)}">${lfUtil.toFixed(0)}%</span></div>`;
+      html += `<div class="dp-bar"><i style="width:${lfUtil}%;background:${lfUtil>=92?'var(--danger)':lfUtil>=80?'var(--warn)':'var(--accent)'}"></i></div>`;
+    } else if (node.type === 'server') {
+      html += `<div class="dp-row"><span class="k">类型</span><span class="v">NPU 服务器</span></div>`;
+      html += `<div class="dp-row"><span class="k">NPU 卡数</span><span class="v accent">8</span></div>`;
+      html += `<div class="dp-row"><span class="k">挂接 Leaf</span><span class="v">${node.leaf}</span></div>`;
+      html += `<div class="dp-section">资源</div>`;
+      html += `<div class="dp-row"><span class="k">DRAM</span><span class="v">512 GB</span></div>`;
+      html += `<div class="dp-row"><span class="k">HBM</span><span class="v">64 GB ×8</span></div>`;
+      html += `<div class="dp-row"><span class="k">NIC</span><span class="v">2×200G</span></div>`;
+      html += `<div class="dp-section">利用率</div>`;
+      const util = node.npuUtil;
+      html += `<div class="dp-row"><span class="k">NPU 利用率</span><span class="v ${valColor(util,85,92)}">${Math.round(util)}%</span></div>`;
+      html += `<div class="dp-bar"><i style="width:${util}%;background:${util>=92?'var(--danger)':util>=85?'var(--warn)':'var(--accent)'}"></i></div>`;
+      html += `<div class="dp-row" style="margin-top:6px"><span class="k">Prefill 吞吐</span><span class="v accent">${(6.5+boost*3.5).toFixed(1)}k T/s</span></div>`;
+      html += `<div class="dp-row"><span class="k">芯片温度</span><span class="v">${52+Math.floor(Math.random()*12)}°C</span></div>`;
+    } else if (node.type === 'storage') {
+      const tierName = node.tier === 'hot' ? 'KV 热缓存池' : node.tier === 'warm' ? 'KV 温缓存池' : '权重池';
+      const tierContent = node.tier === 'hot' ? 'KV缓存/激活值' : node.tier === 'warm' ? '权重暂存/中间态' : '模型权重分片';
+      html += `<div class="dp-row"><span class="k">类型</span><span class="v">DRAM ${tierName}</span></div>`;
+      html += `<div class="dp-row"><span class="k">内容</span><span class="v">${tierContent}</span></div>`;
+      html += `<div class="dp-section">容量与带宽</div>`;
+      html += `<div class="dp-row"><span class="k">容量</span><span class="v">${node.cap}</span></div>`;
+      html += `<div class="dp-row"><span class="k">读写带宽</span><span class="v accent">${node.bw}</span></div>`;
+      html += `<div class="dp-row"><span class="k">命中率</span><span class="v accent">${node.hit}%</span></div>`;
+      html += `<div class="dp-bar"><i style="width:${node.hit}%;background:var(--accent)"></i></div>`;
+      html += `<div class="dp-section">性能</div>`;
+      html += `<div class="dp-row"><span class="k">IOPS</span><span class="v">${(110+boost*40).toFixed(0)}k</span></div>`;
+      html += `<div class="dp-row"><span class="k">尾延迟</span><span class="v">${(50-boost*12).toFixed(0)}µs</span></div>`;
+    }
+    panel.innerHTML = html;
+    panel.classList.add('show');
+    document.getElementById('dpClose').addEventListener('click', clearSelection);
+  }
+  function showLinkDetail(id) {
+    const link = LINKS.find(l => l.id === id);
+    const panel = document.getElementById('detailPanel');
+    const a = NODES.find(n => n.id === link.from);
+    const b = NODES.find(n => n.id === link.to);
+    const statusMap = { healthy: ['健康', 'accent'], busy: ['繁忙', 'warn'], congested: ['拥塞', 'danger'], faulted: ['故障', 'danger'] };
+    const [stLabel, stCls] = statusMap[link.status] || ['未知', ''];
+    const boost = computeBoost();
+    const rtt = Math.round(42 - boost * 10 + Math.random() * 6 + link.utilization * 8);
+    const loss = link.status === 'faulted' ? (0.5 + Math.random() * 0.3) : (0.01 + link.utilization * 0.05);
+    let html = `<div class="dp-head">
+      <div class="dp-title"><span class="dp-icon" style="background:var(--warn)"></span>链路 ${link.id}</div>
+      <button class="dp-close" id="dpClose">✕</button>
+    </div>`;
+    html += `<div class="dp-row"><span class="k">端点</span><span class="v">${a.label} → ${b.label}</span></div>`;
+    const layerName = { 'spine-leaf': 'Spine↔Leaf 骨干', 'leaf-server': 'Leaf↔服务器 接入', 'storage-leaf': '存储↔Leaf' };
+    html += `<div class="dp-row"><span class="k">层级</span><span class="v">${layerName[link.layer] || link.layer}</span></div>`;
+    html += `<div class="dp-row"><span class="k">轨道</span><span class="v">轨 ${link.track}</span></div>`;
+    html += `<div class="dp-row"><span class="k">状态</span><span class="v ${stCls}">${stLabel}</span></div>`;
+    html += `<div class="dp-section">利用率</div>`;
+    html += `<div class="dp-row"><span class="k">带宽占用</span><span class="v ${stCls}">${(link.utilization * 100).toFixed(0)}%</span></div>`;
+    const barColor = link.status === 'faulted' ? 'var(--danger)' : link.status === 'congested' ? 'var(--danger)' : link.status === 'busy' ? 'var(--warn)' : 'var(--accent)';
+    html += `<div class="dp-bar"><i style="width:${link.utilization * 100}%;background:${barColor}"></i></div>`;
+    html += `<div class="dp-section">网络指标</div>`;
+    html += `<div class="dp-row"><span class="k">RTT</span><span class="v">${rtt}µs</span></div>`;
+    html += `<div class="dp-row"><span class="k">丢包率</span><span class="v ${loss > 0.1 ? 'danger' : ''}">${loss.toFixed(2)}%</span></div>`;
+    html += `<div class="dp-row"><span class="k">拥塞窗口</span><span class="v">${Math.floor(48 + boost * 32)}</span></div>`;
+    html += `<div class="dp-row"><span class="k">QoS 优先级</span><span class="v accent">高</span></div>`;
+    panel.innerHTML = html;
+    panel.classList.add('show');
+    document.getElementById('dpClose').addEventListener('click', clearSelection);
+  }
+  function showTooltip(e, node) {
+    const wrap = document.querySelector('.canvas-wrap').getBoundingClientRect();
+    let html = `<div class="tt-title">${node.label}</div>`;
+    if (node.type === 'spine') {
+      html += `<div class="tt-row"><span>类型</span><span>骨干交换机</span></div>`;
+      html += `<div class="tt-row"><span>带宽</span><span>400G×8</span></div>`;
+      html += `<div class="tt-row"><span>下联</span><span>3 Leaf</span></div>`;
+    } else if (node.type === 'leaf') {
+      html += `<div class="tt-row"><span>类型</span><span>接入交换机</span></div>`;
+      html += `<div class="tt-row"><span>上行</span><span>2×400G</span></div>`;
+      html += `<div class="tt-row"><span>下行</span><span>200G</span></div>`;
+    } else if (node.type === 'server') {
+      html += `<div class="tt-row"><span>类型</span><span>NPU 服务器</span></div>`;
+      html += `<div class="tt-row"><span>NPU</span><span>8 卡</span></div>`;
+      html += `<div class="tt-row"><span>DRAM</span><span>512GB</span></div>`;
+      html += `<div class="tt-row"><span>利用率</span><span>${node.npuUtil}%</span></div>`;
+    } else if (node.type === 'storage') {
+      html += `<div class="tt-row"><span>类型</span><span>DRAM 存储池</span></div>`;
+      html += `<div class="tt-row"><span>容量</span><span>${node.cap}</span></div>`;
+      html += `<div class="tt-row"><span>带宽</span><span>${node.bw}</span></div>`;
+      html += `<div class="tt-row"><span>命中</span><span>${node.hit}%</span></div>`;
+    }
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX - wrap.left + 14) + 'px';
+    tooltip.style.top = (e.clientY - wrap.top + 14) + 'px';
+  }
+  function rand(a, b) { return Math.floor(a + Math.random() * (b - a)); }
+
+  /* =========================================================
+     2. Canvas 粒子流动光点
+     ========================================================= */
+  // 每条链路维护一组沿路径运动的粒子。使用 SVG path 的采样点。
+  let particles = []; // {linkId, track, t, speed, color, size}
+  let pathSamples = {}; // linkId -> [{x,y}] 采样点
+
+  function buildPathSamples() {
+    pathSamples = {};
+    LINKS.forEach(link => {
+      const pathEl = document.getElementById(`link-${link.id}`);
+      if (!pathEl) return;
+      const len = pathEl.getTotalLength();
+      const samples = [];
+      const N = 40;
+      for (let i = 0; i <= N; i++) {
+        const pt = pathEl.getPointAtLength((i / N) * len);
+        samples.push({ x: pt.x, y: pt.y });
+      }
+      pathSamples[link.id] = samples;
+    });
+  }
+
+  function spawnParticle(linkId, opts) {
+    const link = LINKS.find(l => l.id === linkId);
+    if (!link) return;
+    const color = opts && opts.color || '#8B7BFF';
+    particles.push({
+      linkId,
+      t: 0,
+      speed: (opts && opts.speed) || 0.006 + link.utilization * 0.006,
+      color,
+      size: (opts && opts.size) || 2.2
+    });
+  }
+
+  // 周期性为活跃链路生成粒子
+  let particleSpawnAcc = 0;
+  let capParticleAcc = 0;
+  function tickParticles(dt) {
+    // 基础粒子生成
+    particleSpawnAcc += dt;
+    if (particleSpawnAcc > 120) {
+      particleSpawnAcc = 0;
+      LINKS.forEach(link => {
+        if (link.status === 'faulted') return;
+        // 根据利用率决定生成数量
+        const n = link.utilization > 0.7 ? 2 : 1;
+        for (let i = 0; i < n; i++) spawnParticle(link.id);
+      });
+    }
+    // 能力开关驱动的额外粒子流
+    capParticleAcc += dt;
+    if (capParticleAcc > 100) {
+      capParticleAcc = 0;
+      // 切片开启：多路径并行喷洒多色粒子
+      if (STATE.caps.slicing.on) {
+        const slicePaths = [
+          { links: ['STL2', 'SL12', 'SL10', 'LS0'], color: '#8B7BFF' },
+          { links: ['STL2', 'SL02', 'SL00', 'LS0'], color: '#2DD4A8' },
+          { links: ['STL2', 'SL12', 'SL01', 'LS1'], color: '#FFB547' },
+          { links: ['STL2', 'SL02', 'SL11', 'LS1'], color: '#FF7AB6' }
+        ];
+        slicePaths.forEach(p => {
+          p.links.forEach(lid => {
+            const link = LINKS.find(l => l.id === lid);
+            if (!link || link.status === 'faulted') return;
+            particles.push({ linkId: lid, t: 0, speed: 0.013, color: p.color, size: 2.6 });
+          });
+        });
+      }
+      // 流水线开启：Leaf-Server 链路持续阶梯粒子
+      if (STATE.caps.pipeline.on) {
+        ['LS0', 'LS1', 'LS2'].forEach(lid => {
+          const link = LINKS.find(l => l.id === lid);
+          if (!link || link.status === 'faulted') return;
+          for (let k = 0; k < 2; k++) {
+            particles.push({ linkId: lid, t: 0, speed: 0.01, color: '#8B7BFF', size: 2.3 });
+          }
+        });
+      }
+    }
+    // 推进
+    particles = particles.filter(p => {
+      p.t += p.speed * (dt / 16);
+      return p.t < 1;
+    });
+  }
+
+  function drawParticles() {
+    const w = particleCanvas.width, h = particleCanvas.height;
+    pctx.clearRect(0, 0, w, h);
+    // 坐标变换：viewBox -> canvas
+    const scale = Math.min(w / VB_W, h / VB_H);
+    const ox = (w - VB_W * scale) / 2;
+    const oy = (h - VB_H * scale) / 2;
+    particles.forEach(p => {
+      const samples = pathSamples[p.linkId];
+      if (!samples || !samples.length) return;
+      const idx = p.t * (samples.length - 1);
+      const i0 = Math.floor(idx), i1 = Math.min(i0 + 1, samples.length - 1);
+      const frac = idx - i0;
+      const sx = samples[i0].x + (samples[i1].x - samples[i0].x) * frac;
+      const sy = samples[i0].y + (samples[i1].y - samples[i0].y) * frac;
+      const x = ox + sx * scale, y = oy + sy * scale;
+      pctx.beginPath();
+      pctx.arc(x, y, p.size, 0, Math.PI * 2);
+      pctx.fillStyle = p.color;
+      pctx.shadowColor = p.color;
+      pctx.shadowBlur = 8;
+      pctx.fill();
+    });
+    pctx.shadowBlur = 0;
+  }
+
+  function resizeCanvas() {
+    const wrap = document.querySelector('.canvas-wrap');
+    const r = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    particleCanvas.width = r.width * dpr;
+    particleCanvas.height = r.height * dpr;
+    particleCanvas.style.width = r.width + 'px';
+    particleCanvas.style.height = r.height + 'px';
+    pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    particleCanvas.width = r.width; particleCanvas.height = r.height;
+  }
+
+  /* =========================================================
+     3. 可观测三联面板
+     ========================================================= */
+  const sparks = {
+    compute: { el: document.getElementById('sparkCompute'), data: [], color: '#8B7BFF' },
+    storage: { el: document.getElementById('sparkStorage'), data: [], color: '#2DD4A8' },
+    network: { el: document.getElementById('sparkNetwork'), data: [], color: '#FFB547' }
+  };
+  function pushSpark(key, val) {
+    const s = sparks[key];
+    s.data.push(val);
+    if (s.data.length > 40) s.data.shift();
+    drawSpark(key);
+  }
+  function drawSpark(key) {
+    const s = sparks[key];
+    const el = s.el;
+    const w = el.clientWidth || 180, h = 32;
+    el.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    if (s.data.length < 2) { el.innerHTML = ''; return; }
+    const min = Math.min(...s.data), max = Math.max(...s.data);
+    const range = max - min || 1;
+    const pts = s.data.map((v, i) => {
+      const x = (i / (s.data.length - 1)) * w;
+      const y = h - 4 - ((v - min) / range) * (h - 8);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    el.innerHTML = `
+      <polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="${w}" cy="${h - 4 - ((s.data[s.data.length-1] - min) / range) * (h - 8)}" r="2" fill="${s.color}" />
+    `;
+  }
+
+  // 指标更新（推理场景）
+  function updateMetrics() {
+    const boost = computeBoost();
+    const npuUtil = clamp(60 + Math.random() * 25 + boost * 8, 0, 99);
+    const linkUtil = clamp(55 + Math.random() * 20 + (STATE.faultedLink ? 15 : 0) - boost * 5, 0, 99);
+    // 算力：NPU 利用率 / HBM / Prefill 吞吐 / Decode 吞吐
+    setVal('mNpuUtil', npuUtil.toFixed(0) + '%', valColor(npuUtil, 85, 92));
+    setVal('mHbm', clamp(55 + Math.random() * 15, 0, 99).toFixed(0) + '%');
+    const prefill = (6.5 + boost * 3.5 + Math.random() * 0.6);
+    const decode = (11 + boost * 6 + Math.random() * 0.8);
+    setVal('mPrefill', prefill.toFixed(1) + 'k T/s', 'accent');
+    setVal('mDecode', decode.toFixed(1) + 'k T/s', 'accent');
+    pushSpark('compute', npuUtil);
+
+    // 存储：KV 命中率 / KV 读写带宽 / TTFT / ITL
+    setVal('mKvHit', clamp(88 + boost * 6 + Math.random() * 4, 0, 99).toFixed(0) + '%');
+    setVal('mBw', (55 + boost * 25 + Math.random() * 8).toFixed(0) + ' GB/s');
+    const ttft = (220 - boost * 90 + Math.random() * 20);
+    setVal('mTtft', ttft.toFixed(0) + 'ms', ttft < 160 ? 'accent' : (ttft > 200 ? 'warn' : ''));
+    const itl = (38 - boost * 14 + Math.random() * 4);
+    setVal('mItl', itl.toFixed(0) + 'ms', itl < 28 ? 'accent' : '');
+    pushSpark('storage', 55 + boost * 25 + Math.random() * 8);
+
+    // 网络：链路利用率 / RTT / KV 迁移延迟 / QoS 队列
+    setVal('mLinkUtil', linkUtil.toFixed(0) + '%', valColor(linkUtil, 85, 92));
+    setVal('mRtt', (42 - boost * 10 + Math.random() * 6).toFixed(0) + 'µs');
+    const kvMig = (55 - boost * 28 + Math.random() * 8);
+    setVal('mKvMig', kvMig.toFixed(0) + 'ms', kvMig < 35 ? 'accent' : (kvMig > 50 ? 'warn' : ''));
+    setVal('mCwnd', Math.floor(48 + boost * 32 + Math.random() * 8));
+    pushSpark('network', linkUtil);
+
+    // 顶部吞吐（平滑过渡到目标值）
+    const target = baselineToCurrent();
+    STATE.current = STATE.current + (target - STATE.current) * 0.3;
+    document.getElementById('topThroughput').textContent = (STATE.current / 1000).toFixed(1) + 'k T/s';
+
+    // 持续刷新能力效果（链路状态/NPU 利用率），但不重渲染拓扑避免抖动
+    applyCapabilityEffects();
+  }
+  function setVal(id, v, cls) {
+    const el = document.getElementById(id);
+    el.textContent = v;
+    el.className = 'm-value' + (cls ? ' ' + cls : '');
+  }
+  function valColor(v, warnAt, dangerAt) {
+    if (v >= dangerAt) return 'danger';
+    if (v >= warnAt) return 'warn';
+    return '';
+  }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  // 根据开关计算当前提升系数
+  function computeBoost() {
+    let b = 0;
+    if (STATE.caps.orchestrate.on) b += 0.10;
+    if (STATE.caps.routing.on)     b += 0.15;
+    if (STATE.caps.slicing.on)     b += 0.35;
+    if (STATE.caps.selfheal.on)    b += 0.10;
+    if (STATE.caps.pipeline.on)    b += 0.20;
+    if (STATE.faultedLink) b -= 0.25; // 故障期间下降
+    return Math.max(0, b);
+  }
+  function baselineToCurrent() {
+    return Math.round(STATE.baseline * (1 + computeBoost() - (STATE.faultedLink ? 0.15 : 0)));
+  }
+
+  /* =========================================================
+     4. 网络优化控制台
+     ========================================================= */
+  function renderCaps() {
+    capList.innerHTML = '';
+    Object.entries(STATE.caps).forEach(([key, cap]) => {
+      const div = document.createElement('div');
+      div.className = 'cap-item' + (cap.on ? ' on' : '');
+      div.innerHTML = `
+        <div class="ci-top">
+          <span class="ci-name">${cap.name}</span>
+          <div class="ci-btns">
+            <button class="demo-btn" data-demo="${key}">演示</button>
+            <div class="toggle" data-toggle="${key}"></div>
+          </div>
+        </div>
+        <div class="ci-desc">${cap.desc}</div>
+      `;
+      capList.appendChild(div);
+    });
+    // 绑定
+    capList.querySelectorAll('.toggle').forEach(t => {
+      t.addEventListener('click', () => {
+        const key = t.getAttribute('data-toggle');
+        STATE.caps[key].on = !STATE.caps[key].on;
+        renderCaps();
+        const cap = STATE.caps[key];
+        log(key, `${cap.name} ${cap.on ? '已启用' : '已关闭'}`, cap.on ? 'brand' : 'warn');
+        // 立即应用画布效果
+        applyCapabilityEffects();
+        // 重渲染拓扑以刷新 NPU 卡利用率显示
+        renderTopo();
+        applyCapabilityEffects();
+        updateKPI();
+        // 切片开启时的额外提示
+        if (key === 'slicing' && cap.on) {
+          showComparePopup();
+          setTimeout(() => { /* 保持显示 */ }, 4000);
+        }
+      });
+    });
+    capList.querySelectorAll('.demo-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const key = b.getAttribute('data-demo');
+        runDemo(key);
+      });
+    });
+  }
+
+  /* =========================================================
+     5. 日志流
+     ========================================================= */
+  function log(key, msg, cls) {
+    const t = new Date();
+    const ts = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`;
+    const line = document.createElement('div');
+    line.className = 'log-line ' + (cls || '');
+    line.innerHTML = `<span class="lt">${ts}</span><span class="lm">${msg}</span>`;
+    logStream.appendChild(line);
+    logStream.scrollTop = logStream.scrollHeight;
+    // 限制条数
+    while (logStream.children.length > 80) logStream.removeChild(logStream.firstChild);
+  }
+
+  /* =========================================================
+     6. 吞吐仪表盘（自绘 Canvas 折线）
+     ========================================================= */
+  const tpChart = document.getElementById('throughputChart');
+  const tpCtx = tpChart.getContext('2d');
+  const tpData = {
+    baseline: [],  // 优化前曲线
+    current: [],   // 优化后曲线
+    maxPoints: 60
+  };
+  function pushThroughput() {
+    // 优化前：基线 + 小幅波动
+    const base = STATE.baseline + (Math.random() - 0.5) * 400;
+    tpData.baseline.push(base);
+    if (tpData.baseline.length > tpData.maxPoints) tpData.baseline.shift();
+    // 优化后：当前值 + 波动
+    const cur = STATE.current + (Math.random() - 0.5) * 300;
+    tpData.current.push(cur);
+    if (tpData.current.length > tpData.maxPoints) tpData.current.shift();
+    // 事件标记随时间向左移动（偏移量+1）
+    STATE.events.forEach(ev => ev.offset++);
+    // 超出可视范围的事件移除
+    STATE.events = STATE.events.filter(ev => ev.offset < tpData.maxPoints);
+  }
+  function resizeTpChart() {
+    const r = tpChart.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    tpChart.width = r.width * dpr;
+    tpChart.height = r.height * dpr;
+    tpCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function drawTpChart() {
+    const r = tpChart.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    tpCtx.clearRect(0, 0, w, h);
+    if (tpData.current.length < 2) return;
+    const padL = 40, padR = 12, padT = 10, padB = 22;
+    const cw = w - padL - padR, ch = h - padT - padB;
+    const all = tpData.baseline.concat(tpData.current);
+    const min = Math.min(...all) * 0.95;
+    const max = Math.max(...all) * 1.05;
+    const range = max - min || 1;
+    // 网格
+    tpCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    tpCtx.lineWidth = 1;
+    tpCtx.fillStyle = '#5C6488';
+    tpCtx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--font-mono');
+    tpCtx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const y = padT + (ch / 4) * i;
+      tpCtx.beginPath(); tpCtx.moveTo(padL, y); tpCtx.lineTo(padL + cw, y); tpCtx.stroke();
+      const val = max - (range / 4) * i;
+      tpCtx.fillText((val / 1000).toFixed(1) + 'k', padL - 6, y + 3);
+    }
+    // 绘制曲线
+    function drawLine(data, color, width) {
+      tpCtx.strokeStyle = color; tpCtx.lineWidth = width;
+      tpCtx.beginPath();
+      data.forEach((v, i) => {
+        const x = padL + (i / (tpData.maxPoints - 1)) * cw;
+        const y = padT + ch - ((v - min) / range) * ch;
+        if (i === 0) tpCtx.moveTo(x, y); else tpCtx.lineTo(x, y);
+      });
+      tpCtx.stroke();
+      // 末端点
+      const last = data[data.length - 1];
+      const lx = padL + ((data.length - 1) / (tpData.maxPoints - 1)) * cw;
+      const ly = padT + ch - ((last - min) / range) * ch;
+      tpCtx.beginPath(); tpCtx.arc(lx, ly, 3, 0, Math.PI * 2);
+      tpCtx.fillStyle = color; tpCtx.fill();
+    }
+    if (STATE.compareMode) drawLine(tpData.baseline, '#5C6488', 1.5);
+    drawLine(tpData.current, '#8B7BFF', 2);
+    // 事件标记（基于 offset 计算位置，随时间向左移动）
+    STATE.events.forEach(ev => {
+      const lastIdx = tpData.current.length - 1;
+      const idx = lastIdx - ev.offset;
+      if (idx < 0) return;
+      const x = padL + (idx / (tpData.maxPoints - 1)) * cw;
+      const v = tpData.current[idx] || STATE.current;
+      const y = padT + ch - ((v - min) / range) * ch;
+      tpCtx.beginPath(); tpCtx.arc(x, y, 4, 0, Math.PI * 2);
+      tpCtx.fillStyle = ev.color || '#2DD4A8'; tpCtx.fill();
+      tpCtx.strokeStyle = '#0B1020'; tpCtx.lineWidth = 1.5; tpCtx.stroke();
+      // 标签
+      tpCtx.fillStyle = ev.color || '#2DD4A8';
+      tpCtx.font = '600 10px ' + getComputedStyle(document.body).getPropertyValue('--font-sans');
+      tpCtx.textAlign = 'left';
+      tpCtx.fillText(ev.label, x + 6, y - 6);
+    });
+    // X 轴标签
+    tpCtx.fillStyle = '#5C6488';
+    tpCtx.textAlign = 'center';
+    tpCtx.fillText('60s 前', padL, h - 6);
+    tpCtx.fillText('现在', padL + cw, h - 6);
+  }
+
+  function updateKPI() {
+    const b = computeBoost();
+    // 根据提升系数换算百分比（推理场景）
+    const tokensPct = Math.round(b * 100 * 1.2);
+    const ttftPct = -Math.round(b * 100 * 1.0);
+    const kvMigPct = -Math.round(b * 100 * 1.3);
+    const linkPct = Math.round(b * 100 * 0.9);
+    document.getElementById('kpiTokens').textContent = '+' + tokensPct + '%';
+    document.getElementById('kpiStep').textContent = ttftPct + '%';
+    document.getElementById('kpiLatency').textContent = kvMigPct + '%';
+    document.getElementById('kpiLink').textContent = '+' + linkPct + '%';
+    // 故障时 KPI 变差
+    if (STATE.faultedLink) {
+      document.getElementById('kpiTokens').className = 'k-value bad';
+    } else {
+      document.getElementById('kpiTokens').className = 'k-value';
+    }
+  }
+
+  /* =========================================================
+     7.5 能力开关 → 画布实时效果联动
+     ========================================================= */
+  // 链路默认状态（重置基准）
+  const LINK_DEFAULTS = {
+    'SL00': ['healthy', 0.5], 'SL10': ['healthy', 0.4], 'SL01': ['busy', 0.8],
+    'SL11': ['healthy', 0.5], 'SL02': ['healthy', 0.45], 'SL12': ['congested', 0.92],
+    'LS0': ['healthy', 0.72], 'LS1': ['busy', 0.85], 'LS2': ['healthy', 0.65],
+    'STL0': ['healthy', 0.6], 'STL1': ['healthy', 0.5], 'STL2': ['busy', 0.78]
+  };
+  // 根据开关状态应用画布效果：链路状态/利用率/NPU/粒子密度/徽标
+  function applyCapabilityEffects() {
+    const caps = STATE.caps;
+    // 1. 恢复链路默认状态（除非正在演示中临时修改）
+    if (!STATE.running && !STATE.faultedLink) {
+      LINKS.forEach(l => {
+        const d = LINK_DEFAULTS[l.id] || ['healthy', 0.5];
+        l.status = d[0]; l.utilization = d[1];
+      });
+    }
+
+    // 2. 自动拓扑编排：高亮 Leaf-Server 链路 + NPU 利用率提升
+    if (caps.orchestrate.on) {
+      ['LS0', 'LS1', 'LS2'].forEach(id => {
+        const l = LINKS.find(x => x.id === id);
+        if (l && l.status !== 'faulted') l.utilization = Math.min(0.95, l.utilization + 0.12);
+      });
+      // NPU 利用率提升
+      NODES.filter(n => n.type === 'server').forEach(n => { n._capBoost = (n._capBoost || 0) + 8; });
+    }
+
+    // 3. 多轨 QoS 选路：SL12 拥塞分流到 SL02 备轨
+    if (caps.routing.on) {
+      const sl12 = LINKS.find(l => l.id === 'SL12');
+      const sl02 = LINKS.find(l => l.id === 'SL02');
+      if (sl12 && sl12.status === 'congested' && !STATE.faultedLink) {
+        sl12.status = 'busy'; sl12.utilization = 0.62;
+        sl02.status = 'busy'; sl02.utilization = 0.78;
+      }
+    }
+
+    // 4. 链路故障自愈：显示保护态（被动能力，故障时自动重路由）
+    //    无需主动改链路，仅靠徽标体现
+
+    // 5. 计算-传输流水线：NPU 脉冲 + 利用率提升
+    if (caps.pipeline.on) {
+      NODES.filter(n => n.type === 'server').forEach(n => { n._capBoost = (n._capBoost || 0) + 6; });
+    }
+
+    // 应用 NPU 利用率变化（合并 boost，取整）
+    NODES.filter(n => n.type === 'server').forEach(n => {
+      const base = { server0: 72, server1: 88, server2: 65 }[n.id] || 70;
+      const boost = n._capBoost || 0;
+      n.npuUtil = Math.round(clamp(base + boost + (Math.random() - 0.5) * 4, 20, 99));
+      n._capBoost = 0; // 重置，下次重新算
+    });
+
+    // 6. 刷新链路视觉
+    if (!STATE.running) refreshLinks();
+
+    // 7. 链路高亮 class（编排/切片激活的链路加 cap-active）
+    clearCapActive();
+    if (caps.orchestrate.on) markCapActive(['LS0', 'LS1', 'LS2']);
+    if (caps.slicing.on) markCapActive(['STL2', 'SL12', 'SL02', 'SL10', 'SL00', 'LS0', 'LS1']);
+
+    // 8. NPU 流水线脉冲
+    topoSvg.querySelectorAll('.npu-card').forEach(el => {
+      el.classList.toggle('pipeline-on', caps.pipeline.on);
+    });
+
+    // 9. 能力徽标显示
+    Object.entries(caps).forEach(([key, cap]) => {
+      const badge = document.querySelector(`.cap-badge .cb-item[data-cap="${key}"]`);
+      if (badge) badge.classList.toggle('show', cap.on);
+    });
+
+    // 10. 切片/流水线开启时持续生成额外粒子
+    // （在 tickParticles 中根据开关增量生成）
+  }
+  function clearCapActive() {
+    topoSvg.querySelectorAll('.topo-link.cap-active').forEach(el => el.classList.remove('cap-active'));
+  }
+  function markCapActive(ids) {
+    ids.forEach(id => {
+      const el = document.getElementById(`link-${id}`);
+      if (el) el.classList.add('cap-active');
+    });
+  }
+
+  /* =========================================================
+     7. 演示场景
+     ========================================================= */
+  function markEvent(label, color) {
+    // 用 offset 记录距末尾的偏移（0=最新点），随数据追加自动向左移动
+    STATE.events.push({ offset: 0, label, color: color || '#2DD4A8' });
+    if (STATE.events.length > 6) STATE.events.shift();
+  }
+
+  /* ---- 演示解说面板控制 ---- */
+  const narration = document.getElementById('narration');
+  const narrTitle = document.getElementById('narrTitle');
+  const narrStep = document.getElementById('narrStep');
+  const narrProgress = document.getElementById('narrProgress');
+  let narrTimers = [];
+  function narrShow(title) {
+    narrTitle.textContent = title;
+    narration.classList.add('show');
+  }
+  function narrSet(html, progress) {
+    narrStep.innerHTML = html;
+    if (progress != null) narrProgress.style.width = (progress * 100) + '%';
+  }
+  function narrHide() {
+    narrTimers.forEach(t => clearTimeout(t));
+    narrTimers = [];
+    setTimeout(() => narration.classList.remove('show'), 1500);
+  }
+  // 按序播放多步解说
+  function narrPlay(title, steps) {
+    narrTimers.forEach(t => clearTimeout(t));
+    narrTimers = [];
+    narrShow(title);
+    let elapsed = 0;
+    steps.forEach((s, i) => {
+      const t = setTimeout(() => narrSet(s.text, (i + 1) / steps.length), s.at);
+      narrTimers.push(t);
+      elapsed = Math.max(elapsed, s.at);
+    });
+    return elapsed + 500;
+  }
+
+  // 演示：自动拓扑编排（权重预取池 → 3 服务器 24 NPU，沿四层逐段建链）
+  function demoOrchestrate() {
+    log('orchestrate', '声明意图：部署 LLM 推理服务 → Prefill + Decode 分离拓扑', 'brand');
+    narrPlay('① 自动拓扑编排 · Prefill/Decode 推理拓扑', [
+      { at: 0,    text: '用户声明意图：<span class="hl-brand">部署 LLM 推理服务</span>。引擎自动构建 Prefill 节点 + Decode 节点 + KV 池的分离拓扑。' },
+      { at: 600,  text: '建链中：<span class="hl-brand">权重池→Leaf2→Spine→Leaf0→Prefill 节点</span>，紫色流光表示正在建链。' },
+      { at: 1400, text: '同时构建 <span class="hl-brand">KV 池→Decode 节点</span> 迁移通道，形成 Prefill/Decode 解耦拓扑。' },
+      { at: 2200, text: '编排完成 <span class="hl">32ms</span>，24 NPU 分工就绪（16 Prefill + 8 Decode）。<span class="hl">推理服务启动时延从秒级降到毫秒级</span>。' }
+    ]);
+    const path = ['STL2', 'SL12', 'SL02', 'LS2', 'SL00', 'SL10', 'LS0', 'SL11', 'SL01', 'LS1'];
+    path.forEach((lid, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(`link-${lid}`);
+        if (el) el.classList.add('building');
+        const link = LINKS.find(l => l.id === lid);
+        const a = NODES.find(n => n.id === link.from);
+        const b = NODES.find(n => n.id === link.to);
+        log('orchestrate', `构建 ${lid}: ${a.label}↔${b.label}`, 'brand');
+      }, i * 200);
+    });
+    setTimeout(() => {
+      path.forEach(lid => {
+        const el = document.getElementById(`link-${lid}`);
+        if (el) el.classList.remove('building');
+      });
+      log('orchestrate', '编排完成 32ms，Prefill/Decode 拓扑就绪', 'accent');
+      markEvent('编排生效', '#8B7BFF');
+      updateKPI();
+      narrHide();
+    }, path.length * 200 + 500);
+  }
+
+  // 演示：多轨 QoS 选路（Prefill→Decode 的 KV 迁移遇拥塞，高优请求走备轨）
+  function demoRouting() {
+    const sl12 = LINKS.find(l => l.id === 'SL12');
+    const sl02 = LINKS.find(l => l.id === 'SL02');
+    const label12 = `${NODES.find(n => n.id === sl12.from).label}↔${NODES.find(n => n.id === sl12.to).label}`;
+    log('routing', `KV 迁移链路 ${sl12.id} (${label12}) 拥塞 95%`, 'warn');
+    sl12.status = 'congested'; sl12.utilization = 0.95;
+    refreshLinks();
+    narrPlay('② 多轨 QoS 选路 · KV 迁移分流', [
+      { at: 0,    text: '<span class="hl-danger">Spine1↔Leaf2 链路拥塞 95%</span>，变红。Prefill→Decode 的 KV 迁移排队，TTFT 飙升。' },
+      { at: 1200, text: '引擎启动 QoS 选路：<span class="hl-brand">高优请求的 KV 走备轨 Spine0↔Leaf2</span>，低优流仍在原轨。' },
+      { at: 2600, text: '原链路从红→黄→绿，<span class="hl">TTFT 下降 40%</span>，KV 迁移延迟回落。QoS 分级保证高优请求 SLA。' }
+    ]);
+    setTimeout(() => {
+      log('routing', 'QoS 选路：高优 KV 迁移切换到备轨', 'brand');
+      sl02.status = 'busy'; sl02.utilization = 0.82;
+      sl12.status = 'busy'; sl12.utilization = 0.6;
+      refreshLinks();
+      markEvent('QoS 选路', '#2DD4A8');
+      updateKPI();
+      setTimeout(() => {
+        sl12.status = 'healthy'; sl12.utilization = 0.5;
+        sl02.status = 'healthy'; sl02.utilization = 0.45;
+        refreshLinks();
+        narrHide();
+      }, 4000);
+    }, 1200);
+  }
+
+  // 演示：并行切片传输（长请求 KV 缓存分片沿 4 路并行迁移到 Decode 节点）
+  function demoSlicing() {
+    log('slicing', '长请求 KV 缓存切片 32 份，沿 4 路并行迁移到 Decode 节点', 'brand');
+    narrPlay('③ 并行切片传输 · KV 缓存并行迁移', [
+      { at: 0,    text: '长请求的 <span class="hl-brand">KV 缓存被切成 32 个分片</span>，沿 4 条路径并行迁移到 Decode 节点（紫/绿/橙/粉 4 色粒子流）。' },
+      { at: 1000, text: '4 条路径：<span class="hl-brand">KV池→Leaf2→Spine→Leaf0→Decode</span> 等，每条走不同的 Spine-Leaf 组合。' },
+      { at: 2000, text: '单路径 200G，<span class="hl">4 路聚合达 800G</span>，KV 迁移耗时从 2.56s 降到 0.64s。' },
+      { at: 2800, text: 'KV 在 Decode 节点聚合，<span class="hl">TTFT 降低 75%</span>，长请求首字延迟大幅缩短，吞吐陡升。' }
+    ]);
+    const paths = [
+      { name: '路径1', links: ['STL2', 'SL12', 'SL10', 'LS0'], color: '#8B7BFF' },
+      { name: '路径2', links: ['STL2', 'SL02', 'SL00', 'LS0'], color: '#2DD4A8' },
+      { name: '路径3', links: ['STL2', 'SL12', 'SL01', 'LS1'], color: '#FFB547' },
+      { name: '路径4', links: ['STL2', 'SL02', 'SL11', 'LS1'], color: '#FF7AB6' }
+    ];
+    let burst = 0;
+    const interval = setInterval(() => {
+      paths.forEach(p => {
+        p.links.forEach(lid => {
+          const link = LINKS.find(l => l.id === lid);
+          if (!link || link.status === 'faulted') return;
+          particles.push({ linkId: lid, t: 0, speed: 0.014, color: p.color, size: 2.6 });
+        });
+      });
+      burst++;
+      if (burst >= 18) {
+        clearInterval(interval);
+        log('slicing', 'KV 切片聚合完成，聚合 800G vs 单路径 200G', 'accent');
+        markEvent('KV 切片并行 ×4', '#2DD4A8');
+        updateKPI();
+        showComparePopup();
+        narrHide();
+      }
+    }, 120);
+  }
+
+  // 演示：链路故障自愈（推理链路故障，请求自动重路由，KV 副本切换）
+  function demoSelfheal() {
+    if (STATE.faultedLink) { log('selfheal', '已有故障在处理中', 'warn'); return; }
+    const target = LINKS.find(l => l.id === 'SL00');
+    const backup = LINKS.find(l => l.id === 'SL10');
+    const label = `${NODES.find(n => n.id === target.from).label}↔${NODES.find(n => n.id === target.to).label}`;
+    STATE.faultedLink = target.id;
+    target.status = 'faulted';
+    refreshLinks();
+    log('selfheal', `注入故障：推理链路 ${target.id} (${label}) 断开`, 'danger');
+    markEvent('故障注入', '#FF5C7A');
+    updateKPI();
+    narrPlay('④ 链路故障自愈 · 推理 SLA 保障', [
+      { at: 0,    text: '<span class="hl-danger">Spine0↔Leaf0 链路故障断开</span>（红色虚线）。Prefill 节点的推理请求受阻，吞吐曲线出现凹陷。' },
+      { at: 300,  text: '引擎 8ms 检测到异常，启动自动重路由，KV 副本准备切换...' },
+      { at: 1500, text: '<span class="hl">推理请求重路由到备轨 Spine1↔Leaf0</span>，KV 副本同步切换，新链路亮起。自愈完成仅 18ms。' },
+      { at: 2600, text: '推理服务恢复，<span class="hl">吞吐凹陷后回升，SLA 不中断</span>。故障期间请求损失 < 3%。' }
+    ]);
+    setTimeout(() => {
+      log('selfheal', '检测异常 8ms，启动重路由', 'warn');
+    }, 300);
+    setTimeout(() => {
+      backup.status = 'busy'; backup.utilization = 0.85;
+      refreshLinks();
+      STATE.faultedLink = null;
+      log('selfheal', `推理请求切到 ${backup.id}，自愈完成 18ms`, 'accent');
+      markEvent('自愈恢复', '#2DD4A8');
+      updateKPI();
+      setTimeout(() => {
+        target.status = 'healthy'; target.utilization = 0.5;
+        backup.status = 'healthy'; backup.utilization = 0.4;
+        refreshLinks();
+        narrHide();
+      }, 4000);
+    }, 1500);
+  }
+
+  // 演示：计算-传输流水线（Prefill 层间预取 + Decode 连续批处理）
+  function demoPipeline() {
+    log('pipeline', '启动 Prefill 层间流水线 + Decode 连续批处理', 'brand');
+    narrPlay('⑤ 计算-传输流水线 · Prefill 层间预取', [
+      { at: 0,    text: 'Prefill 阶段分层：<span class="hl-brand">Layer N 计算时，Layer N+1 的权重/KV 已在预取路上</span>。' },
+      { at: 800,  text: 'Server-0 传输 Layer 1 数据（紫色粒子流），同时 NPU 计算 Layer 0，两者时间重叠。' },
+      { at: 1600, text: '阶梯式推进：Server-0/1/2 依次进入下一层预取，<span class="hl-brand">层重叠度 62%</span>。Decode 侧连续批处理。' },
+      { at: 2400, text: 'NPU 利用率从"锯齿"变"平直高位"，<span class="hl">传输延迟藏在计算时间里，推理吞吐 +30%</span>。' }
+    ]);
+    const lsLinks = ['LS0', 'LS1', 'LS2'];
+    lsLinks.forEach((lid, i) => {
+      setTimeout(() => {
+        const link = LINKS.find(l => l.id === lid);
+        if (!link || link.status === 'faulted') return;
+        for (let k = 0; k < 10; k++) {
+          particles.push({ linkId: lid, t: 0, speed: 0.01, color: '#8B7BFF', size: 2.4 });
+        }
+        log('pipeline', `Prefill Layer ${i+1} 预取中，与 Layer ${i} 计算重叠`, 'brand');
+      }, i * 400);
+    });
+    setTimeout(() => {
+      log('pipeline', 'Prefill 层间重叠度 62%，推理吞吐提升', 'accent');
+      markEvent('Prefill 流水线 62%', '#8B7BFF');
+      updateKPI();
+      narrHide();
+    }, lsLinks.length * 400 + 800);
+  }
+
+  function runDemo(key) {
+    if (STATE.running) return;
+    STATE.running = true;
+    const btns = capList.querySelectorAll('.demo-btn');
+    btns.forEach(b => b.disabled = true);
+    const done = () => { STATE.running = false; btns.forEach(b => b.disabled = false); };
+    const map = {
+      orchestrate: () => { demoOrchestrate(); setTimeout(done, 2500); },
+      routing:     () => { demoRouting();     setTimeout(done, 6000); },
+      slicing:     () => { demoSlicing();     setTimeout(done, 3500); },
+      selfheal:    () => { demoSelfheal();    setTimeout(done, 6500); },
+      pipeline:    () => { demoPipeline();    setTimeout(done, 3500); }
+    };
+    (map[key] || done)();
+  }
+
+  /* ---------- 链路刷新辅助 ---------- */
+  function linkClassName(link) {
+    let cls = `topo-link ${link.status}`;
+    if (selectedTarget && selectedTarget.type === 'link' && selectedTarget.id === link.id) cls += ' selected';
+    return cls;
+  }
+  function refreshLinks() {
+    LINKS.forEach(link => {
+      const el = document.getElementById(`link-${link.id}`);
+      if (!el) return;
+      el.setAttribute('class', linkClassName(link));
+    });
+  }
+  function rebuildLink(link) {
+    const el = document.getElementById(`link-${link.id}`);
+    if (!el) return;
+    const d = linkPath(link, link.track);
+    el.setAttribute('d', d);
+    el.setAttribute('class', linkClassName(link));
+    // 同步热区路径
+    const hit = topoSvg.querySelector(`.topo-link-hit[data-linkid="${link.id}"]`);
+    if (hit) hit.setAttribute('d', d);
+    // 重建采样点
+    const pathEl = el;
+    const len = pathEl.getTotalLength();
+    const samples = [];
+    const N = 40;
+    for (let i = 0; i <= N; i++) {
+      const pt = pathEl.getPointAtLength((i / N) * len);
+      samples.push({ x: pt.x, y: pt.y });
+    }
+    pathSamples[link.id] = samples;
+  }
+
+  function showComparePopup() {
+    comparePopup.innerHTML = `
+      <div class="cp-title">并行切片传输收益</div>
+      <div class="cp-row"><span>单路径带宽</span><span>200 Gb/s</span></div>
+      <div class="cp-row gain"><span>聚合带宽</span><span>800 Gb/s</span></div>
+      <div class="cp-row gain"><span>并行路数</span><span>×4</span></div>
+      <div class="cp-row gain"><span>传输耗时</span><span>-75%</span></div>
+    `;
+    comparePopup.style.display = 'block';
+    const wrap = document.querySelector('.canvas-wrap').getBoundingClientRect();
+    comparePopup.style.left = (wrap.width - 220) + 'px';
+    comparePopup.style.top = '60px';
+    setTimeout(() => { comparePopup.style.display = 'none'; }, 4000);
+  }
+
+  /* =========================================================
+     8. 主循环
+     ========================================================= */
+  let lastTs = performance.now();
+  function loop(ts) {
+    const dt = ts - lastTs;
+    lastTs = ts;
+    if (!STATE.paused) {
+      tickParticles(dt);
+      drawParticles();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // 慢周期：更新指标与吞吐曲线
+  setInterval(() => {
+    if (STATE.paused) return;
+    updateMetrics();
+    pushThroughput();
+    drawTpChart();
+  }, 1000);
+
+  /* =========================================================
+     9. 顶栏控制
+     ========================================================= */
+  document.getElementById('btnPause').addEventListener('click', e => {
+    STATE.paused = !STATE.paused;
+    e.target.textContent = STATE.paused ? '继续' : '暂停';
+    e.target.classList.toggle('active', STATE.paused);
+  });
+  document.getElementById('btnCompare').addEventListener('click', e => {
+    STATE.compareMode = !STATE.compareMode;
+    e.target.classList.toggle('active', STATE.compareMode);
+    drawTpChart();
+  });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+    STATE.running = false;
+    autoDemoBtn.disabled = false;
+    autoDemoBtn.textContent = '一键演示';
+    capList.querySelectorAll('.demo-btn').forEach(b => b.disabled = false);
+    STATE.events = [];
+    tpData.baseline = []; tpData.current = [];
+    STATE.faultedLink = null;
+    clearSelection();
+    // 重置所有链路到默认状态
+    const defaults = {
+      'SL00': ['healthy', 0.5], 'SL10': ['healthy', 0.4], 'SL01': ['busy', 0.8],
+      'SL11': ['healthy', 0.5], 'SL02': ['healthy', 0.45], 'SL12': ['congested', 0.92],
+      'LS0': ['healthy', 0.72], 'LS1': ['busy', 0.85], 'LS2': ['healthy', 0.65],
+      'STL0': ['healthy', 0.6], 'STL1': ['healthy', 0.5], 'STL2': ['busy', 0.78]
+    };
+    LINKS.forEach(l => {
+      const d = defaults[l.id] || ['healthy', 0.5];
+      l.status = d[0]; l.track = 'A'; l.utilization = d[1];
+    });
+    renderTopo();
+    setTimeout(() => { buildPathSamples(); }, 50);
+    log('reset', '已重置演示状态', 'warn');
+    applyCapabilityEffects();
+    updateKPI();
+    drawTpChart();
+  });
+
+  /* ---- 一键演示：依次执行五项 ---- */
+  const autoDemoBtn = document.getElementById('btnAutoDemo');
+  let autoTimer = null;
+  autoDemoBtn.addEventListener('click', () => {
+    if (STATE.running) return;
+    clearSelection();
+    log('auto', '启动一键演示：依次展示五项网络优化能力', 'brand');
+    const seq = ['orchestrate', 'routing', 'slicing', 'selfheal', 'pipeline'];
+    const durations = [2500, 6000, 3500, 6500, 3500];
+    let i = 0;
+    autoDemoBtn.disabled = true;
+    autoDemoBtn.textContent = '演示中 1/5';
+    function step() {
+      if (i >= seq.length) {
+        autoDemoBtn.disabled = false;
+        autoDemoBtn.textContent = '一键演示';
+        log('auto', '一键演示完成，网络优化使吞吐提升 ' + Math.round(computeBoost() * 120) + '%', 'accent');
+        return;
+      }
+      autoDemoBtn.textContent = `演示中 ${i + 1}/5`;
+      runDemo(seq[i]);
+      autoTimer = setTimeout(() => { i++; step(); }, durations[i] + 400);
+    }
+    step();
+  });
+
+  /* ---- 场景触发浮窗按钮 ---- */
+  document.querySelectorAll('.scenario-bar .sc-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const sc = b.getAttribute('data-sc');
+      runDemo(sc);
+    });
+  });
+
+  /* ---- 点击画布空白处取消选中 ---- */
+  document.querySelector('.canvas-wrap').addEventListener('click', e => {
+    // 点击非节点、非链路热区时取消选中
+    const onNode = e.target.classList && e.target.classList.contains('topo-node');
+    const onLinkHit = e.target.classList && e.target.classList.contains('topo-link-hit');
+    if (!onNode && !onLinkHit) clearSelection();
+  });
+
+  /* =========================================================
+     10. 初始化
+     ========================================================= */
+  function init() {
+    renderTopo();
+    renderCaps();
+    resizeCanvas();
+    resizeTpChart();
+    // 等 SVG 渲染完成后采样路径
+    requestAnimationFrame(() => {
+      buildPathSamples();
+      resizeCanvas();
+    });
+    // 初始日志
+    log('init', '可观测系统已上线：2 Spine / 3 Leaf / 3 服务器 24 NPU / 3 存储池', 'accent');
+    log('init', '网络优化引擎就绪：拓扑编排 + QoS 选路 + 切片 + 自愈 + 流水线', 'brand');
+    applyCapabilityEffects();
+    updateMetrics();
+    updateKPI();
+    // 预填一些吞吐数据
+    for (let i = 0; i < 20; i++) {
+      tpData.baseline.push(STATE.baseline + (Math.random() - 0.5) * 400);
+      tpData.current.push(STATE.current + (Math.random() - 0.5) * 300);
+    }
+    drawTpChart();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    resizeTpChart();
+    buildPathSamples();
+    drawTpChart();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
