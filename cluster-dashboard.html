@@ -93,13 +93,13 @@
     text-transform: uppercase; padding: 4px 14px; border-radius: 4px;
     white-space: nowrap;
   }
-  .zone-prefill { left: 12px; width: 30%; border-color: rgba(139,123,255,0.28); background: rgba(139,123,255,0.04); }
+  .zone-prefill { left: 2%; width: 19%; border-color: rgba(139,123,255,0.28); background: rgba(139,123,255,0.04); }
   .zone-prefill .zone-label { background: rgba(139,123,255,0.18); color: var(--brand); }
-  .zone-network { left: 32%; right: 32%; bottom: 33%; border-color: rgba(255,181,71,0.28); background: rgba(255,181,71,0.04); }
+  .zone-network { left: 27%; right: 27%; bottom: 33%; border-color: rgba(255,181,71,0.28); background: rgba(255,181,71,0.04); }
   .zone-network .zone-label { background: rgba(255,181,71,0.18); color: var(--warn); }
-  .zone-kv { left: 32%; right: 32%; top: 70%; border-color: rgba(255,122,182,0.28); background: rgba(255,122,182,0.04); }
+  .zone-kv { left: 27%; right: 27%; top: 68%; border-color: rgba(255,122,182,0.28); background: rgba(255,122,182,0.04); }
   .zone-kv .zone-label { background: rgba(255,122,182,0.18); color: var(--pink); }
-  .zone-decode { right: 12px; width: 30%; border-color: rgba(45,212,168,0.28); background: rgba(45,212,168,0.04); }
+  .zone-decode { right: 2%; width: 19%; border-color: rgba(45,212,168,0.28); background: rgba(45,212,168,0.04); }
   .zone-decode .zone-label { background: rgba(45,212,168,0.18); color: var(--accent); }
 
   #topoSvg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -144,7 +144,7 @@
   }
   .obs-card { background: var(--bg-panel); padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; }
   .obs-card .oc-head {
-    font-size: 10px; font-weight: 650; margin-bottom: 6px;
+    font-size: 11px; font-weight: 650; margin-bottom: 6px;
     display: flex; align-items: center; gap: 8px;
     text-transform: uppercase; letter-spacing: 0.05em;
     padding-bottom: 5px; border-bottom: 1px solid var(--border-soft);
@@ -159,20 +159,20 @@
   .grp { margin-bottom: 5px; }
   .grp:last-child { margin-bottom: 0; }
   .grp-label {
-    font-size: 8px; color: var(--text-dim); font-weight: 600;
+    font-size: 9px; color: var(--text-dim); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.08em;
     margin-bottom: 3px; padding-left: 2px;
   }
-  /* 瓦片网格：大数字 + 小标签（一排4个，紧凑正方形） */
-  .tiles { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; }
+  /* 瓦片网格：大数字 + 小标签（一排4个，铺满空间） */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; flex: 1; min-height: 0; }
   .tile {
     background: var(--bg-card); border: 1px solid var(--border-soft);
-    border-radius: 4px; padding: 6px 3px;
+    border-radius: 4px; padding: 4px 2px;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    justify-content: center; min-height: 42px;
+    justify-content: center; min-height: 0;
   }
   .tile .tv {
-    font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+    font-family: var(--font-mono); font-size: 17px; font-weight: 700;
     color: var(--text); line-height: 1; letter-spacing: -0.02em;
     text-align: center;
   }
@@ -182,37 +182,37 @@
   .tile .tv.danger { color: var(--danger); }
   .tile .tv.pink { color: var(--pink); }
   .tile .tl {
-    font-size: 7px; color: var(--text-muted);
+    font-size: 9px; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: 0.03em;
     line-height: 1.1; text-align: center;
   }
-  .tile .tu { font-size: 8px; color: var(--text-dim); margin-left: 1px; font-weight: 500; }
+  .tile .tu { font-size: 10px; color: var(--text-dim); margin-left: 1px; font-weight: 500; }
 
   /* ============ 可视化组件：仪表盘/柱状图/热力图 ============ */
-  .viz-row { display: flex; gap: 4px; margin-bottom: 4px; }
+  .viz-row { display: flex; gap: 4px; margin-bottom: 4px; flex-shrink: 0; }
   .gauge-wrap {
     flex: 1; background: var(--bg-card); border: 1px solid var(--border-soft);
     border-radius: 4px; padding: 3px 2px; display: flex; flex-direction: column;
     align-items: center; gap: 1px;
   }
   .gauge-wrap .gw-label {
-    font-size: 7px; color: var(--text-dim); text-transform: uppercase;
+    font-size: 8px; color: var(--text-dim); text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .gauge-svg { width: 100%; height: 46px; display: block; }
   .gauge-svg .gauge-bg { fill: none; stroke: var(--border); stroke-width: 5; stroke-linecap: round; }
   .gauge-svg .gauge-arc { fill: none; stroke-width: 5; stroke-linecap: round;
     transition: stroke-dashoffset 0.8s ease, stroke 0.3s; }
-  .gauge-svg .gauge-text { font-size: 13px; font-weight: 700; font-family: var(--font-mono); }
-  .gauge-svg .gauge-sub { font-size: 5px; fill: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .gauge-svg .gauge-text { font-size: 14px; font-weight: 700; font-family: var(--font-mono); }
+  .gauge-svg .gauge-sub { font-size: 8px; fill: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 
   .barchart-wrap {
     background: var(--bg-card); border: 1px solid var(--border-soft);
     border-radius: 4px; padding: 3px 4px; display: flex; flex-direction: column;
-    gap: 1px; margin-bottom: 4px;
+    gap: 1px; margin-bottom: 4px; flex-shrink: 0;
   }
   .barchart-wrap .bc-label {
-    font-size: 7px; color: var(--text-dim); text-transform: uppercase;
+    font-size: 8.5px; color: var(--text-dim); text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .barchart-svg { width: 100%; height: 48px; display: block; }
@@ -223,7 +223,7 @@
     gap: 1px; flex: 0 0 auto;
   }
   .heatmap-wrap .hm-label {
-    font-size: 7px; color: var(--text-dim); text-transform: uppercase;
+    font-size: 8.5px; color: var(--text-dim); text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .heatmap-svg { width: 100%; height: 36px; display: block; }
@@ -678,7 +678,7 @@
       </div>
     </div>
 
-    <svg id="topoSvg" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet">
+    <svg id="topoSvg" viewBox="0 0 1000 560" preserveAspectRatio="none">
       <!-- ============ 步骤动效层（放在最底层，不挡设备） ============ -->
       <g class="step-fx" id="stepFx">
         <!-- 步骤1：链路负载扫描圈 -->
@@ -1424,10 +1424,10 @@
       if (opts.labels) {
         const lbl = document.createElementNS(SVGNS, 'text');
         lbl.setAttribute('x', x + barW/2);
-        lbl.setAttribute('y', baseY + 7);
+        lbl.setAttribute('y', baseY + 8);
         lbl.setAttribute('text-anchor', 'middle');
         lbl.setAttribute('fill', 'var(--text-dim)');
-        lbl.setAttribute('font-size', '5');
+        lbl.setAttribute('font-size', '7.5');
         lbl.setAttribute('font-family', 'var(--font-mono)');
         lbl.textContent = opts.labels[i];
         svgEl.appendChild(lbl);
