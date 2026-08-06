@@ -45,12 +45,13 @@
   /* ============ 总体布局 ============ */
   .app {
     display: grid;
-    grid-template-rows: 56px 1fr 300px;
+    grid-template-rows: 56px 60px 1fr 280px;
     height: 100vh;
     gap: 1px;
     background: var(--border-soft);
   }
   .topbar { background: var(--bg-panel); }
+  .golden-bar { background: var(--bg-panel); }
   .canvas-wrap { background: var(--bg); position: relative; overflow: hidden; }
   .observe { background: var(--bg-panel); }
 
@@ -76,6 +77,74 @@
   .btn.primary:hover { background: var(--brand); color: #fff; }
   .btn.danger { border-color: var(--danger); color: var(--danger); }
   .btn.danger:hover { background: var(--danger); color: #fff; }
+
+  /* ============ 黄金指标条 ============ */
+  .golden-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
+    background: var(--border-soft); border-bottom: 1px solid var(--border);
+  }
+  .gm-card {
+    background: var(--bg-panel); padding: 6px 12px;
+    display: flex; align-items: center; gap: 10px;
+    position: relative; overflow: hidden;
+  }
+  .gm-card .gm-body { flex: 1; min-width: 0; }
+  .gm-card .gm-label {
+    font-size: 8px; color: var(--text-dim); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    line-height: 1.1; margin-bottom: 1px;
+  }
+  .gm-card .gm-val-row { display: flex; align-items: baseline; gap: 3px; }
+  .gm-card .gm-val {
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    line-height: 1; letter-spacing: -0.02em;
+  }
+  .gm-card .gm-unit {
+    font-size: 10px; color: var(--text-dim); font-weight: 500;
+  }
+  .gm-card .gm-trend {
+    font-size: 8.5px; font-weight: 600; margin-left: 4px;
+  }
+  .gm-card .gm-spark {
+    width: 56px; height: 30px; flex-shrink: 0; display: block;
+  }
+  .gm-card .gm-spark path.line { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .gm-card .gm-spark path.area { opacity: 0.15; }
+  .gm-card .gm-icon {
+    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .gm-card.gm-throughput .gm-val, .gm-card.gm-throughput .gm-icon { color: var(--brand); }
+  .gm-card.gm-throughput .gm-icon { background: rgba(139,123,255,0.12); }
+  .gm-card.gm-throughput .gm-spark path.line { stroke: var(--brand); }
+  .gm-card.gm-throughput .gm-spark path.area { fill: var(--brand); }
+  .gm-card.gm-qps .gm-val, .gm-card.gm-qps .gm-icon { color: var(--accent); }
+  .gm-card.gm-qps .gm-icon { background: rgba(45,212,168,0.12); }
+  .gm-card.gm-qps .gm-spark path.line { stroke: var(--accent); }
+  .gm-card.gm-qps .gm-spark path.area { fill: var(--accent); }
+  .gm-card.gm-tpot .gm-val, .gm-card.gm-tpot .gm-icon { color: var(--warn); }
+  .gm-card.gm-tpot .gm-icon { background: rgba(255,181,71,0.12); }
+  .gm-card.gm-tpot .gm-spark path.line { stroke: var(--warn); }
+  .gm-card.gm-tpot .gm-spark path.area { fill: var(--warn); }
+  .gm-card.gm-sla .gm-val, .gm-card.gm-sla .gm-icon { color: var(--accent); }
+  .gm-card.gm-sla .gm-icon { background: rgba(45,212,168,0.12); }
+  .gm-card.gm-sla .gm-spark path.line { stroke: var(--accent); }
+  .gm-card.gm-sla .gm-spark path.area { fill: var(--accent); }
+  .gm-card.gm-kv .gm-val, .gm-card.gm-kv .gm-icon { color: var(--pink); }
+  .gm-card.gm-kv .gm-icon { background: rgba(255,122,182,0.12); }
+  .gm-card.gm-kv .gm-spark path.line { stroke: var(--pink); }
+  .gm-card.gm-kv .gm-spark path.area { fill: var(--pink); }
+  /* 待采集态 */
+  .golden-bar.dim .gm-val { color: var(--text-dim) !important; }
+  .golden-bar.dim .gm-icon { opacity: 0.4; }
+  .golden-bar.dim .gm-spark { opacity: 0.3; }
+  /* 闪烁高亮 */
+  @keyframes gmFlash {
+    0%, 100% { background: var(--bg-panel); }
+    50% { background: var(--bg-card); box-shadow: inset 0 0 0 1px var(--brand); }
+  }
+  .gm-card.flash { animation: gmFlash 0.6s ease; }
 
   /* ============ 拓扑画布 ============ */
   .canvas-wrap .cv-title {
@@ -567,6 +636,68 @@
     <button class="btn primary">一键优化</button>
     <button class="btn danger" id="faultBtn">注入故障</button>
     <button class="btn">重置</button>
+  </div>
+
+  <!-- ============ 黄金指标条 ============ -->
+  <div class="golden-bar dim" id="goldenBar">
+    <div class="gm-card gm-throughput" id="gmThroughput">
+      <div class="gm-icon">T</div>
+      <div class="gm-body">
+        <div class="gm-label">吞吐量 · Tokens/s</div>
+        <div class="gm-val-row">
+          <span class="gm-val" id="gmThruVal">--</span>
+          <span class="gm-unit">k/s</span>
+          <span class="gm-trend" id="gmThruTrend"></span>
+        </div>
+      </div>
+      <svg class="gm-spark" viewBox="0 0 56 30"><path class="area" id="gmThruArea"></path><path class="line" id="gmThruLine"></path></svg>
+    </div>
+    <div class="gm-card gm-qps" id="gmQps">
+      <div class="gm-icon">Q</div>
+      <div class="gm-body">
+        <div class="gm-label">QPS · 请求并发</div>
+        <div class="gm-val-row">
+          <span class="gm-val" id="gmQpsVal">--</span>
+          <span class="gm-trend" id="gmQpsTrend"></span>
+        </div>
+      </div>
+      <svg class="gm-spark" viewBox="0 0 56 30"><path class="area" id="gmQpsArea"></path><path class="line" id="gmQpsLine"></path></svg>
+    </div>
+    <div class="gm-card gm-tpot" id="gmTpot">
+      <div class="gm-icon">L</div>
+      <div class="gm-body">
+        <div class="gm-label">TPOT · 单 Token 延迟</div>
+        <div class="gm-val-row">
+          <span class="gm-val" id="gmTpotVal">--</span>
+          <span class="gm-unit">ms</span>
+          <span class="gm-trend" id="gmTpotTrend"></span>
+        </div>
+      </div>
+      <svg class="gm-spark" viewBox="0 0 56 30"><path class="area" id="gmTpotArea"></path><path class="line" id="gmTpotLine"></path></svg>
+    </div>
+    <div class="gm-card gm-sla" id="gmSla">
+      <div class="gm-icon">S</div>
+      <div class="gm-body">
+        <div class="gm-label">SLA · 达标率</div>
+        <div class="gm-val-row">
+          <span class="gm-val" id="gmSlaVal">--</span>
+          <span class="gm-unit">%</span>
+          <span class="gm-trend" id="gmSlaTrend"></span>
+        </div>
+      </div>
+      <svg class="gm-spark" viewBox="0 0 56 30"><path class="area" id="gmSlaArea"></path><path class="line" id="gmSlaLine"></path></svg>
+    </div>
+    <div class="gm-card gm-kv" id="gmKv">
+      <div class="gm-icon">K</div>
+      <div class="gm-body">
+        <div class="gm-label">P→D KV 同步</div>
+        <div class="gm-val-row">
+          <span class="gm-val" id="gmKvVal">--</span>
+          <span class="gm-trend" id="gmKvTrend"></span>
+        </div>
+      </div>
+      <svg class="gm-spark" viewBox="0 0 56 30"><path class="area" id="gmKvArea"></path><path class="line" id="gmKvLine"></path></svg>
+    </div>
   </div>
 
   <!-- ============ 拓扑画布 ============ -->
@@ -1321,6 +1452,16 @@
   const obs   = document.querySelector('.observe');
   const allTv = Array.from(obs.querySelectorAll('.tile .tv'));
 
+  /* ===== 黄金指标数据（提前声明，避免暂时性死区） ===== */
+  const GOLDEN = {
+    init:     { thru:2.1, qps:512, tpot:38, sla:92, kv:'正常' },
+    opt:      { thru:3.8, qps:920, tpot:24, sla:99, kv:'快' },
+    fault:    { thru:1.8, qps:420, tpot:62, sla:88, kv:'慢' },
+    faultOpt: { thru:3.2, qps:780, tpot:32, sla:95, kv:'正常' }
+  };
+  const gmHistory = { thru:[], qps:[], tpot:[], sla:[] };
+  const GM_MAX = { thru:5.0, qps:1200, tpot:80, sla:100 };
+
   // 覆盖层
   const ov = document.createElement('div');
   ov.className = 'observe-overlay';
@@ -1376,6 +1517,76 @@
       bcLat:[22,35,55,105,220]
     }
   };
+
+  /* ===== 黄金指标：sparkline 绘制 + 更新 + 重置 ===== */
+  function drawSparkline(lineId, areaId, data, max) {
+    const line = document.getElementById(lineId);
+    const area = document.getElementById(areaId);
+    if (!line || !area || data.length < 2) return;
+    const W = 56, H = 30, pad = 3;
+    const pts = data.map(function(v, i) {
+      const x = pad + (W - 2*pad) * (i / (data.length - 1));
+      const y = H - pad - (H - 2*pad) * Math.min(1, v / max);
+      return [x, y];
+    });
+    const d = pts.map(function(p, i) { return (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    line.setAttribute('d', d);
+    const last = pts[pts.length - 1];
+    area.setAttribute('d', d + ' L' + last[0].toFixed(1) + ',' + (H-pad) + ' L' + pts[0][0].toFixed(1) + ',' + (H-pad) + ' Z');
+  }
+
+  function updateGolden(state) {
+    const g = GOLDEN[state] || GOLDEN.init;
+    const bar = document.getElementById('goldenBar');
+    bar.classList.remove('dim');
+    // 数值
+    document.getElementById('gmThruVal').textContent = g.thru.toFixed(1);
+    document.getElementById('gmQpsVal').textContent = g.qps;
+    document.getElementById('gmTpotVal').textContent = g.tpot;
+    document.getElementById('gmSlaVal').textContent = g.sla;
+    document.getElementById('gmKvVal').textContent = g.kv;
+    // 趋势箭头
+    function trend(cur, prev, lowerBetter) {
+      if (prev === undefined || prev === cur) return '';
+      const up = cur > prev;
+      const good = lowerBetter ? !up : up;
+      return (up ? '↑' : '↓') + ' ' + (good ? '良好' : '恶化');
+    }
+    const prev = gmHistory;
+    document.getElementById('gmThruTrend').innerHTML = '<span style="color:' + (g.thru >= 3.0 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.thru >= 3.0 ? '↑ 良好' : '↓ 偏低') + '</span>';
+    document.getElementById('gmQpsTrend').innerHTML = '<span style="color:' + (g.qps >= 800 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.qps >= 800 ? '↑ 良好' : '↓ 偏低') + '</span>';
+    document.getElementById('gmTpotTrend').innerHTML = '<span style="color:' + (g.tpot <= 30 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.tpot <= 30 ? '↓ 良好' : '↑ 偏高') + '</span>';
+    document.getElementById('gmSlaTrend').innerHTML = '<span style="color:' + (g.sla >= 95 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.sla >= 95 ? '↑ 良好' : '↓ 偏低') + '</span>';
+    document.getElementById('gmKvTrend').innerHTML = '<span style="color:' + (g.kv === '快' ? 'var(--accent)' : (g.kv === '慢' ? 'var(--danger)' : 'var(--text-muted)')) + '">' + g.kv + '</span>';
+    // 更新 sparkline 历史
+    gmHistory.thru.push(g.thru); if (gmHistory.thru.length > 12) gmHistory.thru.shift();
+    gmHistory.qps.push(g.qps);   if (gmHistory.qps.length > 12) gmHistory.qps.shift();
+    gmHistory.tpot.push(g.tpot); if (gmHistory.tpot.length > 12) gmHistory.tpot.shift();
+    gmHistory.sla.push(g.sla);   if (gmHistory.sla.length > 12) gmHistory.sla.shift();
+    drawSparkline('gmThruLine', 'gmThruArea', gmHistory.thru, GM_MAX.thru);
+    drawSparkline('gmQpsLine', 'gmQpsArea', gmHistory.qps, GM_MAX.qps);
+    drawSparkline('gmTpotLine', 'gmTpotArea', gmHistory.tpot, GM_MAX.tpot);
+    drawSparkline('gmSlaLine', 'gmSlaArea', gmHistory.sla, GM_MAX.sla);
+    // KV sparkline 用 sla 的数据形状但颜色不同（已在 CSS 中处理）
+    drawSparkline('gmKvLine', 'gmKvArea', gmHistory.thru.map(function(v){ return v * 20; }), 100);
+  }
+
+  function resetGolden() {
+    document.getElementById('goldenBar').classList.add('dim');
+    ['gmThruVal','gmQpsVal','gmTpotVal','gmSlaVal','gmKvVal'].forEach(function(id) {
+      document.getElementById(id).textContent = '--';
+    });
+    ['gmThruTrend','gmQpsTrend','gmTpotTrend','gmSlaTrend','gmKvTrend'].forEach(function(id) {
+      document.getElementById(id).innerHTML = '';
+    });
+    ['gmThruLine','gmQpsLine','gmTpotLine','gmSlaLine','gmKvLine'].forEach(function(id) {
+      document.getElementById(id).setAttribute('d', '');
+    });
+    ['gmThruArea','gmQpsArea','gmTpotArea','gmSlaArea','gmKvArea'].forEach(function(id) {
+      document.getElementById(id).setAttribute('d', '');
+    });
+    gmHistory.thru = []; gmHistory.qps = []; gmHistory.tpot = []; gmHistory.sla = [];
+  }
   // 仪表盘文字后缀
   const GAUGE_UNIT = { gPNpu:'%', gDNpu:'%', gHbmUse:'%', gTotalHit:'%',
     gLinkUse:'%', gMigLat:'ms', gSla:'%', gTpot:'ms' };
@@ -1509,6 +1720,8 @@
       for (let c = 0; c < 8; c++) hmData.push(npuState[32 + r * 8 + c].cur);   // Decode 第 r 台
     }
     renderHeatmap('hmNpu', hmData);
+    // 黄金指标条
+    updateGolden(state);
   }
   function resetViz() {
     ['gPNpu','gDNpu','gHbmUse','gTotalHit','gLinkUse','gMigLat','gSla','gTpot'].forEach(function(id) {
@@ -1521,6 +1734,7 @@
       const el = document.getElementById(id);
       if (el) el.innerHTML = '';
     });
+    resetGolden();
   }
   function populate() {
     const cards = document.querySelectorAll('.obs-card');
