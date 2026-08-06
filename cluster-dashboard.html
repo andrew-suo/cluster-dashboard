@@ -1077,19 +1077,9 @@
       </div>
     </div>
 
-    <!-- 存储 · KV Cache 池（3层容量柱状图 + 命中率瓦片 + 双仪表盘） -->
+    <!-- 存储 · KV Cache 池（双仪表盘 + 命中率瓦片 + 三层容量柱状图） -->
     <div class="obs-card storage">
       <div class="oc-head"><span class="tag"></span>存储 · KV Cache 池</div>
-      <div class="barchart-wrap">
-        <div class="bc-label">三层容量利用率</div>
-        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcCap"></svg>
-      </div>
-      <div class="tiles">
-        <div class="tile"><div class="tv accent" id="t-s0">--<span class="tu">%</span></div><div class="tl">HBM 命中率</div></div>
-        <div class="tile"><div class="tv accent" id="t-s1">--<span class="tu">%</span></div><div class="tl">DDR 命中率</div></div>
-        <div class="tile"><div class="tv warn" id="t-s2">--<span class="tu">%</span></div><div class="tl">SSD 命中率</div></div>
-        <div class="tile"><div class="tv" id="t-s3">--<span class="tu">GB/s</span></div><div class="tl">总带宽</div></div>
-      </div>
       <div class="viz-row">
         <div class="gauge-wrap">
           <svg class="gauge-svg" viewBox="0 0 80 50">
@@ -1108,9 +1098,19 @@
           </svg>
         </div>
       </div>
+      <div class="tiles">
+        <div class="tile"><div class="tv accent" id="t-s0">--<span class="tu">%</span></div><div class="tl">HBM 命中率</div></div>
+        <div class="tile"><div class="tv accent" id="t-s1">--<span class="tu">%</span></div><div class="tl">DDR 命中率</div></div>
+        <div class="tile"><div class="tv warn" id="t-s2">--<span class="tu">%</span></div><div class="tl">SSD 命中率</div></div>
+        <div class="tile"><div class="tv" id="t-s3">--<span class="tu">GB/s</span></div><div class="tl">总带宽</div></div>
+      </div>
+      <div class="barchart-wrap">
+        <div class="bc-label">三层容量利用率</div>
+        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcCap"></svg>
+      </div>
     </div>
 
-    <!-- 网络 · 链路（链路利用率仪表盘 + 8链路柱状图 + 指标瓦片） -->
+    <!-- 网络 · 链路（双仪表盘 + 指标瓦片 + 8链路柱状图） -->
     <div class="obs-card network">
       <div class="oc-head"><span class="tag"></span>网络 · 链路</div>
       <div class="viz-row">
@@ -1131,19 +1131,19 @@
           </svg>
         </div>
       </div>
-      <div class="barchart-wrap">
-        <div class="bc-label">8 链路负载分布</div>
-        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcLinks"></svg>
-      </div>
       <div class="tiles">
         <div class="tile"><div class="tv" id="t-n0">--<span class="tu">G/s</span></div><div class="tl">迁移吞吐</div></div>
         <div class="tile"><div class="tv warn" id="t-n1">--<span class="tu">ms</span></div><div class="tl">端到端 RTT</div></div>
         <div class="tile"><div class="tv danger" id="t-n2">--<span class="tu">%</span></div><div class="tl">重传率</div></div>
         <div class="tile"><div class="tv warn" id="t-n3">--<span class="tu">%</span></div><div class="tl">丢包率</div></div>
       </div>
+      <div class="barchart-wrap">
+        <div class="bc-label">8 链路负载分布</div>
+        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcLinks"></svg>
+      </div>
     </div>
 
-    <!-- 端到端 · 推理性能（SLA仪表盘 + 延迟柱状图 + 指标瓦片） -->
+    <!-- 端到端 · 推理性能（双仪表盘 + 指标瓦片 + 延迟柱状图） -->
     <div class="obs-card e2e">
       <div class="oc-head"><span class="tag"></span>端到端 · 推理性能</div>
       <div class="viz-row">
@@ -1164,15 +1164,15 @@
           </svg>
         </div>
       </div>
-      <div class="barchart-wrap">
-        <div class="bc-label">延迟分布 (ms)</div>
-        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcLat"></svg>
-      </div>
       <div class="tiles">
         <div class="tile"><div class="tv" id="t-e0">--<span class="tu">k/s</span></div><div class="tl">集群吞吐</div></div>
         <div class="tile"><div class="tv" id="t-e1">--</div><div class="tl">QPS</div></div>
         <div class="tile"><div class="tv danger" id="t-e2">--</div><div class="tl">P→D KV 同步</div></div>
         <div class="tile"><div class="tv warn" id="t-e3">--<span class="tu">%</span></div><div class="tl">D 等待 KV</div></div>
+      </div>
+      <div class="barchart-wrap">
+        <div class="bc-label">延迟分布 (ms)</div>
+        <svg class="barchart-svg" viewBox="0 0 200 50" id="bcLat"></svg>
       </div>
     </div>
   </div>
@@ -1349,30 +1349,30 @@
   const VIZ = {
     init: {
       gPNpu:82, gDNpu:78, gHbmUse:85, gTotalHit:92,
-      gLinkUse:95, gMigLat:80, gSla:92, gTpot:45,
+      gLinkUse:72, gMigLat:45, gSla:92, gTpot:38,
       bcCap:[85,70,40],
-      bcLinks:[95,60,95,60,95,60,95,60],
+      bcLinks:[78,55,72,50,75,58,68,45],
       bcLat:[25,45,80,120,280]
     },
     opt: {
       gPNpu:85, gDNpu:76, gHbmUse:78, gTotalHit:96,
-      gLinkUse:48, gMigLat:28, gSla:99, gTpot:28,
+      gLinkUse:42, gMigLat:22, gSla:99, gTpot:24,
       bcCap:[78,62,32],
-      bcLinks:[60,60,60,60,60,60,60,60],
+      bcLinks:[48,42,45,40,50,44,46,38],
       bcLat:[15,25,40,75,180]
     },
     fault: {
-      gPNpu:82, gDNpu:78, gHbmUse:85, gTotalHit:90,
-      gLinkUse:97, gMigLat:100, gSla:88, gTpot:58,
-      bcCap:[85,70,40],
-      bcLinks:[97,30,97,30,97,30,97,30],
+      gPNpu:82, gDNpu:78, gHbmUse:88, gTotalHit:90,
+      gLinkUse:95, gMigLat:105, gSla:88, gTpot:62,
+      bcCap:[88,72,42],
+      bcLinks:[96,28,94,30,95,32,93,26],
       bcLat:[35,58,95,165,380]
     },
     faultOpt: {
-      gPNpu:85, gDNpu:76, gHbmUse:78, gTotalHit:95,
-      gLinkUse:82, gMigLat:42, gSla:95, gTpot:35,
-      bcCap:[78,62,32],
-      bcLinks:[82,40,82,40,82,40,82,40],
+      gPNpu:85, gDNpu:76, gHbmUse:80, gTotalHit:95,
+      gLinkUse:68, gMigLat:38, gSla:95, gTpot:32,
+      bcCap:[80,64,34],
+      bcLinks:[72,38,70,40,68,42,66,36],
       bcLat:[22,35,55,105,220]
     }
   };
@@ -1381,12 +1381,19 @@
     gLinkUse:'%', gMigLat:'ms', gSla:'%', gTpot:'ms' };
 
   /* ===== 可视化组件渲染函数 ===== */
+  // 仪表盘最大值配置：百分比类指标 max=100，延迟类按合理上限归一化
+  const GAUGE_MAX = { gPNpu:100, gDNpu:100, gHbmUse:100, gTotalHit:100,
+    gLinkUse:100, gMigLat:120, gSla:100, gTpot:80 };
   function setGauge(arcId, textId, val) {
     const arc = document.getElementById(arcId);
     const txt = document.getElementById(textId);
     if (!arc || !txt) return;
-    arc.style.strokeDashoffset = String(100 - Math.min(100, Math.max(0, val)));
-    txt.textContent = Math.round(val) + (GAUGE_UNIT[arcId] || '');
+    const max = GAUGE_MAX[arcId] || 100;
+    const pct = Math.min(100, Math.max(0, (val / max) * 100));
+    arc.style.strokeDashoffset = String(100 - pct);
+    // 延迟类指标显示原始值（ms），百分比类显示百分比
+    const unit = GAUGE_UNIT[arcId] || '';
+    txt.textContent = (unit === 'ms' ? Math.round(val) : Math.round(val)) + unit;
   }
   function renderBarchart(svgId, data, opts) {
     opts = opts || {};
@@ -1411,7 +1418,7 @@
       rect.setAttribute('width', barW);
       rect.setAttribute('height', 0);
       rect.setAttribute('rx', 1);
-      rect.setAttribute('fill', Array.isArray(colors) ? colors[i % colors.length] : colors);
+      rect.setAttribute('fill', typeof colors === 'function' ? colors(v, i) : (Array.isArray(colors) ? colors[i % colors.length] : colors));
       rect.setAttribute('opacity', '0.88');
       svgEl.appendChild(rect);
       // 动画增长
@@ -1491,7 +1498,9 @@
     setGauge('gTpot', 'gTpotVal', v.gTpot);
     // 柱状图
     renderBarchart('bcCap', v.bcCap, { labels:['HBM','DDR','SSD'], colors:['#8B7BFF','#2DD4A8','#FFB547'], max:100 });
-    renderBarchart('bcLinks', v.bcLinks, { max:100, colors:['#FF5C7A','#FFB547','#FF5C7A','#FFB547','#FF5C7A','#FFB547','#FF5C7A','#FFB547'] });
+    // bcLinks 颜色按负载动态着色：>90红，>70橙，<70绿
+    const linkColorFn = function(v) { return v >= 90 ? '#FF5C7A' : (v >= 70 ? '#FFB547' : '#2DD4A8'); };
+    renderBarchart('bcLinks', v.bcLinks, { max:100, colors: linkColorFn, labels: ['L0','L1','L2','L3','L4','L5','L6','L7'] });
     renderBarchart('bcLat', v.bcLat, { labels:['P50','P75','P90','P95','P99'], max:400, colors:['#2DD4A8','#2DD4A8','#FFB547','#FFB547','#FF5C7A'] });
     // 热力图（16×4 布局：每行 = P 第i台8卡 + D 第i台8卡，i=0..3）
     const hmData = [];
