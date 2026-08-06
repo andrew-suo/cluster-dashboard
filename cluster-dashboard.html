@@ -163,16 +163,16 @@
     text-transform: uppercase; letter-spacing: 0.08em;
     margin-bottom: 3px; padding-left: 2px;
   }
-  /* 瓦片网格：大数字 + 小标签（一排4个，铺满空间） */
-  .tiles { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; flex: 1; min-height: 0; }
+  /* 瓦片网格：大数字 + 小标签（一排4个，紧凑高度） */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; flex: 0 0 auto; }
   .tile {
     background: var(--bg-card); border: 1px solid var(--border-soft);
-    border-radius: 4px; padding: 4px 2px;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    justify-content: center; min-height: 0;
+    border-radius: 4px; padding: 3px 2px;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    justify-content: center; height: 38px;
   }
   .tile .tv {
-    font-family: var(--font-mono); font-size: 17px; font-weight: 700;
+    font-family: var(--font-mono); font-size: 16px; font-weight: 700;
     color: var(--text); line-height: 1; letter-spacing: -0.02em;
     text-align: center;
   }
@@ -182,14 +182,14 @@
   .tile .tv.danger { color: var(--danger); }
   .tile .tv.pink { color: var(--pink); }
   .tile .tl {
-    font-size: 9px; color: var(--text-muted);
+    font-size: 8.5px; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: 0.03em;
     line-height: 1.1; text-align: center;
   }
-  .tile .tu { font-size: 10px; color: var(--text-dim); margin-left: 1px; font-weight: 500; }
+  .tile .tu { font-size: 9.5px; color: var(--text-dim); margin-left: 1px; font-weight: 500; }
 
   /* ============ 可视化组件：仪表盘/柱状图/热力图 ============ */
-  .viz-row { display: flex; gap: 4px; margin-bottom: 4px; flex-shrink: 0; }
+  .viz-row { display: flex; gap: 4px; margin-bottom: 4px; flex: 0 0 auto; height: 62px; }
   .gauge-wrap {
     flex: 1; background: var(--bg-card); border: 1px solid var(--border-soft);
     border-radius: 4px; padding: 3px 2px; display: flex; flex-direction: column;
@@ -199,34 +199,34 @@
     font-size: 8px; color: var(--text-dim); text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .gauge-svg { width: 100%; height: 46px; display: block; }
+  .gauge-svg { width: 100%; height: 54px; display: block; }
   .gauge-svg .gauge-bg { fill: none; stroke: var(--border); stroke-width: 5; stroke-linecap: round; }
   .gauge-svg .gauge-arc { fill: none; stroke-width: 5; stroke-linecap: round;
     transition: stroke-dashoffset 0.8s ease, stroke 0.3s; }
-  .gauge-svg .gauge-text { font-size: 14px; font-weight: 700; font-family: var(--font-mono); }
+  .gauge-svg .gauge-text { font-size: 15px; font-weight: 700; font-family: var(--font-mono); }
   .gauge-svg .gauge-sub { font-size: 8px; fill: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 
   .barchart-wrap {
     background: var(--bg-card); border: 1px solid var(--border-soft);
     border-radius: 4px; padding: 3px 4px; display: flex; flex-direction: column;
-    gap: 1px; margin-bottom: 4px; flex-shrink: 0;
+    gap: 1px; margin-bottom: 4px; flex: 1; min-height: 0;
   }
   .barchart-wrap .bc-label {
     font-size: 8.5px; color: var(--text-dim); text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.05em; flex-shrink: 0;
   }
-  .barchart-svg { width: 100%; height: 48px; display: block; }
+  .barchart-svg { width: 100%; flex: 1; min-height: 40px; display: block; }
 
   .heatmap-wrap {
     background: var(--bg-card); border: 1px solid var(--border-soft);
     border-radius: 4px; padding: 3px 4px; display: flex; flex-direction: column;
-    gap: 1px; flex: 0 0 auto;
+    gap: 1px; flex: 1; min-height: 0;
   }
   .heatmap-wrap .hm-label {
     font-size: 8.5px; color: var(--text-dim); text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.05em; flex-shrink: 0;
   }
-  .heatmap-svg { width: 100%; height: 36px; display: block; }
+  .heatmap-svg { width: 100%; flex: 1; min-height: 0; display: block; }
   .heatmap-svg rect.cell { transition: fill 0.5s; }
 
   /* ============ 动效：设备负载感 ============ */
