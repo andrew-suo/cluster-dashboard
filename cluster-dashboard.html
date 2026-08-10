@@ -45,7 +45,7 @@
   /* ============ 总体布局 ============ */
   .app {
     display: grid;
-    grid-template-rows: 56px 96px minmax(0, 1fr) 210px;
+    grid-template-rows: 56px 96px 208px minmax(0, 1fr);
     height: 100vh;
     gap: 1px;
     background: var(--border-soft);
@@ -53,9 +53,61 @@
   .topbar { background: var(--bg-panel); }
   .golden-bar { background: var(--bg-panel); }
   .canvas-wrap { background: var(--bg); position: relative; overflow: hidden; min-height: 0; }
+  .optimization-stage { position: relative; overflow: hidden; padding: 10px 16px 12px; background: #0D1426; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .optimization-stage .algo-panel, .optimization-stage .solve-panel, .optimization-stage .forecast-panel { display: none !important; }
+  .opt-stage-head { height: 31px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid rgba(111,134,184,.26); }
+  .opt-stage-mark { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 7px rgba(139,123,255,.55); }
+  .opt-stage-title { color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: .08em; }
+  .opt-stage-sub { color: var(--text-dim); font: 700 8px var(--font-mono); letter-spacing: .1em; }
+  .opt-stage-status { margin-left: auto; color: var(--text-dim); font: 700 10px var(--font-mono); }
+  .opt-stage-status.live { color: var(--accent); }
+  .opt-step-grid { height: calc(100% - 37px); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding-top: 9px; }
+  .opt-step-card { --step-color: var(--brand); position: relative; min-width: 0; padding: 10px 11px; border: 1px solid rgba(111,134,184,.22); background: linear-gradient(180deg, rgba(18,28,52,.72), rgba(8,15,31,.72)); overflow: hidden; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
+  .opt-step-card:nth-child(2) { --step-color: var(--warn); }.opt-step-card:nth-child(3) { --step-color: var(--pink); }.opt-step-card:nth-child(4) { --step-color: #65B4FF; }.opt-step-card:nth-child(5) { --step-color: var(--accent); }
+  .opt-step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--step-color); transform:scaleX(.08); transform-origin:left; }
+  .opt-step-card.running { opacity:1; border-color:color-mix(in srgb, var(--step-color) 68%, var(--border)); background:color-mix(in srgb, var(--step-color) 8%, rgba(12,20,39,.7)); box-shadow:0 0 18px color-mix(in srgb, var(--step-color) 28%, transparent); }
+  .opt-step-card.running::before { animation: stepTrace 1s linear infinite; }.opt-step-card.done { opacity:.5; border-color:color-mix(in srgb, var(--step-color) 34%, var(--border)); }.opt-step-card.done::before { transform:scaleX(1); }
+  .opt-step-num { color:var(--step-color); font:700 10px var(--font-mono); }.opt-step-name { margin-left:6px; color:var(--text); font-size:13px; font-weight:700; }.opt-step-state { position:relative; z-index:1; margin-top:6px; color:var(--text-muted); font-size:10px; font-weight:600; }
+  .baseline-lock, .baseline-progress { display:none; margin-left:5px; font:700 8px var(--font-mono); letter-spacing:.03em; }
+  .baseline-progress { color:var(--brand); }
+  .opt-step-card[data-opt-step="0"].running .baseline-progress { display:inline; }
+  .opt-step-card[data-opt-step="0"].done .baseline-lock { display:inline; }
+  .opt-step-card[data-opt-step="0"] .opt-step-state { display:none; }
+  .model-solved { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
+  .opt-step-card[data-opt-step="1"].done .model-solved { display:inline; }
+  .opt-step-card[data-opt-step="1"] .opt-step-state { display:none; }
+  .kv-rebalanced { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
+  .opt-step-card[data-opt-step="2"].done .kv-rebalanced { display:inline; }
+  .opt-step-card[data-opt-step="2"] .opt-step-state { display:none; }
+  .route-deployed, .forecast-verified { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
+  .opt-step-card[data-opt-step="3"].done .route-deployed, .opt-step-card[data-opt-step="4"].done .forecast-verified { display:inline; }
+  .opt-step-card[data-opt-step="3"] .opt-step-state, .opt-step-card[data-opt-step="4"] .opt-step-state { display:none; }
+  .opt-viz { display:none; }
+  .opt-card-canvas { position:absolute; z-index:0; left:11px; right:11px; bottom:36px; width:calc(100% - 22px); height:62px; pointer-events:none; }
+  .opt-step-note { position:absolute; z-index:1; left:11px; right:11px; bottom:8px; min-height:24px; color:var(--text-dim); font:600 9px/1.3 var(--font-sans); letter-spacing:.02em; white-space:normal; overflow:hidden; }
+  .opt-step-note b { display:block; color:color-mix(in srgb, var(--step-color) 70%, var(--text)); font-weight:700; }
+  .opt-step-card.running .opt-step-note { color:var(--text-muted); }.opt-step-card.done .opt-step-note { color:rgba(184,198,224,.72); }
+  .opt-step-card[data-opt-step="0"] .opt-step-note { display:none; }
+  .opt-step-card[data-opt-step="0"] .opt-card-canvas { bottom:10px; height:92px; }
+  .opt-viz .v-grid { stroke:rgba(139,155,201,.13); stroke-width:.55; }.opt-viz .v-muted { stroke:rgba(139,155,201,.24); stroke-width:.8; fill:none; }.opt-viz .v-accent { stroke:var(--step-color); fill:none; stroke-width:1.3; }.opt-viz .v-fill { fill:var(--step-color); }.opt-viz .v-frame { fill:rgba(5,11,24,.42); stroke:rgba(139,155,201,.24); stroke-width:.7; }
+  .opt-viz .fp-port { fill:#0b1121; stroke:var(--step-color); stroke-width:1; opacity:.35; }.opt-viz .fp-cell { fill:rgba(139,155,201,.1); stroke:rgba(139,155,201,.14); stroke-width:.45; }.opt-viz .fp-cell.locked { fill:var(--step-color); stroke:var(--step-color); opacity:.8; filter:drop-shadow(0 0 2px var(--step-color)); }
+  .opt-step-card.running .fp-port { animation: portReceive .78s ease-in-out infinite; }.opt-step-card.running .fp-scan { animation: fpScan 1s linear infinite; }.opt-step-card.done .fp-port { opacity:.8; }.opt-step-card.done .fp-scan { opacity:0; }
+  .model-boundary { stroke:var(--step-color); fill:none; stroke-width:1.2; stroke-dasharray:2 2; opacity:.4; }.model-region { fill:var(--step-color); opacity:.07; stroke:var(--step-color); stroke-width:1; transform-origin:50px 22px; }.model-solution { fill:var(--step-color); opacity:0; }.opt-step-card.running .model-boundary { animation: constraintSweep 1.3s ease-in-out infinite; }.opt-step-card.running .model-region { animation: feasibleSet 1.3s ease-in-out infinite; }.opt-step-card.running .model-solution { animation: solutionPulse 1.3s ease-in-out infinite; }.opt-step-card.done .model-region { opacity:.18; }.opt-step-card.done .model-solution { opacity:1; filter:drop-shadow(0 0 2px var(--step-color)); }
+  .kv-before { fill:var(--step-color); opacity:.5; }.kv-after { fill:var(--step-color); opacity:0; }.kv-transfer { stroke:var(--step-color); stroke-width:1; stroke-dasharray:2 3; opacity:0; }.opt-step-card.running .kv-before { animation: kvDissolve 1.45s ease-in-out infinite; }.opt-step-card.running .kv-after { animation: kvSettle 1.45s ease-in-out infinite; }.opt-step-card.running .kv-transfer { animation: kvTransfer 1.45s linear infinite; }.opt-step-card.done .kv-before { opacity:.08; }.opt-step-card.done .kv-after { opacity:.74; filter:drop-shadow(0 0 1.5px var(--step-color)); }
+  .route-link { stroke:rgba(139,155,201,.22); stroke-width:1; fill:none; }.route-link.candidate { stroke:var(--step-color); stroke-dasharray:3 2; opacity:0; }.route-node { fill:#0a1225; stroke:rgba(139,155,201,.38); stroke-width:1; }.route-node.live { fill:var(--step-color); }.opt-step-card.running .route-link.candidate { animation: routeProbe 1.25s linear infinite; }.opt-step-card.running .route-link.candidate.alt { animation-delay:.42s; }.opt-step-card.running .route-node.live { animation: routeNode 1.25s ease-in-out infinite; }.opt-step-card.done .route-link.candidate { opacity:.85; stroke-dasharray:none; }.opt-step-card.done .route-link.candidate.alt { opacity:.2; }.opt-step-card.done .route-node.live { fill:var(--step-color); }
+  .forecast-band { fill:var(--accent); opacity:.1; }.forecast-range { fill:var(--step-color); opacity:.13; }.forecast-line { stroke:var(--step-color); fill:none; stroke-width:1.25; }.forecast-target { stroke:var(--accent); stroke-width:.7; stroke-dasharray:2 2; }.forecast-dot { fill:var(--step-color); opacity:0; }.opt-step-card.running .forecast-range { animation: rangeClose 1.25s ease-in-out infinite; transform-origin:62px 22px; }.opt-step-card.running .forecast-line { animation: forecastDraw 1.25s linear infinite; stroke-dasharray:80; }.opt-step-card.running .forecast-dot { animation: solutionPulse 1.25s ease-in-out infinite; }.opt-step-card.done .forecast-range { fill:var(--accent); opacity:.18; }.opt-step-card.done .forecast-line, .opt-step-card.done .forecast-dot { stroke:var(--accent); fill:var(--accent); opacity:1; }
+  .collection-particle-canvas { position:fixed; inset:0; z-index:20; pointer-events:none; mix-blend-mode:screen; }
+  @keyframes stepTrace { 0% { transform:scaleX(.08); } 70% { transform:scaleX(1); } 100% { transform:scaleX(.35); } }
+  @keyframes portReceive { 50% { opacity:1; filter:drop-shadow(0 0 2px var(--step-color)); } } @keyframes fpScan { from { transform:translateX(-15px); opacity:0; } 20% { opacity:.9; } to { transform:translateX(106px); opacity:0; } }
+  @keyframes constraintSweep { 50% { stroke-dashoffset:-12; opacity:.9; } } @keyframes feasibleSet { 50% { transform:scale(.74); opacity:.22; } } @keyframes solutionPulse { 40% { opacity:1; filter:drop-shadow(0 0 3px var(--step-color)); } }
+  @keyframes kvDissolve { 45% { opacity:.75; } 80%,100% { opacity:.08; } } @keyframes kvSettle { 0%,35% { opacity:0; } 72%,100% { opacity:.74; } } @keyframes kvTransfer { 35% { opacity:0; stroke-dashoffset:0; } 65% { opacity:1; stroke-dashoffset:-12; } 100% { opacity:0; stroke-dashoffset:-24; } }
+  @keyframes routeProbe { 0% { opacity:0; stroke-dashoffset:12; } 25%,65% { opacity:1; } 100% { opacity:0; stroke-dashoffset:0; } } @keyframes routeNode { 50% { filter:drop-shadow(0 0 2px var(--step-color)); } }
+  @keyframes rangeClose { 50% { transform:scaleY(.45); opacity:.28; } } @keyframes forecastDraw { from { stroke-dashoffset:80; } to { stroke-dashoffset:0; } }
+  @media (prefers-reduced-motion: reduce) { .opt-step-card *, .collection-particle-canvas { animation:none !important; transition-duration:.01ms !important; } }
+  .optimization-stage .algo-panel { top: 8px; left: 24%; right: 24%; }
+  .optimization-stage .solve-panel, .optimization-stage .forecast-panel { top: 38px; width: 330px; }
   .telemetry-deck {
-    position: relative; overflow: hidden; background: #0D1426;
-    border-top: 1px solid var(--border); padding: 28px 14px 12px;
+    display: none;
   }
   .telemetry-deck::before {
     content: ''; position: absolute; top: 25px; left: 14px; right: 14px;
@@ -138,7 +190,7 @@
 
   /* ============ 黄金指标条（现代数据卡） ============ */
   .golden-bar {
-    display: grid; grid-template-columns: 46px repeat(3, 1fr); gap: 1px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
     background: var(--border-soft); border-bottom: 1px solid var(--border);
     position: relative;
   }
@@ -197,6 +249,7 @@
     width: 100%; height: 18px; display: block; margin-top: 0;
     background: rgba(0,0,0,0.2); border-radius: 2px;
   }
+  .gm-card .gm-formula { display: none; }
   .gm-card .gm-hb path {
     fill: none; stroke: var(--metric-color, var(--brand)); stroke-width: 1.2;
     stroke-linejoin: round; stroke-linecap: round;
@@ -246,10 +299,12 @@
   .zone-prefill .zone-label { background: rgba(139,123,255,0.18); color: var(--brand); }
   .zone-network { left: 24%; right: 24%; bottom: 33%; border-color: rgba(255,181,71,0.28); background: rgba(255,181,71,0.04); }
   .zone-network .zone-label { background: rgba(255,181,71,0.18); color: var(--warn); }
-  .zone-kv { left: 27%; right: 27%; top: 68%; border-color: rgba(255,122,182,0.28); background: rgba(255,122,182,0.04); }
+  .zone-kv { left: 24%; right: 24%; top: 68%; border-color: rgba(255,122,182,0.28); background: rgba(255,122,182,0.04); }
   .zone-kv .zone-label { background: rgba(255,122,182,0.18); color: var(--pink); }
   .zone-decode { right: 1%; width: 22%; border-color: rgba(45,212,168,0.28); background: rgba(45,212,168,0.04); }
   .zone-decode .zone-label { background: rgba(45,212,168,0.18); color: var(--accent); }
+  .zone.collecting { animation: zoneCollect 1.35s ease-out; }
+  @keyframes zoneCollect { 0% { box-shadow: inset 0 0 0 0 transparent; } 35% { box-shadow: inset 0 0 28px var(--zone-collect, var(--brand)), 0 0 16px var(--zone-collect, var(--brand)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
   .domain-collector {
     --collector-color: var(--brand); position: absolute; left: 8px; right: 8px; bottom: 9px;
     min-height: 42px; padding: 6px 8px; opacity: 0; transform: translateY(6px);
@@ -285,6 +340,7 @@
     box-shadow: inset 2px 0 0 var(--zone-color, var(--brand));
     transition: border-color .3s, box-shadow .3s, background .3s;
   }
+  .zone-metrics, .domain-collector { display: none; }
   .zone-metrics::before {
     content: attr(data-stage); position: absolute; left: 7px; top: 4px;
     font-size: 6px; font-family: var(--font-mono); font-weight: 700;
@@ -410,8 +466,9 @@
   @keyframes collectorPulse { 0%,100% { opacity: .62; r: 3; } 50% { opacity: 1; r: 4.2; } }
 
   /* 拓扑节点样式 */
-  .topo-label { fill: var(--text); font-size: 12px; font-weight: 700; pointer-events: none; letter-spacing: 0.03em; }
-  .topo-sub { fill: var(--text-muted); font-size: 9px; pointer-events: none; }
+  #topoSvg text { paint-order: stroke; stroke: rgba(6,12,27,.88); stroke-width: 1.2px; stroke-linejoin: round; }
+  .topo-label { fill: var(--text); font-size: 14px; font-weight: 700; pointer-events: none; letter-spacing: 0.04em; }
+  .topo-sub { fill: #AEB9D6; font-size: 10px; font-weight: 600; pointer-events: none; }
   .topo-link { fill: none; stroke: var(--border); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
   .node-server-p { fill: url(#planeGradP); stroke: var(--brand); stroke-width: 1.3; }
   .node-server-d { fill: url(#planeGradD); stroke: var(--accent); stroke-width: 1.3; }
@@ -438,7 +495,7 @@
   .net-plane-side-k { fill: rgba(255,122,182,0.25); stroke: rgba(255,122,182,0.5); stroke-width: 0.6; }
   .net-plane-front-k { fill: rgba(255,122,182,0.17); stroke: rgba(255,122,182,0.44); stroke-width: 0.6; }
   .net-plane-grid-k { stroke: rgba(255,122,182,0.17); stroke-width: 0.45; fill: none; }
-  .net-plane-label { fill: var(--text-muted); font-size: 8px; font-weight: 700; pointer-events: none; letter-spacing: 0.05em; opacity: 0.9; }
+  .net-plane-label { fill: #B6C2E1; font-size: 9.5px; font-weight: 700; pointer-events: none; letter-spacing: 0.06em; opacity: 0.95; }
   .device-bay { fill: rgba(5,12,28,0.7); stroke-width: 0.75; }
   .leaf-p .device-bay { stroke: rgba(139,123,255,0.4); }
   .leaf-d .device-bay { stroke: rgba(45,212,168,0.4); }
@@ -455,15 +512,15 @@
   .fullmesh-line.d { stroke: rgba(45,212,168,0.16); }
   .inter-node-link { stroke: rgba(139,123,255,0.3); stroke-width: 0.6; stroke-dasharray: 2 1.5; fill: none; }
   .inter-node-link.d { stroke: rgba(45,212,168,0.3); }
-  .inter-node-lbl { fill: var(--text-dim); font-size: 5px; font-family: var(--font-mono); text-anchor: middle; }
-  .npu-id { fill: var(--text-muted); font-size: 6px; font-weight: 700; pointer-events: none; font-family: var(--font-mono); }
-  .kv-label { fill: var(--text-muted); font-size: 8px; pointer-events: none; }
+  .inter-node-lbl { fill: #9CA9CA; font-size: 5.8px; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; }
+  .npu-id { fill: #CDD7F1; font-size: 6.8px; font-weight: 700; pointer-events: none; font-family: var(--font-mono); }
+  .kv-label { fill: #CBD4EB; font-size: 8.8px; font-weight: 600; pointer-events: none; }
   .kv-bar-bg { fill: var(--bg); stroke: var(--border); stroke-width: 0.6; }
   .kv-bar-p { fill: var(--brand); }
   .kv-bar-d { fill: var(--accent); }
-  .kv-val { font-size: 8px; pointer-events: none; font-family: var(--font-mono); }
-  .role-tag { font-size: 9.5px; font-weight: 700; pointer-events: none; letter-spacing: 0.04em; }
-  .node-name { font-size: 11px; font-weight: 700; pointer-events: none; letter-spacing: 0.03em; }
+  .kv-val { font-size: 8.8px; pointer-events: none; font-family: var(--font-mono); font-weight: 700; }
+  .role-tag { font-size: 10.5px; font-weight: 700; pointer-events: none; letter-spacing: 0.05em; }
+  .node-name { font-size: 12.5px; font-weight: 700; pointer-events: none; letter-spacing: 0.04em; }
 
   /* 网络设备：与 NPU 卡一致的顶部、正面、侧面三维结构 */
   .device-top { fill: #17294A; stroke-width: 0.65; }
@@ -496,8 +553,8 @@
   .device-led.warn { fill: var(--warn); filter: drop-shadow(0 0 2px var(--warn)); }
   .leaf-p .device-led { fill: var(--brand); filter: drop-shadow(0 0 2px var(--brand)); }
   .leaf-kv .device-led { fill: var(--pink); filter: drop-shadow(0 0 2px var(--pink)); }
-  .device-name { fill: var(--text); font-size: 7px; font-weight: 700; pointer-events: none; letter-spacing: 0.03em; }
-  .device-role { font-size: 7.5px; font-weight: 700; pointer-events: none; }
+  .device-name { fill: #F0F3FC; font-size: 8.2px; font-weight: 700; pointer-events: none; letter-spacing: 0.04em; }
+  .device-role { font-size: 8.4px; font-weight: 700; pointer-events: none; letter-spacing: 0.04em; }
 
   /* ============ 可视化组件渲染样式（保留） ============ */
   .gauge-svg { width: 100%; height: 54px; display: block; }
@@ -529,16 +586,54 @@
 
   /* KV 数据粒子 */
   .kv-particle { pointer-events: none; }
+  /* 3D KV Cache 池：介质色与运行健康状态分离，页块亮度表达热度与占用。 */
+  #kvPool3d { transform-origin: 500px 478px; }
+  .kv-tier { transform-box: fill-box; transform-origin: center; }
+  .kv-face-top { stroke-width: .75; }
+  .kv-face-front, .kv-face-side { stroke-width: .65; }
+  .kv-tier-hbm .kv-face-top { fill:rgba(139,123,255,.24); stroke:rgba(139,123,255,.78); }.kv-tier-hbm .kv-face-front { fill:rgba(46,34,86,.78); stroke:rgba(139,123,255,.62); }.kv-tier-hbm .kv-face-side { fill:rgba(28,20,61,.84); stroke:rgba(139,123,255,.5); }
+  .kv-tier-ddr .kv-face-top { fill:rgba(45,212,168,.18); stroke:rgba(45,212,168,.72); }.kv-tier-ddr .kv-face-front { fill:rgba(13,65,64,.76); stroke:rgba(45,212,168,.56); }.kv-tier-ddr .kv-face-side { fill:rgba(8,43,46,.84); stroke:rgba(45,212,168,.46); }
+  .kv-tier-ssd .kv-face-top { fill:rgba(255,181,71,.18); stroke:rgba(255,181,71,.72); }.kv-tier-ssd .kv-face-front { fill:rgba(74,52,25,.76); stroke:rgba(255,181,71,.56); }.kv-tier-ssd .kv-face-side { fill:rgba(47,33,18,.84); stroke:rgba(255,181,71,.46); }
+  .kv-tier-label { fill:#E6ECFC; font:700 7.2px var(--font-sans); letter-spacing:.09em; pointer-events:none; }
+  .kv-page { stroke:rgba(236,244,255,.34); stroke-width:.3; filter:drop-shadow(0 0 1.8px currentColor); transform-box:fill-box; transform-origin:center; }
+  .kv-tier-hbm .kv-page { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page { fill:#42DDB6; color:#42DDB6; }.kv-tier-ssd .kv-page { fill:#FFC76C; color:#FFC76C; }
+  .kv-page.hot { fill:#FF7AB6; color:#FF7AB6; }.kv-page.dim { opacity:.27; }
+  .kv-tier-hbm { animation:kvTrayFloat 3.8s ease-in-out infinite; }.kv-tier-ddr { animation:kvTrayFloat 4.6s ease-in-out -.8s infinite; }.kv-tier-ssd { animation:kvTrayFloat 5.1s ease-in-out -1.5s infinite; }
+  .kv-page:nth-of-type(3n) { animation:kvPageBeat 1.8s ease-in-out infinite; }.kv-page:nth-of-type(4n) { animation-delay:-.7s; }
+  .kv-pool-flow { fill:none; stroke-width:1; stroke-linecap:round; opacity:.42; stroke-dasharray:2 3; animation:kvBusFlow 1.4s linear infinite; }
+  .kv-pool-flow.hbm { stroke:var(--brand); }.kv-pool-flow.ddr { stroke:var(--accent); }.kv-pool-flow.ssd { stroke:var(--warn); }
+  .kv-pool-dot { filter:drop-shadow(0 0 2px currentColor); }.kv-pool-dot.hbm { fill:var(--brand); color:var(--brand); }.kv-pool-dot.ddr { fill:var(--accent); color:var(--accent); }.kv-pool-dot.ssd { fill:var(--warn); color:var(--warn); }
+  #kvPool3d.rebalancing .kv-tier-hbm { animation:kvHotPressure .48s ease-in-out infinite; }.kv-tier-hbm .kv-page.hot { animation:kvHotPage .62s ease-in-out infinite; }
+  #kvPool3d.rebalanced .kv-tier-hbm .kv-page.hot { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page.reserve, .kv-tier-ssd .kv-page.reserve { opacity:.2; }
+  #kvPool3d.rebalanced .kv-tier-ddr .kv-page.reserve, #kvPool3d.rebalanced .kv-tier-ssd .kv-page.reserve { opacity:.9; animation:kvPageLock .7s ease-out both; }
+  @keyframes kvTrayFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-1.8px); } }
+  @keyframes kvPageBeat { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+  @keyframes kvBusFlow { to { stroke-dashoffset:-12; } }
+  @keyframes kvHotPressure { 50% { filter:drop-shadow(0 0 5px rgba(255,122,182,.9)); } }
+  @keyframes kvHotPage { 50% { opacity:.28; filter:drop-shadow(0 0 4px #FF7AB6); } }
+  @keyframes kvPageLock { 0% { opacity:.15; transform:scale(.45); } 70% { transform:scale(1.16); } 100% { opacity:.9; transform:scale(1); } }
+  .disturbance-source { opacity:0; transition:opacity .35s ease; pointer-events:none; }
+  .disturbance-source.active { opacity:1; }
+  .disturbance-source .source-link { fill:none; stroke:var(--danger); stroke-width:1.4; opacity:.72; filter:drop-shadow(0 0 2px rgba(255,92,122,.46)); }
+  .disturbance-source.resolved .source-link { stroke:var(--warn); filter:drop-shadow(0 0 2px rgba(255,181,71,.42)); }
 
   /* 采集状态徽标 */
   .collect-status {
-    font-size: 11px; color: var(--text-dim);
-    padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
-    display: flex; align-items: center; gap: 6px; transition: all .2s;
+    min-width: 346px; height: 30px; color: var(--text-dim);
+    padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px;
+    display: flex; align-items: center; gap: 9px; transition: all .2s;
   }
-  .collect-status .cs-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
-  .collect-status.active { color: var(--accent); border-color: rgba(45,212,168,0.4); }
-  .collect-status.active .cs-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: portPulse 1.2s infinite; }
+  .cs-flow { display:flex; align-items:center; flex:1; min-width:0; }
+  .cs-stage { position:relative; display:flex; align-items:center; gap:4px; min-width:0; color:var(--text-dim); font:700 8px var(--font-sans); white-space:nowrap; }
+  .cs-stage:not(:last-child)::after { content:''; width:10px; height:1px; margin:0 3px; background:rgba(139,155,201,.24); }
+  .cs-stage i { width:6px; height:6px; flex:0 0 6px; border-radius:50%; background:#536080; box-shadow:0 0 0 1px rgba(187,201,232,.14); }
+  .cs-stage.is-complete { color:#B8C5E2; }.cs-stage.is-complete i { background:#7181A8; box-shadow:0 0 5px rgba(138,159,209,.42); }
+  .cs-stage.is-current { color:var(--accent); }.cs-stage.is-current i { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+  .collect-status[data-phase="collecting"] .cs-stage.is-current i, .collect-status[data-phase="window"] .cs-stage.is-current i, .collect-status[data-phase="optimizing"] .cs-stage.is-current i { animation:statusPulse .82s ease-in-out infinite; }
+  .collect-status[data-phase="baseline"] .cs-stage.is-current { color:var(--brand); }.collect-status[data-phase="baseline"] .cs-stage.is-current i { background:var(--brand); box-shadow:0 0 8px var(--brand); animation:statusPulse .82s ease-in-out infinite; }
+  .collect-status[data-phase="optimized"] { border-color:rgba(45,212,168,.45); }.collect-status[data-phase="optimized"] .cs-stage.is-current { color:var(--accent); }
+  .cs-text { flex:0 0 42px; color:var(--text-muted); font:700 8px var(--font-mono); text-align:right; }
+  @keyframes statusPulse { 50% { transform:scale(1.55); opacity:.48; } }
 
   /* ============ 采集特效 ============ */
   /* 全屏数据流覆盖层 */
@@ -550,6 +645,7 @@
   /* ============ 链路负载状态 ============ */
   .link-heavy { stroke: var(--danger) !important; stroke-width: 2.2 !important; opacity: 0.85; }
   .link-warn  { stroke: var(--warn) !important; stroke-width: 1.6 !important; opacity: 0.7; }
+  .link-normal { stroke: var(--accent) !important; stroke-width: 1.45 !important; opacity: 0.7; }
   .link-idle  { stroke: var(--border) !important; stroke-width: 1 !important; opacity: 0.4; }
   .link-opt   { stroke: var(--accent) !important; stroke-width: 1.8 !important; opacity: 0.9;
                 filter: drop-shadow(0 0 2px rgba(45,212,168,0.5)); }
@@ -559,13 +655,12 @@
   /* 中负载链路：轻微脉冲 */
   @keyframes linkPulse { 0%,100%{opacity:0.5} 50%{opacity:0.8} }
   .link-warn { animation: linkPulse 2.4s infinite ease-in-out; }
-  /* 故障链路：断开+红X标记 */
+  /* 受扰链路保持原有实线形态，仅以颜色区分。 */
   .link-fault {
     stroke: var(--danger) !important; stroke-width: 1.8 !important;
-    stroke-dasharray: 3 5; opacity: 0.5;
+    stroke-dasharray: none; opacity: 0.7;
     animation: none;
   }
-  .link-fault .fault-mark { display: block; }
   .fault-mark {
     fill: var(--danger); font-size: 10px; font-weight: 700;
     pointer-events: none; display: none;
@@ -788,15 +883,13 @@
   <div class="topbar">
     <div class="title"><span class="dot"></span>TCN Token 加速</div>
     <div class="spacer"></div>
-    <button class="btn">集群数据采集</button>
-    <button class="btn primary">一键优化</button>
+    <button class="btn primary" id="optimizeBtn">一键优化</button>
     <button class="btn danger" id="faultBtn">扰动注入</button>
     <button class="btn">重置</button>
   </div>
 
   <!-- ============ 黄金指标条（现代数据卡） ============ -->
   <div class="golden-bar dim" id="goldenBar">
-    <div class="gm-tier"><span class="gm-tier-num">③</span><span class="gm-tier-txt">全局<br>聚合</span></div>
     <!-- 吞吐量 -->
     <div class="gm-card gm-throughput" id="gmThroughput">
       <div class="gm-head">
@@ -838,9 +931,20 @@
     </div>
   </div>
 
+  <div class="optimization-stage" id="optimizationStage">
+    <div class="opt-stage-head"><span class="opt-stage-mark"></span><span class="opt-stage-title">优化决策台</span><span class="opt-stage-sub">OPTIMIZATION TRACE</span><span class="opt-stage-status" id="optStageStatus">等待优化任务</span></div>
+    <div class="opt-step-grid">
+      <div class="opt-step-card" data-opt-step="0"><span class="opt-step-num">01</span><span class="opt-step-name">基线采集</span><span class="baseline-progress">采集中</span><span class="baseline-lock">基线已锁定</span><div class="opt-step-state">等待采样</div><svg class="opt-viz" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><rect class="v-frame" x="31" y="3" width="39" height="24"/><line class="v-grid" x1="40" y1="3" x2="40" y2="27"/><line class="v-grid" x1="50" y1="3" x2="50" y2="27"/><line class="v-grid" x1="60" y1="3" x2="60" y2="27"/><line class="v-grid" x1="31" y1="9" x2="70" y2="9"/><line class="v-grid" x1="31" y1="15" x2="70" y2="15"/><line class="v-grid" x1="31" y1="21" x2="70" y2="21"/><rect class="fp-cell" data-fp-col="0" x="33" y="5" width="5" height="3"/><rect class="fp-cell" data-fp-col="0" x="33" y="11" width="5" height="3"/><rect class="fp-cell" data-fp-col="0" x="33" y="17" width="5" height="3"/><rect class="fp-cell" data-fp-col="1" x="42" y="5" width="5" height="3"/><rect class="fp-cell" data-fp-col="1" x="42" y="11" width="5" height="3"/><rect class="fp-cell" data-fp-col="1" x="42" y="17" width="5" height="3"/><rect class="fp-cell" data-fp-col="2" x="52" y="5" width="5" height="3"/><rect class="fp-cell" data-fp-col="2" x="52" y="11" width="5" height="3"/><rect class="fp-cell" data-fp-col="2" x="52" y="17" width="5" height="3"/><rect class="fp-cell" data-fp-col="3" x="62" y="5" width="5" height="3"/><rect class="fp-cell" data-fp-col="3" x="62" y="11" width="5" height="3"/><rect class="fp-cell" data-fp-col="3" x="62" y="17" width="5" height="3"/><line class="v-accent fp-scan" x1="31" y1="2" x2="31" y2="28"/><circle class="fp-port" cx="12" cy="32" r="2"/><circle class="fp-port" cx="37" cy="32" r="2"/><circle class="fp-port" cx="63" cy="32" r="2"/><circle class="fp-port" cx="88" cy="32" r="2"/></svg></div>
+      <div class="opt-step-card" data-opt-step="1"><span class="opt-step-num">02</span><span class="opt-step-name">约束建模</span><span class="model-solved">可行解空间确定</span><div class="opt-step-state">等待求解</div><svg class="opt-viz" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><path class="v-grid" d="M12 4V30M28 4V30M44 4V30M60 4V30M76 4V30M8 10H88M8 16H88M8 22H88M8 28H88"/><path class="model-boundary" d="M16 9 L84 25 M16 25 L84 9"/><polygon class="model-region" points="39,12 59,12 68,22 50,29 31,22"/><circle class="model-solution" cx="50" cy="20" r="2.2"/></svg></div>
+      <div class="opt-step-card" data-opt-step="2"><span class="opt-step-num">03</span><span class="opt-step-name">KV 重整</span><span class="kv-rebalanced">均衡分片已确认</span><div class="opt-step-state">等待重排</div><svg class="opt-viz" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><rect class="v-frame" x="8" y="5" width="30" height="23"/><rect class="v-frame" x="60" y="5" width="30" height="23"/><g class="kv-before"><rect x="12" y="8" width="21" height="5"/><rect x="12" y="15" width="14" height="5"/><rect x="12" y="22" width="18" height="3"/></g><path class="kv-transfer" d="M39 16 H58"/><g class="kv-after"><rect x="64" y="8" width="7" height="4"/><rect x="73" y="8" width="7" height="4"/><rect x="82" y="8" width="4" height="4"/><rect x="64" y="14" width="7" height="4"/><rect x="73" y="14" width="7" height="4"/><rect x="82" y="14" width="4" height="4"/><rect x="64" y="20" width="7" height="4"/><rect x="73" y="20" width="7" height="4"/><rect x="82" y="20" width="4" height="4"/></g></svg></div>
+      <div class="opt-step-card" data-opt-step="3"><span class="opt-step-num">04</span><span class="opt-step-name">路径编排</span><span class="route-deployed">最优路径已下发</span><div class="opt-step-state">等待选路</div><svg class="opt-viz" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><path class="route-link" d="M15 9 L46 18 L85 8 M15 27 L46 18 L85 28 M15 9 L46 18 L85 28 M15 27 L46 18 L85 8"/><path class="route-link candidate" d="M15 9 L46 18 L85 28"/><path class="route-link candidate alt" d="M15 27 L46 18 L85 8"/><circle class="route-node live" cx="15" cy="9" r="2.2"/><circle class="route-node live" cx="15" cy="27" r="2.2"/><circle class="route-node live" cx="46" cy="18" r="2.4"/><circle class="route-node live" cx="85" cy="8" r="2.2"/><circle class="route-node live" cx="85" cy="28" r="2.2"/></svg></div>
+      <div class="opt-step-card" data-opt-step="4"><span class="opt-step-num">05</span><span class="opt-step-name">预测校验</span><span class="forecast-verified">策略验证通过</span><div class="opt-step-state">等待验证</div><svg class="opt-viz" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><path class="v-grid" d="M9 7H91M9 15H91M9 23H91M9 29H91"/><rect class="forecast-band" x="51" y="11" width="36" height="7"/><path class="forecast-target" d="M51 14.5H87"/><path class="forecast-range" d="M51 8 L63 5 L75 9 L87 12 L87 18 L75 20 L63 18 L51 21Z"/><path class="forecast-line" d="M10 27 L22 23 L34 25 L45 18 L55 15 L66 13 L77 14 L87 14"/><circle class="forecast-dot" cx="87" cy="14" r="2"/></svg></div>
+    </div>
+  </div>
+
   <!-- ============ 拓扑画布 ============ -->
   <div class="canvas-wrap">
-    <div class="cv-title"><span class="tier-num">①</span><span class="tier-label">业务数据平面</span><span class="tier-sep">·</span>Prefill 集群 · Decode 集群 · 华为灵衢总线 · KV Cache 池</div>
+    <div class="cv-title"><span class="tier-label">业务数据平面</span><span class="tier-sep">·</span>Prefill 集群 · Decode 集群 · 华为灵衢总线 · KV Cache 池</div>
     <div class="zone zone-prefill">
       <div class="zone-label">Prefill 集群</div>
       <div class="zone-metrics" id="zmPrefill" data-stage="Σ THROUGHPUT · W-AVG LOAD">
@@ -1118,18 +1222,18 @@
       <text class="net-plane-label" x="500" y="282" text-anchor="middle">KV 网关层</text>
 
       <!-- Spine↔Leaf-P/D 链路（Spine 后沿 y=224 → L1 平面前沿 y=128） -->
-      <line class="topo-link link-s0 link-heavy" x1="430" y1="224" x2="337" y2="128"/>
-      <line class="topo-link link-s0 link-heavy" x1="446" y1="224" x2="411" y2="128"/>
-      <line class="topo-link link-s0 link-heavy" x1="430" y1="224" x2="597" y2="128"/>
-      <line class="topo-link link-s0 link-heavy" x1="446" y1="224" x2="671" y2="128"/>
-      <line class="topo-link link-s1 link-warn fault-grp-1" x1="556" y1="224" x2="337" y2="128"/>
-      <line class="topo-link link-s1 link-warn" x1="568" y1="224" x2="411" y2="128"/>
-      <line class="topo-link link-s1 link-warn" x1="556" y1="224" x2="597" y2="128"/>
-      <line class="topo-link link-s1 link-warn fault-grp-2" x1="568" y1="224" x2="671" y2="128"/>
+      <line class="topo-link link-s0 link-warn fault-grp-1" x1="430" y1="224" x2="337" y2="128"/>
+      <line class="topo-link link-s0 link-warn disturbance-link-b" x1="446" y1="224" x2="411" y2="128"/>
+      <line class="topo-link link-s0 link-warn" x1="430" y1="224" x2="597" y2="128"/>
+      <line class="topo-link link-s0 link-warn disturbance-link-a" x1="446" y1="224" x2="671" y2="128"/>
+      <line class="topo-link link-s1 link-normal" x1="556" y1="224" x2="337" y2="128"/>
+      <line class="topo-link link-s1 link-normal" x1="568" y1="224" x2="411" y2="128"/>
+      <line class="topo-link link-s1 link-normal" x1="556" y1="224" x2="597" y2="128"/>
+      <line class="topo-link link-s1 link-normal" x1="568" y1="224" x2="671" y2="128"/>
 
       <!-- Spine↔Leaf-KV 链路（核心层向 KV 网关层汇聚） -->
-      <line class="topo-link link-s0 link-heavy" x1="438" y1="242" x2="440" y2="298"/>
-      <line class="topo-link link-s1 link-warn fault-grp-1" x1="562" y1="242" x2="560" y2="298"/>
+      <line class="topo-link link-s0 link-warn fault-grp-1" x1="438" y1="242" x2="440" y2="298"/>
+      <line class="topo-link link-s1 link-normal" x1="562" y1="242" x2="560" y2="298"/>
 
       <!-- Spine ISL 互联 -->
       <line class="topo-link" x1="478" y1="233" x2="522" y2="233" stroke-width="2"/>
@@ -1304,25 +1408,34 @@
       <line class="topo-link" x1="440" y1="316" x2="440" y2="410"/>
       <line class="topo-link" x1="560" y1="316" x2="560" y2="410"/>
 
-      <!-- ============ KV Cache 池卡片（金字塔：HBM→DDR→SSD） ============ -->
+      <!-- ============ KV Cache 池：三层 3D 缓存托盘 ============ -->
+      <g id="kvPool3d">
+        <path class="kv-pool-flow hbm" d="M440 410 C440 418 454 421 468 424 M560 410 C560 418 546 421 532 424"/>
+        <circle class="kv-pool-dot hbm" cx="446" cy="416" r="1.4"><animateMotion dur="1.9s" repeatCount="indefinite" path="M0 0 C0 8 14 11 28 14"/></circle>
+        <circle class="kv-pool-dot hbm" cx="554" cy="416" r="1.4"><animateMotion dur="2.1s" begin="-.7s" repeatCount="indefinite" path="M0 0 C0 8 -14 11 -28 14"/></circle>
 
-      <rect x="440" y="432" width="120" height="30" rx="4" fill="rgba(139,123,255,0.12)" stroke="var(--brand)" stroke-width="0.8"/>
-      <text x="500" y="443" text-anchor="middle" fill="var(--brand)" font-size="7.5" font-weight="700">HBM · 热数据</text>
-      <rect x="450" y="446" width="100" height="4" rx="1" fill="var(--bg)" stroke="var(--border)" stroke-width="0.4"/>
-      <rect x="451" y="447" width="85" height="2" rx="0.5" fill="var(--brand)"/>
-      <text x="500" y="458" text-anchor="middle" fill="var(--text-muted)" font-size="6.5" font-family="var(--font-mono)">85% · 命中 92% · 8.5GB/s</text>
-
-      <rect x="420" y="466" width="160" height="30" rx="4" fill="rgba(45,212,168,0.12)" stroke="var(--accent)" stroke-width="0.8"/>
-      <text x="500" y="477" text-anchor="middle" fill="var(--accent)" font-size="7.5" font-weight="700">DDR · 温数据</text>
-      <rect x="430" y="480" width="140" height="4" rx="1" fill="var(--bg)" stroke="var(--border)" stroke-width="0.4"/>
-      <rect x="431" y="481" width="98" height="2" rx="0.5" fill="var(--accent)"/>
-      <text x="500" y="492" text-anchor="middle" fill="var(--text-muted)" font-size="6.5" font-family="var(--font-mono)">70% · 命中 78% · 14.2GB/s</text>
-
-      <rect x="400" y="500" width="200" height="30" rx="4" fill="rgba(255,181,71,0.12)" stroke="var(--warn)" stroke-width="0.8"/>
-      <text x="500" y="511" text-anchor="middle" fill="var(--warn)" font-size="7.5" font-weight="700">SSD · 冷数据</text>
-      <rect x="410" y="514" width="180" height="4" rx="1" fill="var(--bg)" stroke="var(--border)" stroke-width="0.4"/>
-      <rect x="411" y="515" width="72" height="2" rx="0.5" fill="var(--warn)"/>
-      <text x="500" y="526" text-anchor="middle" fill="var(--text-muted)" font-size="6.5" font-family="var(--font-mono)">40% · 命中 45% · 3.1GB/s</text>
+        <g class="kv-tier kv-tier-hbm">
+          <polygon class="kv-face-top" points="425,432 575,432 587,421 437,421"/>
+          <polygon class="kv-face-front" points="425,432 575,432 575,454 425,454"/>
+          <polygon class="kv-face-side" points="575,432 587,421 587,443 575,454"/>
+          <text class="kv-tier-label" x="500" y="442" text-anchor="middle">HBM · 热数据层</text>
+          <rect class="kv-page hot" x="436" y="446" width="11" height="4"/><rect class="kv-page" x="450" y="446" width="11" height="4"/><rect class="kv-page hot" x="464" y="446" width="11" height="4"/><rect class="kv-page" x="478" y="446" width="11" height="4"/><rect class="kv-page hot" x="492" y="446" width="11" height="4"/><rect class="kv-page" x="506" y="446" width="11" height="4"/><rect class="kv-page" x="520" y="446" width="11" height="4"/><rect class="kv-page hot" x="534" y="446" width="11" height="4"/><rect class="kv-page dim" x="548" y="446" width="11" height="4"/>
+        </g>
+        <g class="kv-tier kv-tier-ddr">
+          <polygon class="kv-face-top" points="390,470 610,470 624,457 404,457"/>
+          <polygon class="kv-face-front" points="390,470 610,470 610,495 390,495"/>
+          <polygon class="kv-face-side" points="610,470 624,457 624,482 610,495"/>
+          <text class="kv-tier-label" x="500" y="480" text-anchor="middle">DDR · 温数据层</text>
+          <rect class="kv-page" x="402" y="484" width="15" height="5"/><rect class="kv-page reserve" x="420" y="484" width="15" height="5"/><rect class="kv-page" x="438" y="484" width="15" height="5"/><rect class="kv-page reserve" x="456" y="484" width="15" height="5"/><rect class="kv-page" x="474" y="484" width="15" height="5"/><rect class="kv-page reserve" x="492" y="484" width="15" height="5"/><rect class="kv-page" x="510" y="484" width="15" height="5"/><rect class="kv-page reserve" x="528" y="484" width="15" height="5"/><rect class="kv-page" x="546" y="484" width="15" height="5"/><rect class="kv-page reserve" x="564" y="484" width="15" height="5"/>
+        </g>
+        <g class="kv-tier kv-tier-ssd">
+          <polygon class="kv-face-top" points="350,510 650,510 666,496 366,496"/>
+          <polygon class="kv-face-front" points="350,510 650,510 650,538 350,538"/>
+          <polygon class="kv-face-side" points="650,510 666,496 666,524 650,538"/>
+          <text class="kv-tier-label" x="500" y="520" text-anchor="middle">SSD · 冷数据层</text>
+          <rect class="kv-page" x="365" y="526" width="22" height="6"/><rect class="kv-page reserve" x="391" y="526" width="22" height="6"/><rect class="kv-page" x="417" y="526" width="22" height="6"/><rect class="kv-page reserve" x="443" y="526" width="22" height="6"/><rect class="kv-page" x="469" y="526" width="22" height="6"/><rect class="kv-page reserve" x="495" y="526" width="22" height="6"/><rect class="kv-page" x="521" y="526" width="22" height="6"/><rect class="kv-page reserve" x="547" y="526" width="22" height="6"/><rect class="kv-page" x="573" y="526" width="22" height="6"/><rect class="kv-page reserve" x="599" y="526" width="22" height="6"/>
+        </g>
+      </g>
 
       <!-- 故障标记 -->
       <g id="faultMarks" style="display:none;">
@@ -1844,6 +1957,418 @@
 (function(){
   const svg = document.getElementById('topoSvg');
   const SVGNS = 'http://www.w3.org/2000/svg';
+  const optimizationStage = document.getElementById('optimizationStage');
+  ['algoPanel', 'solvePanel', 'forecastPanel'].forEach(id => optimizationStage.appendChild(document.getElementById(id)));
+
+  /* ===== 优化决策台：跨域基线采集与卡片微型推演 ===== */
+  const decisionCards = Array.from(document.querySelectorAll('.opt-step-card'));
+  const stageCanvas = document.createElement('canvas');
+  stageCanvas.className = 'collection-particle-canvas';
+  stageCanvas.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(stageCanvas);
+  const stageCtx = stageCanvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let baselineParticles = [], baselineFrame = null, baselineTimers = [];
+  const baselineScene = { active:false, frozen:false, started:0, samples:[] };
+  const STEP_NOTES = [
+    { idle:['等待四域设备采样', '尚未生成全局基线'], running:['采集 Prefill集群、UB网络、KV Cache、Decode集群', '设备覆盖进度正在逐域注满'], done:['四个业务域已完成采集', '全局基线已锁定'] },
+    { idle:['等待资源与服务约束', '尚未建立可行解空间'], running:['联立资源、时延与服务等级约束', '正在排除冲突策略'], done:['约束边界已完成收敛', '可执行策略空间已锁定'] },
+    { idle:['等待缓存页重排', '尚未生成迁移计划'], running:['识别热点、碎片与迁移窗口', '正在编排 KV 页面迁移'], done:['缓存页已完成均衡归位', 'KV 布局已重整'] },
+    { idle:['等待链路策略推演', '尚未选择读写路径'], running:['评估读写链路与可用带宽', '正在筛选最优双向路径'], done:['无效候选路径已剔除', '最优读写路径已下发'] },
+    { idle:['等待策略收益校验', '尚未形成预测结论'], running:['推演负载与关键路径时延', '正在收敛预测不确定性'], done:['预测结果已进入目标窗口', '策略收益验证通过'] }
+  ];
+  const cardCanvases = decisionCards.map((card, index) => {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'opt-card-canvas'; canvas.setAttribute('aria-hidden', 'true');
+    const note = document.createElement('div'); note.className = 'opt-step-note';
+    card.append(canvas, note);
+    return { card, canvas, note, index, startedAt:0 };
+  });
+  let cardRenderFrame = null;
+  function stepColor(card){ return getComputedStyle(card).getPropertyValue('--step-color').trim() || '#8B7BFF'; }
+  function setStepNote(index, state){
+    const view = cardCanvases[index]; if (!view) return;
+    const copy = STEP_NOTES[index][state] || STEP_NOTES[index].idle;
+    view.note.innerHTML = '<b>' + copy[0] + '</b>' + copy[1];
+  }
+  function sizeCardCanvases(){
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    cardCanvases.forEach(view => {
+      const rect = view.canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.round(rect.width * ratio)), h = Math.max(1, Math.round(rect.height * ratio));
+      if (view.canvas.width !== w || view.canvas.height !== h) { view.canvas.width = w; view.canvas.height = h; }
+    });
+  }
+  function ink(ctx, color, alpha){ ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.fillStyle = color; }
+  function grid(ctx, w, h){
+    ctx.lineWidth = .5; ctx.strokeStyle = 'rgba(126,148,194,.13)';
+    for(let x=3;x<w;x+=12){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let y=4;y<h;y+=10){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  }
+  function glowDot(ctx, x, y, r, color, alpha){
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=alpha; ctx.fillStyle=color; ctx.shadowBlur=7; ctx.shadowColor=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+  function drawBaseline(ctx,w,h,t,color,state){
+    const clamp=v=>Math.max(0,Math.min(1,v));
+    const elapsed=baselineScene.active ? t-baselineScene.started : 0;
+    const progress=(start,end)=>state==='done'?1:baselineScene.active?clamp((elapsed-start)/(end-start)):0;
+    // 四域采集轨道与业务画布采集窗口严格同步，最后一域完成前不提前锁定基线。
+    const prefill=progress(260,2220), network=progress(740,3020), cache=progress(1460,3930), decode=progress(2190,4900);
+    const labelW=Math.max(61,w*.29), trackX=labelW+5, trackW=w-trackX-4;
+    const rows=[12,34,59,81], labels=['Prefill集群','UB网络','KV Cache','Decode集群'];
+    grid(ctx,w,h);
+    ctx.font='700 8px var(--font-sans)'; ctx.textBaseline='middle';
+    labels.forEach(label=>{ ctx.fillStyle='#B9C5E2';ctx.globalAlpha=.92;ctx.fillText(label,1,rows[labels.indexOf(label)]); });
+    function npuColor(sample){
+      const value=sample.cur;
+      if(value>=85) return '#FF5C7A';
+      if(value>=75) return '#FFB547';
+      if(value>=60) return '#2DD4A8';
+      return '#8B7BFF';
+    }
+    function deviceRail(y, value, cluster){
+      const samples=npuState.filter(item=>item.isP===cluster), count=13,gap=2,blockW=(trackW-gap*(count-1))/count;
+      for(let i=0;i<count;i++){
+        const filled=Math.max(0,Math.min(1,value*count-i));const x=trackX+i*(blockW+gap);
+        const sample=samples[Math.min(samples.length-1,Math.floor(i*(samples.length-1)/(count-1)))];
+        ctx.fillStyle='rgba(129,150,196,.14)';ctx.globalAlpha=1;ctx.fillRect(x,y-4,blockW,8);
+        if(filled){ctx.fillStyle=npuColor(sample);ctx.globalAlpha=.32+.64*filled;ctx.fillRect(x,y-4,blockW,8);}
+      }
+      if(value>0&&value<1) glowDot(ctx,trackX+trackW*value,y,1.6,'#EDF3FF',.94);
+    }
+    deviceRail(rows[0],prefill,true); deviceRail(rows[3],decode,false);
+    // UB 网络：采到的微型节点和链段直接复用业务拓扑上的黄、绿、红状态。
+    const s0=Array.from(svg.querySelectorAll('.link-s0')), s1=Array.from(svg.querySelectorAll('.link-s1'));
+    const links=[s0[0],s0[1],s0[3],s1[0],s1[1],s1[3]].filter(Boolean);
+    const nodeX=links.map((_,index)=>trackX+index*(trackW/(links.length-1)));
+    links.forEach((link,index)=>{
+      const filled=Math.max(0,Math.min(1,network*links.length-index));
+      const stroke=getComputedStyle(link).stroke || '#7080A3';
+      if(index){ctx.strokeStyle=filled?stroke:'rgba(129,150,196,.18)';ctx.globalAlpha=filled?.74:.5;ctx.lineWidth=1.35;ctx.beginPath();ctx.moveTo(nodeX[index-1],rows[1]+(index%2?-3:3));ctx.lineTo(nodeX[index],rows[1]+(index%2?3:-3));ctx.stroke();}
+      ctx.fillStyle=filled?stroke:'rgba(129,150,196,.17)';ctx.globalAlpha=filled?.88:1;ctx.fillRect(nodeX[index]-2.8,rows[1]-2.8,5.6,5.6);
+    });
+    if(network>0&&network<1) glowDot(ctx,trackX+trackW*network,rows[1],1.6,'#EDF3FF',.94);
+    // KV Cache：数值和容量长度与业务画布 HBM/DDR/SSD 三层保持一致。
+    const kv=[{name:'HBM',used:85,hit:92,color:'#8B7BFF'},{name:'DDR',used:70,hit:78,color:'#2DD4A8'},{name:'SSD',used:40,hit:45,color:'#FFB547'}];
+    ctx.font='700 6.5px var(--font-mono)';
+    kv.forEach((layer,index)=>{
+      const y=rows[2]-8+index*6.4, layerProgress=clamp(cache*3-index), used=layer.used/100;
+      ctx.fillStyle='rgba(129,150,196,.15)';ctx.globalAlpha=1;ctx.fillRect(trackX,y,trackW,3.4);
+      ctx.fillStyle=layer.color;ctx.globalAlpha=.38+.55*layerProgress;ctx.fillRect(trackX,y,trackW*used*layerProgress,3.4);
+    });
+    if(cache>0&&cache<1) glowDot(ctx,trackX+trackW*cache,rows[2],1.5,'#EDF3FF',.94);
+  }
+  function drawModel(ctx,w,h,t,color,state){
+    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/4000)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const build=clamp(phase/.24), search=clamp((phase-.16)/.55), lock=clamp((phase-.62)/.38);
+    const cx=w*.53, cy=h*.54, sx=w*.20, sy=h*.25;
+    const project=(x,y,z)=>[cx+x*sx-z*sx*.62,cy-y*sy+z*sy*.46];
+    const line=(a,b,stroke,alpha,width=1)=>{const p=project(...a),q=project(...b);ctx.strokeStyle=stroke;ctx.globalAlpha=alpha;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(...q);ctx.stroke();};
+    const face=(points,fill,alpha)=>{ctx.fillStyle=fill;ctx.globalAlpha=alpha;ctx.beginPath();points.forEach((point,index)=>{const p=project(...point);index?ctx.lineTo(...p):ctx.moveTo(...p);});ctx.closePath();ctx.fill();};
+    grid(ctx,w,h);
+    // 三维参数空间：横轴为资源配额、纵轴为时延预算、深轴为缓存切分，约束平面切出可行体。
+    const corners=[[-1,-1,-1],[1,-1,-1],[-1,1,-1],[1,1,-1],[-1,-1,1],[1,-1,1],[-1,1,1],[1,1,1]];
+    const edges=[[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+    face([[-.54,-.7,-.58],[.64,-.7,-.58],[.64,.63,-.58],[-.54,.63,-.58]],'#33415E',.06+.08*build);
+    face([[-.45,-.72,-.46],[.57,-.72,-.46],[.57,.5,.72],[-.45,.5,.72]],'#FFB547',.025+.11*build);
+    face([[-.18,-.74,-.72],[-.18,.68,-.72],[-.18,.68,.72],[-.18,-.74,.72]],'#FF7AB6',.02+.1*build);
+    edges.forEach(([a,b])=>line(corners[a],corners[b],'#7890C2',.14+.3*build,.75));
+    [-.5,0,.5].forEach(v=>{ line([v,-1,-1],[v,-1,1],'#6F86B8',.1+.22*build,.55);line([-1,v,-1],[1,v,-1],'#6F86B8',.1+.22*build,.55);line([-1,-1,v],[-1,1,v],'#6F86B8',.1+.18*build,.55); });
+    // 约束面到位后，可行解体以绿色半透明棱柱留在三维空间中央。
+    const feasible=[[-.2,-.43,-.22],[.45,-.43,-.22],[-.2,.35,-.22],[.45,.35,-.22],[-.2,-.43,.37],[.45,-.43,.37],[-.2,.35,.37],[.45,.35,.37]];
+    [[0,1,3,2],[0,4,5,1],[1,5,7,3],[2,3,7,6]].forEach(indices=>face(indices.map(i=>feasible[i]),'#2DD4A8',(.025+.16*search)*build));
+    [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]].forEach(([a,b])=>line(feasible[a],feasible[b],'#2DD4A8',.12+.58*search,.8));
+    // 候选解在体内游走；越接近尾声越收束到策略核，淘汰候选自然熄灭。
+    const target=[.14,.04,.08];
+    const candidates=[[-.72,.48,-.55],[.78,-.55,.42],[-.52,-.42,.65],[.72,.62,-.37],[-.06,.72,.54],[.56,.18,.7],[-.7,.08,.22],[.1,-.74,-.4]];
+    candidates.forEach((start,index)=>{
+      const local=clamp(search*1.35-index*.08), eased=local*local*(3-2*local);
+      const point=start.map((v,axis)=>v+(target[axis]-v)*eased);
+      const p=project(...point); const viable=index===2||index===4||index===6;
+      ctx.fillStyle=viable?'#D8E2FA':'#7080A3';ctx.globalAlpha=(viable?.35:.16)*(1-eased*.54)+.16*lock;ctx.beginPath();ctx.arc(p[0],p[1],viable?1.45:1.05,0,Math.PI*2);ctx.fill();
+      if(local>.02&&local<.98&&viable){const base=project(...start);ctx.strokeStyle=color;ctx.globalAlpha=.13+.25*search;ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(...base);ctx.lineTo(...p);ctx.stroke();}
+    });
+    // 主求解光点沿可行域内的探索轨迹前进，最后进入策略核，而非只做静态收敛。
+    const searchRoute=[[-.72,.48,-.55],[-.52,-.12,-.26],[-.13,.4,.3],[.34,.18,.22],target];
+    ctx.strokeStyle='#D8E2FA';ctx.globalAlpha=.08+.26*search;ctx.lineWidth=.65;ctx.beginPath();
+    searchRoute.forEach((point,index)=>{const p=project(...point);index?ctx.lineTo(...p):ctx.moveTo(...p);});ctx.stroke();
+    const routeProgress=clamp((phase-.1)/.76)*(searchRoute.length-1), segment=Math.min(searchRoute.length-2,Math.floor(routeProgress)), mix=routeProgress-segment;
+    const from=searchRoute[segment],to=searchRoute[segment+1],probe=from.map((value,index)=>value+(to[index]-value)*mix), probePoint=project(...probe);
+    if(!done && phase>.1) glowDot(ctx,probePoint[0],probePoint[1],2.15,'#EDF3FF',.96);
+    const final=project(...target);
+    if(lock>.02){ctx.strokeStyle=color;ctx.globalAlpha=.22+.5*lock;ctx.lineWidth=.8;ctx.beginPath();ctx.arc(final[0],final[1],3+lock*5,0,Math.PI*2);ctx.stroke();}
+    glowDot(ctx,final[0],final[1],done?2.35:1.25,color,.45+.48*Math.max(search,lock));
+  }
+  function drawKv(ctx,w,h,t,color,state){
+    const p=state==='done'?1:(state==='idle'?0:Math.min(1,t/4000)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const profile=clamp(p/.25), compare=clamp((p-.16)/.44), select=clamp((p-.57)/.43);
+    const y=8, panelH=h-16, sourceX=4, sourceW=w*.18, stageX=w*.3, optionW=w*.16, gap=w*.045;
+    const options=[{name:'横切',cols:1,rows:4,color:'#FFB547',cuts:'horizontal'},{name:'竖切',cols:4,rows:1,color:'#FF7AB6',cuts:'vertical'},{name:'双向',cols:2,rows:3,color:'#2DD4A8',cuts:'both'}];
+    grid(ctx,w,h);
+    // 原始 KV 页池：冷热混杂、块大小不一，是三套分片策略共同的输入。
+    ctx.fillStyle='rgba(7,15,30,.64)';ctx.globalAlpha=1;ctx.fillRect(sourceX,y,sourceW,panelH);ctx.strokeStyle='#8B7BFF';ctx.globalAlpha=.38;ctx.lineWidth=.7;ctx.strokeRect(sourceX,y,sourceW,panelH);
+    [[.12,.08,.7,.15],[.12,.29,.45,.18],[.61,.29,.27,.18],[.12,.53,.7,.1],[.12,.7,.3,.2],[.46,.7,.36,.2]].forEach((block,index)=>{ctx.fillStyle=index===0||index===3?'#8B7BFF':'#FF7AB6';ctx.globalAlpha=.16+.56*profile;ctx.fillRect(sourceX+block[0]*sourceW,y+block[1]*panelH,block[2]*sourceW,block[3]*panelH);});
+    // 三种候选分片大小：细粒度、均衡粒度、粗粒度，同时展开对比。
+    options.forEach((option,index)=>{
+      const x=stageX+index*(optionW+gap), active=index===1, eliminated=compare>.7&&!active;
+      const alpha=eliminated?.12:Math.min(1,.24+.76*compare);
+      ctx.fillStyle='rgba(7,15,30,.64)';ctx.globalAlpha=.94;ctx.fillRect(x,y,optionW,panelH);
+      ctx.strokeStyle=option.color;ctx.globalAlpha=(active?.72:.36)*alpha;ctx.lineWidth=active?1.1:.7;ctx.strokeRect(x,y,optionW,panelH);
+      const cellW=(optionW-6)/option.cols,cellH=(panelH-7)/option.rows;
+      for(let row=0;row<option.rows;row++) for(let col=0;col<option.cols;col++){
+        const cell=row*option.cols+col, local=clamp(compare*option.cols*option.rows-cell*.11);
+        ctx.fillStyle=option.color;ctx.globalAlpha=(.08+.5*local)*(eliminated?.45:1);ctx.fillRect(x+3+col*cellW,y+3+row*cellH,cellW-1,cellH-1);
+      }
+      // 切线明确表达分片策略：横切、竖切与横竖组合，而不是普通栅格变化。
+      ctx.strokeStyle='#EDF3FF';ctx.globalAlpha=(.18+.52*compare)*(eliminated?.28:1);ctx.lineWidth=.7;
+      if(option.cuts==='horizontal'||option.cuts==='both') for(let row=1;row<option.rows;row++){ctx.beginPath();ctx.moveTo(x+3,y+3+row*cellH);ctx.lineTo(x+optionW-3,y+3+row*cellH);ctx.stroke();}
+      if(option.cuts==='vertical'||option.cuts==='both') for(let col=1;col<option.cols;col++){ctx.beginPath();ctx.moveTo(x+3+col*cellW,y+3);ctx.lineTo(x+3+col*cellW,y+panelH-3);ctx.stroke();}
+      ctx.font='700 7px var(--font-sans)';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle=option.color;ctx.globalAlpha=.56*alpha;ctx.fillText(option.name,x+optionW/2,y+panelH+8);
+      if(active&&select>.02){ctx.strokeStyle=option.color;ctx.globalAlpha=.3+.58*select;ctx.lineWidth=.85;ctx.beginPath();ctx.arc(x+optionW/2,y+panelH/2,Math.min(optionW,panelH)*(.27+.17*select),0,Math.PI*2);ctx.stroke();}
+      if(active && (select>.68 || done)){ctx.strokeStyle='#EDF3FF';ctx.globalAlpha=.9;ctx.lineWidth=1.15;ctx.beginPath();ctx.moveTo(x+optionW*.31,y+panelH*.52);ctx.lineTo(x+optionW*.45,y+panelH*.67);ctx.lineTo(x+optionW*.72,y+panelH*.34);ctx.stroke();}
+    });
+    // 原始页池向三个候选策略分流，最终只向中等粒度的均衡分片收束。
+    if(!done&&compare>.03) for(let i=0;i<9;i++){
+      const branch=i%3, local=clamp(compare*1.25-i*.07), ease=local*local*(3-2*local), fromX=sourceX+sourceW*.78, fromY=y+panelH*(.13+(i%5)*.18), toX=stageX+branch*(optionW+gap)+optionW*.5, toY=y+panelH*(.2+(i%3)*.22);
+      const x=fromX+(toX-fromX)*ease, py=fromY+(toY-fromY)*ease-Math.sin(ease*Math.PI)*5;
+      ctx.fillStyle=options[branch].color;ctx.globalAlpha=(branch===1?.78:.38)*(1-(compare>.7&&branch!==1?.55:0));ctx.fillRect(x-1.6,py-1.1,3.2,2.2);
+    }
+    if(done){const x=stageX+optionW+gap;ctx.strokeStyle='#D8E2FA';ctx.globalAlpha=.5;ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(x,y+panelH+12);ctx.lineTo(x+optionW,y+panelH+12);ctx.stroke();}
+    ctx.textAlign='start';ctx.globalAlpha=1;
+  }
+  function drawRoutes(ctx,w,h,t,color,state){
+    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/3600)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const explore=clamp(phase/.3), prune=clamp((phase-.26)/.45), lock=clamp((phase-.66)/.34);
+    const nodes=[[.06,.23],[.06,.77],[.31,.14],[.31,.47],[.31,.82],[.62,.13],[.62,.4],[.62,.72],[.94,.25],[.94,.75]];
+    const candidates=[[0,2,5,8],[0,3,6,8],[0,3,7,9],[0,4,7,9],[1,2,6,8],[1,3,6,9],[1,4,7,9],[1,4,5,8]];
+    const selected=faultActive?5:1;
+    const pointOnPath=(path,progress)=>{
+      const scaled=Math.min(path.length-1,progress*(path.length-1)), section=Math.min(path.length-2,Math.floor(scaled)), mix=scaled-section;
+      const a=nodes[path[section]],b=nodes[path[section+1]]; return [(a[0]+(b[0]-a[0])*mix)*w,(a[1]+(b[1]-a[1])*mix)*h];
+    };
+    grid(ctx,w,h);
+    // 四列节点与八条候选路径同时出现，形成真实的多跳路由决策空间。
+    candidates.forEach((path,index)=>{
+      const isSelected=index===selected, eliminated=prune>.03&&!isSelected;
+      const fade=eliminated?Math.max(.06,.38-prune*.4):.18+.25*explore+.5*lock;
+      ctx.strokeStyle=isSelected?'#65B4FF':'#7182A8';ctx.globalAlpha=fade;ctx.lineWidth=isSelected?1.25:.65;ctx.beginPath();
+      path.forEach((nodeIndex,j)=>{const node=nodes[nodeIndex];j?ctx.lineTo(node[0]*w,node[1]*h):ctx.moveTo(node[0]*w,node[1]*h);});ctx.stroke();
+      if(!done && (!eliminated || prune<.35)){
+        const q=(phase*1.75+index*.17)%1, point=pointOnPath(path,q);
+        glowDot(ctx,point[0],point[1],isSelected?1.45:1.05,isSelected?'#B9D9FF':'#9BA9C8',isSelected?.88:.42);
+      }
+    });
+    // 选中的最优路径在收敛后出现连续能量带，明确传达最终路径选择。
+    if(lock>.02||done){const path=candidates[selected];ctx.strokeStyle='#65B4FF';ctx.globalAlpha=.22+.62*Math.max(lock,done?1:0);ctx.lineWidth=2.1;ctx.beginPath();path.forEach((nodeIndex,j)=>{const node=nodes[nodeIndex];j?ctx.lineTo(node[0]*w,node[1]*h):ctx.moveTo(node[0]*w,node[1]*h);});ctx.stroke();if(!done){const point=pointOnPath(path,(phase*1.25)%1);glowDot(ctx,point[0],point[1],2.05,'#EDF3FF',.95);}}
+    nodes.forEach((node,index)=>{const onFinal=candidates[selected].includes(index);glowDot(ctx,node[0]*w,node[1]*h,onFinal?(done?2.1:1.55):1.05,onFinal?'#65B4FF':'#7080A3',onFinal?.86:.28);});
+  }
+  function drawForecast(ctx,w,h,t,color,state){
+    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/3600)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const simulate=clamp(phase/.38), pressure=clamp((phase-.28)/.22), settle=clamp((phase-.48)/.52);
+    const targetY=h*.31, targetH=h*.19, startX=w*.57, endX=w*.94;
+    const baseline=[[.05,.77],[.18,.61],[.3,.69],[.42,.44],[.55,.57],[.69,.39],[.82,.5],[.95,.45]];
+    const main=[[.05,.77],[.18,.61],[.3,.69],[.42,.44],[.55,.54],[.69,.38],[.82,.4],[.95,.4]];
+    const variants=[[[.05,.77],[.18,.61],[.3,.7],[.42,.48],[.55,.68],[.69,.62],[.82,.58],[.95,.57]],[[.05,.77],[.18,.64],[.3,.66],[.42,.42],[.55,.25],[.69,.18],[.82,.2],[.95,.24]],[[.05,.77],[.18,.59],[.3,.68],[.42,.46],[.55,.47],[.69,.52],[.82,.49],[.95,.5]]];
+    const drawTrack=(points,stroke,alpha,width=1)=>{ctx.strokeStyle=stroke;ctx.globalAlpha=alpha;ctx.lineWidth=width;ctx.beginPath();points.forEach((point,index)=>index?ctx.lineTo(point[0]*w,point[1]*h):ctx.moveTo(point[0]*w,point[1]*h));ctx.stroke();};
+    grid(ctx,w,h);
+    // 基线残影作为对照，绿色窗口是校验目标而不是单纯图表区域。
+    drawTrack(baseline,'#7888AD',.22,1);
+    ctx.fillStyle='#2DD4A8';ctx.globalAlpha=.08+.11*simulate;ctx.fillRect(startX,targetY,endX-startX,targetH);
+    ctx.strokeStyle='#2DD4A8';ctx.globalAlpha=.28+.38*settle;ctx.lineWidth=.65;ctx.strokeRect(startX,targetY,endX-startX,targetH);
+    const envelope=Math.max(.04,.24*(1-settle*.78));ctx.fillStyle=color;ctx.globalAlpha=envelope;ctx.beginPath();ctx.moveTo(startX,h*.21);ctx.lineTo(endX,h*.27);ctx.lineTo(endX,h*.56);ctx.lineTo(startX,h*.61);ctx.closePath();ctx.fill();
+    // 数字孪生并行试算：压力注入后偏离的样本逐个熄灭，只保留能回到目标窗的主轨迹。
+    variants.forEach((track,index)=>drawTrack(track,index===2?'#FFB547':'#FF7AB6',(.36-.22*settle)*pressure,.8));
+    if(pressure>.04){const x=w*.54;ctx.strokeStyle='#FFB547';ctx.globalAlpha=.2+.52*pressure;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,h*.12);ctx.lineTo(x,h*.82);ctx.stroke();glowDot(ctx,x,h*.49,1.5,'#FFB547',.75);}
+    drawTrack(main,done?'#2DD4A8':color,.45+.42*simulate,1.35);
+    const mainPoint=main[Math.min(main.length-1,Math.floor(simulate*(main.length-1)))];
+    if(!done&&simulate>.03) glowDot(ctx,mainPoint[0]*w,mainPoint[1]*h,1.7,'#EDF3FF',.9);
+    glowDot(ctx,endX,h*.4,done?2.25:1.35,done?'#2DD4A8':color,.52+.38*settle);
+  }
+  function drawCardCanvases(time){
+    let active=false; sizeCardCanvases();
+    cardCanvases.forEach(view=>{
+      const ctx=view.canvas.getContext('2d'), ratio=Math.min(window.devicePixelRatio||1,2), w=view.canvas.width/ratio,h=view.canvas.height/ratio;
+      ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
+      const state=view.card.classList.contains('running')?'running':view.card.classList.contains('done')?'done':'idle';
+      const color=stepColor(view.card); const localT=reduceMotion?0:(state==='running' ? time-(view.startedAt||time) : time);
+      [drawBaseline,drawModel,drawKv,drawRoutes,drawForecast][view.index](ctx,w,h,localT,color,state);
+      active ||= state==='running';
+    });
+    cardRenderFrame=active?requestAnimationFrame(drawCardCanvases):null;
+  }
+  function refreshCardRenderers(){ if(cardRenderFrame) cancelAnimationFrame(cardRenderFrame); cardRenderFrame=requestAnimationFrame(drawCardCanvases); }
+  cardCanvases.forEach(view=>setStepNote(view.index,'idle'));
+  refreshCardRenderers();
+
+  function resetCardVisuals(){
+    baselineTimers.forEach(clearTimeout); baselineTimers = [];
+    baselineParticles = [];
+    baselineScene.active=false; baselineScene.frozen=false; baselineScene.samples=[];
+    if (baselineFrame) cancelAnimationFrame(baselineFrame);
+    baselineFrame = null;
+    stageCtx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
+    decisionCards.forEach(card => card.querySelectorAll('.fp-cell').forEach(cell => cell.classList.remove('locked')));
+    cardCanvases.forEach(view => setStepNote(view.index, 'idle'));
+    refreshCardRenderers();
+  }
+  function setCardVisual(index, state){
+    const card = decisionCards[index];
+    if (!card) return;
+    const view = cardCanvases[index];
+    if (state === 'running' && view) view.startedAt = performance.now();
+    card.classList.toggle('running', state === 'running');
+    card.classList.toggle('done', state === 'done');
+    setStepNote(index, state);
+    refreshCardRenderers();
+  }
+  function resizeStageCanvas(){
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    stageCanvas.width = Math.ceil(window.innerWidth * ratio);
+    stageCanvas.height = Math.ceil(window.innerHeight * ratio);
+    stageCanvas.style.width = window.innerWidth + 'px';
+    stageCanvas.style.height = window.innerHeight + 'px';
+    stageCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  function sampleRects(nodes, count){
+    if (!nodes.length) return [];
+    return Array.from({length:count}, (_, i) => nodes[Math.min(nodes.length - 1, Math.floor(i * (nodes.length - 1) / Math.max(1, count - 1)))].getBoundingClientRect());
+  }
+  function cubicPoint(p, t){
+    const u = 1 - t;
+    return {
+      x: u*u*u*p.x1 + 3*u*u*t*p.cx1 + 3*u*t*t*p.cx2 + t*t*t*p.x2,
+      y: u*u*u*p.y1 + 3*u*u*t*p.cy1 + 3*u*t*t*p.cy2 + t*t*t*p.y2
+    };
+  }
+  function scenePoint(point, rect){ return { x:rect.left + point[0] / 1000 * rect.width, y:rect.top + point[1] / 560 * rect.height }; }
+  function sceneCurve(ctx, points, rect, color, alpha){
+    if (!points || points.length < 2) return;
+    ctx.beginPath(); points.forEach((point,index)=>{ const p=scenePoint(point,rect); index ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y); });
+    ctx.strokeStyle=color; ctx.globalAlpha=alpha; ctx.lineWidth=.8; ctx.stroke();
+  }
+  function drawBaselineFingerprint(ctx, rect, alpha){
+    const cx=rect.left + rect.width*.87, cy=rect.top + rect.height*.18, radius=Math.min(rect.width,rect.height)*.052;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let band=0;band<6;band++){
+      ctx.beginPath();
+      for(let point=0;point<=30;point++){
+        const angle=point/30*Math.PI*2 - Math.PI/2;
+        const ripple=1 + .14*Math.sin(angle*3+band*1.8) + .06*Math.cos(angle*5-band);
+        const r=radius*(.55+band*.13)*ripple;
+        const x=cx+Math.cos(angle)*r, y=cy+Math.sin(angle)*r*.62;
+        point?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      }
+      ctx.closePath(); ctx.strokeStyle=['#8B7BFF','#65B4FF','#FFB547','#FF7AB6','#2DD4A8','#9FA9FF'][band]; ctx.globalAlpha=alpha*(.45+band*.07); ctx.lineWidth=.8;ctx.stroke();
+    }
+    glowDot(ctx,cx,cy,2.1,'#E8EAF2',alpha*.9);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+  }
+  function drawBaselineScene(now){
+    if (!baselineScene.active && !baselineScene.frozen) return;
+    const rect=svg.getBoundingClientRect(); if (!rect.width || !rect.height) return;
+    const elapsed=now-baselineScene.started;
+    const traffic=Math.max(0,Math.min(1,(elapsed-980)/2150));
+    const windows=Math.max(0,Math.min(1,(elapsed-2500)/1900));
+    const freeze=Math.max(0,Math.min(1,(elapsed-4650)/350));
+
+    // 资源唤醒：按设备所在域渐次出现细小能量环。
+    if (elapsed < 1150) baselineScene.samples.forEach((sample,index)=>{
+      const local=Math.max(0,Math.min(1,(elapsed-index*65)/500)); if(!local) return;
+      const box=sample.rect, x=box.left+box.width/2,y=box.top+box.height/2;
+      ctxSaveArc(stageCtx,x,y,Math.max(box.width,box.height)*(.35+local*.35),sample.color,(1-local)*.48);
+    });
+    // 关键指标以离散采样脉冲出现，不再使用横贯画布的扫描波。
+    if (elapsed >= 700 && elapsed < 2050) {
+      baselineScene.samples.forEach((sample,index)=>{
+        const box=sample.rect, nx=box.left+box.width/2, began=700+index*105;
+        const textAlpha=Math.max(0,Math.min(1,(elapsed-began)/160)) * Math.max(0,Math.min(1,(began+620-elapsed)/220));
+        if(textAlpha>.02) glowDot(stageCtx,nx,box.top+box.height/2,2.2,sample.color,.75*textAlpha);
+      });
+    }
+    // 链路流量显形与局部暖色堆积。
+    if (traffic>0 && typeof PATHS !== 'undefined') {
+      PATHS.forEach((path,index)=>{
+        const tint=['#8B7BFF','#FF7AB6','#FFB547','#2DD4A8'][index%4]; sceneCurve(stageCtx,path,rect,tint,.07+traffic*.12);
+        const density=2+Math.floor(traffic*3);
+        for(let dot=0;dot<density;dot++){
+          const phase=((elapsed/760)+(dot/density)+index*.13)%1; const point=pointOnPolyline(path,phase); const p=scenePoint(point,rect);
+          glowDot(stageCtx,p.x,p.y,1.1,tint,.35+traffic*.4);
+        }
+      });
+      const congestion=scenePoint([500,245],rect); glowDot(stageCtx,congestion.x,congestion.y,5,'#FFB547',Math.sin(elapsed/130)*.07+traffic*.16);
+    }
+    // 时间窗口：保留四次采样轮廓，表达基线不是瞬时数据。
+    if (windows>0) {
+      const y=rect.bottom-19, left=rect.left+rect.width*.36, width=rect.width*.28;
+      stageCtx.font='600 9px var(--font-mono)';
+      for(let i=0;i<4;i++){
+        const ready=Math.max(0,Math.min(1,windows*4-i)); const x=left+width*(i/3);
+        stageCtx.strokeStyle='#A9B7DE';stageCtx.globalAlpha=.16+ready*.34;stageCtx.lineWidth=.7;stageCtx.beginPath();stageCtx.moveTo(x,y-4);stageCtx.lineTo(x,y+5);stageCtx.stroke();
+        stageCtx.fillStyle='#C7D4F4';stageCtx.globalAlpha=.22+ready*.6;stageCtx.fillText('T'+i,x-6,y+16);
+        if(ready>.1) { sceneCurve(stageCtx,PATHS[i],rect,['#8B7BFF','#FF7AB6','#FFB547','#2DD4A8'][i],.025+ready*.045); }
+      }
+      stageCtx.strokeStyle='rgba(169,183,222,.25)';stageCtx.globalAlpha=1;stageCtx.beginPath();stageCtx.moveTo(left,y);stageCtx.lineTo(left+width,y);stageCtx.stroke();
+    }
+    if (elapsed >= 4650 || baselineScene.frozen) drawBaselineFingerprint(stageCtx,rect,baselineScene.frozen ? .34 : freeze*.86);
+  }
+  function ctxSaveArc(ctx,x,y,r,color,alpha){ ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();ctx.restore(); }
+  function drawBaselineParticles(now){
+    stageCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    drawBaselineScene(now);
+    stageCtx.globalCompositeOperation = 'lighter';
+    baselineParticles = baselineParticles.filter(p => {
+      const progress = Math.max(0, Math.min(1, (now - p.start) / p.duration));
+      if (progress <= 0 || progress >= 1) return progress < 1;
+      const pos = cubicPoint(p, progress);
+      const alpha = Math.min(progress * 5, (1 - progress) * 6, 1) * .9;
+      stageCtx.fillStyle = p.color;
+      stageCtx.globalAlpha = alpha;
+      stageCtx.shadowBlur = 8; stageCtx.shadowColor = p.color;
+      stageCtx.beginPath(); stageCtx.arc(pos.x, pos.y, p.radius, 0, Math.PI * 2); stageCtx.fill();
+      return true;
+    });
+    stageCtx.globalAlpha = 1; stageCtx.shadowBlur = 0; stageCtx.globalCompositeOperation = 'source-over';
+    if (baselineParticles.length || baselineScene.active) baselineFrame = requestAnimationFrame(drawBaselineParticles);
+    else baselineFrame = null;
+  }
+  function launchBaselineCapture(){
+    resetCardVisuals(); resizeStageCanvas(); setCardVisual(0, 'running');
+    baselineScene.active=true; baselineScene.frozen=false; baselineScene.started=performance.now();
+    const metricNames=['利用率','带宽','往返时延','缓存规模','队列深度','Token 吞吐'];
+    const allSources=[
+      ...sampleRects(npuState.filter(s=>s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#8B7BFF',metric:metricNames[i]})),
+      ...sampleRects(Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf:not(.leaf-kv) .device-body')),2).map((rect,i)=>({rect,color:'#FFB547',metric:metricNames[i+1]})),
+      ...sampleRects(Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')),2).map((rect,i)=>({rect,color:'#FF7AB6',metric:metricNames[i+3]})),
+      ...sampleRects(npuState.filter(s=>!s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#2DD4A8',metric:metricNames[(i+4)%metricNames.length]}))
+    ];
+    baselineScene.samples=allSources;
+    const target = decisionCards[0].querySelector('.opt-card-canvas').getBoundingClientRect();
+    const ports = [0.12, .37, .63, .88].map(x => ({ x:target.left + target.width * x, y:target.bottom - 3 }));
+    const domains = [
+      { nodes:sampleRects(npuState.filter(s => s.isP).map(s => s.card), 5), color:'#8B7BFF' },
+      { nodes:sampleRects(Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf:not(.leaf-kv) .device-body')), 5), color:'#FFB547' },
+      { nodes:sampleRects(Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), 4), color:'#FF7AB6' },
+      { nodes:sampleRects(npuState.filter(s => !s.isP).map(s => s.card), 5), color:'#2DD4A8' }
+    ];
+    const now = performance.now();
+    domains.forEach((domain, domainIndex) => domain.nodes.forEach((rect, sampleIndex) => {
+      const source = { x:rect.left + rect.width / 2, y:rect.top + rect.height / 2 };
+      const end = ports[domainIndex];
+      const delay = 520 + domainIndex * 720 + sampleIndex * (reduceMotion ? 90 : 64);
+      baselineParticles.push({ x1:source.x, y1:source.y, x2:end.x, y2:end.y, cx1:source.x, cy1:source.y - 42, cx2:end.x, cy2:end.y + 38, color:domain.color, start:now + delay, duration:reduceMotion ? 650 : 1280, radius:reduceMotion ? 1.35 : 1.8 });
+    }));
+    baselineFrame = requestAnimationFrame(drawBaselineParticles);
+    [2100, 3000, 3900, 4900].forEach((time, column) => baselineTimers.push(setTimeout(() => {
+      decisionCards[0].querySelectorAll('.fp-cell[data-fp-col="' + column + '"]').forEach(cell => cell.classList.add('locked'));
+    }, time)));
+    baselineTimers.push(setTimeout(() => {
+      decisionCards[0].querySelectorAll('.fp-cell').forEach(cell => cell.classList.add('locked'));
+      setCardVisual(0, 'done');
+      baselineScene.active=false; baselineScene.frozen=true;
+      setCollectionPhase('baseline');
+    }, 5000));
+  }
+  window.addEventListener('resize', () => { if (baselineParticles.length) resizeStageCanvas(); refreshCardRenderers(); });
 
   /* ===== 1. NPU 负载动态模型（64 张卡随机游走，颜色表示利用率） ===== */
   const npuCards = Array.from(svg.querySelectorAll('.npu-card'));
@@ -1892,6 +2417,12 @@
     }
     return {segs,total};
   });
+  // 外部流从 Decode 接入叶交换机借道核心 Fabric，再到 Prefill 接入叶；不进入 PD 或 KV Cache。
+  const DISTURBANCE_PATH = [[716,72],[704,120],[671,128],[446,224],[411,128],[382,120],[362,72]].map((point,index,array)=>point).reduce((path, point, index, array) => {
+    if(index === 0) return { segs:[], total:0, points:array };
+    const [x1,y1]=array[index-1],[x2,y2]=point,len=Math.hypot(x2-x1,y2-y1);
+    path.segs.push({x1,y1,x2,y2,len,acc:path.total}); path.total+=len; return path;
+  }, null);
   function ptAt(p, prog){
     const d=prog*p.total;
     for (const s of p.segs){
@@ -1899,11 +2430,71 @@
     }
     const l=p.segs[p.segs.length-1]; return [l.x2,l.y2];
   }
+  function disturbancePointAt(progress){
+    const first=DISTURBANCE_PATH.segs[0], edge=first.len/DISTURBANCE_PATH.total;
+    const last=DISTURBANCE_PATH.segs[DISTURBANCE_PATH.segs.length-1], lastStart=last.acc/DISTURBANCE_PATH.total;
+    if(progress<edge){
+      const t=progress/edge, u=1-t;
+      return [u*u*u*716 + 3*u*u*t*750 + 3*u*t*t*672 + t*t*t*704, u*u*u*72 + 3*u*u*t*82 + 3*u*t*t*90 + t*t*t*120];
+    }
+    if(progress>lastStart){
+      const t=(progress-lastStart)/(1-lastStart), u=1-t;
+      return [u*u*u*382 + 3*u*u*t*354 + 3*u*t*t*424 + t*t*t*362, u*u*u*120 + 3*u*u*t*112 + 3*u*t*t*98 + t*t*t*72];
+    }
+    return ptAt(DISTURBANCE_PATH,progress);
+  }
 
   const pLayer = document.createElementNS(SVGNS,'g');
   pLayer.setAttribute('id','particleLayer');
   svg.appendChild(pLayer);
   const particles=[];
+  const disturbanceLayer = document.createElementNS(SVGNS,'g');
+  disturbanceLayer.setAttribute('id','disturbanceLayer'); svg.appendChild(disturbanceLayer);
+  const disturbanceSource = document.createElementNS(SVGNS,'g');
+  disturbanceSource.setAttribute('class','disturbance-source');
+  disturbanceSource.innerHTML='<path class="source-link" d="M 716 72 C 750 82 672 90 704 120"/><path class="source-link" d="M 382 120 C 354 112 424 98 362 72"/>';
+  disturbanceLayer.appendChild(disturbanceSource);
+  const disturbanceParticles = [], dropParticles = [];
+  const DISTURBANCE_IMPACTS = [
+    { point:[554,176], paths:[5] },
+    { point:[430,175], paths:[1] }
+  ];
+  let disturbanceTimer = null;
+  function spawnDrop(x, y, color, count){
+    for(let i=0;i<(count||1);i++){
+      const tail=document.createElementNS(SVGNS,'line'), dot=document.createElementNS(SVGNS,'circle');
+      const c=color || '#FF6B83';
+      tail.setAttribute('stroke',c);tail.setAttribute('stroke-width','0.8');tail.setAttribute('opacity','.7');
+      dot.setAttribute('r',String(1.1+Math.random()*.9));dot.setAttribute('fill',c);dot.style.filter='drop-shadow(0 0 2px '+c+')';
+      disturbanceLayer.append(tail,dot);
+      dropParticles.push({ dot,tail,x:x+(Math.random()-.5)*5,y:y+(Math.random()-.5)*4,vx:(Math.random()-.5)*.12,vy:.025+Math.random()*.08,age:0,life:520+Math.random()*360,color:c });
+    }
+  }
+  function spawnDisturbance(){
+    if(!faultActive) return;
+    const dot=document.createElementNS(SVGNS,'circle');
+    dot.setAttribute('r','2.55');dot.setAttribute('fill','#FF5C7A');dot.style.filter='drop-shadow(0 0 4px #FF5C7A)';
+    disturbanceLayer.appendChild(dot);
+    disturbanceParticles.push({el:dot,progress:0,speed:.00058,dropAt:Math.random()<.52?0:1});
+  }
+  function startDisturbanceFlow(){
+    disturbanceSource.classList.remove('resolved'); disturbanceSource.classList.add('active');
+    for(let i=0;i<6;i++) setTimeout(spawnDisturbance,i*90);
+    if(disturbanceTimer) clearInterval(disturbanceTimer);
+    disturbanceTimer=setInterval(()=>{
+      spawnDisturbance();
+      if(!optimized) spawn([1,5][Math.floor(Math.random()*2)], { speed:.00034 + Math.random()*.00012, r:1.9 });
+    },120);
+  }
+  function stopDisturbanceFlow(){
+    if(disturbanceTimer) clearInterval(disturbanceTimer); disturbanceTimer=null;
+    disturbanceSource.classList.remove('active','resolved');
+  }
+  function ejectBusinessParticle(p, x, y){
+    const color=p.el.getAttribute('fill') || '#C5D0E8';
+    spawnDrop(x,y,color,3); spawnDrop(x,y,'#FF6B83',2);
+    p.el.remove();
+  }
 
   /* 平面内部的数据流：独立于跨域传输链路，只在各自承载面上滑行。 */
   const planeFlowLayer = document.createElementNS(SVGNS, 'g');
@@ -2145,25 +2736,66 @@
   }
 
   let faultActive = false;      // 是否处于故障态（提前声明避免 TDZ）
+  let disturbanceResolved = false;
   // 判断粒子是否在故障链路上（Spine-1 路径：写路径 2,3 和读路径 6,7）
   function isParticleOnFaultPath(p){
     if (!faultActive) return false;
-    if (p.opt) return p.pi === 2 || p.pi === 3 || p.pi === 6 || p.pi === 7;
-    return p.pi === 2 || p.pi === 3 || p.pi === 6 || p.pi === 7;
+    return p.pi === 1 || p.pi === 5;
+  }
+  function pointProgressOnPath(path, point){
+    let best={distance:Infinity, progress:.5};
+    path.segs.forEach(segment=>{
+      const dx=segment.x2-segment.x1, dy=segment.y2-segment.y1, lenSq=dx*dx+dy*dy;
+      const t=Math.max(0,Math.min(1,((point[0]-segment.x1)*dx+(point[1]-segment.y1)*dy)/lenSq));
+      const px=segment.x1+dx*t, py=segment.y1+dy*t, distance=Math.hypot(point[0]-px,point[1]-py);
+      if(distance<best.distance) best={distance,progress:(segment.acc+segment.len*t)/path.total};
+    });
+    return best.progress;
+  }
+  function impactForParticle(p){
+    return DISTURBANCE_IMPACTS.find(impact => impact.paths.includes(p.pi));
   }
   let lt=performance.now();
   function loop(t){
     const dt=t-lt; lt=t;
     for (let i=particles.length-1;i>=0;i--){
       const p=particles[i];
-      // 故障链路上的粒子立即移除
-      if (isParticleOnFaultPath(p)){ p.el.remove(); particles.splice(i,1); continue; }
       p.prog += p.speed*dt*(p.rev?-1:1);
       if (p.prog>=1||p.prog<=0){ p.el.remove(); particles.splice(i,1); continue; }
+      // 扰动命中 Spine-1 接入点时，业务粒子脱离原轨迹并向下散落。
+      const impact=impactForParticle(p);
+      if (isParticleOnFaultPath(p) && impact && !disturbanceResolved && p.prog >= pointProgressOnPath(p.path,impact.point)) {
+        ejectBusinessParticle(p,impact.point[0],impact.point[1]); particles.splice(i,1); continue;
+      }
       const [x,y]=ptAt(p.path,p.prog);
       p.el.setAttribute('cx',x); p.el.setAttribute('cy',y);
       const fade=Math.min(p.prog*6,(1-p.prog)*6,1);
       p.el.setAttribute('opacity', (p.rev?0.45:0.95)*fade);
+    }
+    for(let i=disturbanceParticles.length-1;i>=0;i--){
+      const p=disturbanceParticles[i]; p.progress+=p.speed*dt;
+      const impact=DISTURBANCE_IMPACTS[p.dropAt], hitProgress=pointProgressOnPath(DISTURBANCE_PATH,impact.point);
+      if(p.progress>=hitProgress){
+        if(!disturbanceResolved){
+          p.el.remove(); disturbanceParticles.splice(i,1);
+          spawnDrop(impact.point[0],impact.point[1],'#FF5C7A',5);
+          spawnDrop(impact.point[0],impact.point[1],'#FFB547',3);
+          continue;
+        }
+      }
+      if(p.progress>=1){
+        p.el.remove(); disturbanceParticles.splice(i,1);
+        continue;
+      }
+      const point=disturbancePointAt(p.progress);
+      p.el.setAttribute('cx',point[0]); p.el.setAttribute('cy',point[1]);
+      p.el.setAttribute('opacity',Math.min(p.progress*7,(1-p.progress)*7,1));
+    }
+    for(let i=dropParticles.length-1;i>=0;i--){
+      const p=dropParticles[i];p.age+=dt;p.vy+=.00022*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
+      const alpha=Math.max(0,1-p.age/p.life);p.dot.setAttribute('cx',p.x);p.dot.setAttribute('cy',p.y);p.dot.setAttribute('opacity',alpha);
+      p.tail.setAttribute('x1',p.x-p.vx*28);p.tail.setAttribute('y1',p.y-p.vy*20);p.tail.setAttribute('x2',p.x);p.tail.setAttribute('y2',p.y);p.tail.setAttribute('opacity',alpha*.7);
+      if(!alpha){p.dot.remove();p.tail.remove();dropParticles.splice(i,1);}
     }
     for (let i = telemetryPulses.length - 1; i >= 0; i--) {
       const pulse = telemetryPulses[i];
@@ -2192,7 +2824,7 @@
 
   // 默认流动：Spine-0 路径频繁（heavy），Spine-1 路径较少（warn），写+读交替
   function getDefaultPaths(){
-    if (faultActive) return [0, 1, 4, 5];  // 仅 Spine-0
+    if (faultActive) return [2, 3, 6, 7];  // 扰动后，正常业务优先改走 Spine-1
     return [0, 1, 2, 3, 4, 5, 6, 7];        // 全部
   }
   let defaultSpawnTimer = setInterval(()=>{
@@ -2720,8 +3352,7 @@
       }, computeStart + index * 1950);
     });
     setTimeout(() => {
-      cs.classList.add('active');
-      cs.querySelector('.cs-text').textContent = '实时观测中';
+      setCollectionPhase('optimized');
       realtimeTimer = setInterval(tickRealtime, 2000);
     }, computeStart + 6000);
   }
@@ -2820,12 +3451,16 @@
     clearOptimizeTimers();
     if (optSpawnTimer) { clearInterval(optSpawnTimer); optSpawnTimer=null; }
     optimized = true; perfDone = false;
-    clearInterval(defaultSpawnTimer);
+    clearInterval(defaultSpawnTimer); defaultSpawnTimer = null;
     // 清理上次的性能高亮
     document.querySelectorAll('.zm-val.improved').forEach(t=>t.classList.remove('improved'));
 
     const algo = document.getElementById('algoPanel');
     const steps = ['apStep1','apStep2','apStep3','apStep4','apStep5'].map(id=>document.getElementById(id));
+    const stageCards = Array.from(document.querySelectorAll('.opt-step-card'));
+    const decisionStatus = document.getElementById('optStageStatus');
+    const runningText = ['正在锁定全局基线', '正在构建约束模型', '正在重整 KV 布局', '正在编排读写路径', '正在校验策略收益'];
+    const doneText = ['基线已锁定', '可行解空间确定', '均衡分片已确认', '最优路径已下发', '策略验证通过'];
     algo.classList.remove('done');
 
     function setStep(i){
@@ -2834,39 +3469,50 @@
         if(j<i) s.classList.add('done');
         else if(j===i) s.classList.add('active');
       });
+      stageCards.forEach((card, j) => {
+        card.classList.remove('running', 'done');
+        const state = card.querySelector('.opt-step-state');
+        if (j < i) { card.classList.add('done'); state.textContent = doneText[j]; setCardVisual(j, 'done'); }
+        else if (j === i) { card.classList.add('running'); state.textContent = '执行中…'; setCardVisual(j, 'running'); }
+        else { state.textContent = ['等待采样', '等待求解', '等待重排', '等待选路', '等待验证'][j]; setCardVisual(j, 'idle'); }
+      });
+      decisionStatus.textContent = runningText[i];
+      decisionStatus.classList.add('live');
     }
     const T = (fn,ms)=>{ optimizeTimers.push(setTimeout(fn,ms)); };
 
-    // ── 步骤1：负载感知采集（0~1500ms）──
+    // 基线已在采集阶段完成；后续四步在决策台内连续推进。
     algo.classList.add('show');
     document.getElementById('apTitle').textContent = faultActive ? '扰动感知优化求解中' : '优化模型求解中';
-    setStep(0);
+    setStep(1);
     fxStep1();
+    fxStep2();
 
-    // ── 步骤2：形式化建模与求解（1500~3500ms）──
-    T(()=>{ setStep(1); fxStep2(); }, 1500);
+    // 约束空间寻优与 KV 分片评估均保留完整观察时间，避免一闪而过。
+    T(()=>{ setStep(2); showKvSplit(); }, 4000);
 
-    // ── 步骤3：KV Cache 池切分（3500~5500ms）──
-    T(()=>{ setStep(2); showKvSplit(); }, 3500);
-
-    // ── 步骤4：双向选路（5500~7000ms）──
+    // ── 步骤4：多候选路径编排（8000~11600ms）──
     T(()=>{
       setStep(3);
       fxStep4();
-    }, 5500);
+    }, 8000);
 
-    // ── 步骤5：负载预测与链路实施（7000~8500ms）──
+    // ── 步骤5：数字孪生预测校验（11600~15200ms）──
     T(()=>{
       setStep(4);
       fxStep5();
       selectOptLinks();
-    }, 7000);
+    }, 11600);
 
     // ── 完成：持续优化态 + 性能高亮 ──
     T(()=>{
       steps[4].classList.remove('active'); steps[4].classList.add('done');
       document.getElementById('apTitle').textContent = faultActive ? '扰动规避策略已生效' : '优化策略已生效';
       algo.classList.add('done');
+      stageCards.forEach((card, index) => { card.classList.remove('running'); card.classList.add('done'); card.querySelector('.opt-step-state').textContent = doneText[index]; setCardVisual(index, 'done'); });
+      decisionStatus.textContent = '策略已生效 · 全局指标持续刷新';
+      setCollectionPhase('optimized');
+      if (faultActive) { disturbanceResolved = true; disturbanceSource.classList.add('resolved'); }
       // 启动优化粒子流（避开故障路径）
       const paths = getActiveOptPaths();
       optSpawnTimer = setInterval(()=>{
@@ -2874,13 +3520,15 @@
       }, 350);
       // 性能高亮（故障态性能稍差但仍优于未优化）
       highlightPerf();
+      tickRealtime();
+      if (!realtimeTimer) realtimeTimer = setInterval(tickRealtime, 2000);
       clearStepFx();
-    }, 8500);
+    }, 15200);
   }
 
   /* 获取当前可用的优化路径索引（故障态避开 Spine-1 故障链路 → 仅用 Spine-0 路径） */
   function getActiveOptPaths(){
-    if (faultActive) return [0, 1, 4, 5];  // 仅 Spine-0 路径（写0,1 + 读4,5）
+    if (faultActive) return [2, 3, 6, 7];  // 规避扰动所在的 Spine-0 路径
     return [0, 1, 2, 3, 4, 5, 6, 7];        // 全部 8 条
   }
 
@@ -3145,8 +3793,60 @@
     }, 500));
   }
 
-  /* === KV 切分动画：在 KV Cache 池内切分 → 切分后直接上行到 Leaf-KV（利用网络链路） === */
+  /* === KV 切分动画：在 3D KV Cache 池内完成分片重整 === */
+  let kvPoolRun = 0, kvPoolFrame = null, kvPoolTimer = null, kvPoolFragments = [];
+  function clearKvPoolMotion(){
+    kvPoolRun++;
+    if(kvPoolFrame) cancelAnimationFrame(kvPoolFrame);
+    if(kvPoolTimer) clearTimeout(kvPoolTimer);
+    kvPoolFrame=null; kvPoolTimer=null;
+    kvPoolFragments.splice(0).forEach(fragment=>fragment.remove());
+  }
   function showKvSplit(){
+    clearKvPoolMotion();
+    const pool=document.getElementById('kvPool3d'); if(!pool) return;
+    const run=++kvPoolRun;
+    pool.classList.remove('rebalanced'); pool.classList.add('rebalancing');
+    // 从三层缓存托盘抽取多个 KV 块，在上方切分位完成横竖组合切分，再发往两台 KV 网关。
+    const moves=[
+      {from:[436,446],cut:[426,397],gateway:[440,309],color:'#FF7AB6',delay:0},
+      {from:[478,446],cut:[474,389],gateway:[440,309],color:'#9B8CFF',delay:220},
+      {from:[528,446],cut:[526,397],gateway:[560,309],color:'#FF7AB6',delay:440},
+      {from:[438,484],cut:[474,405],gateway:[440,309],color:'#42DDB6',delay:660},
+      {from:[510,484],cut:[526,405],gateway:[560,309],color:'#42DDB6',delay:880},
+      {from:[573,526],cut:[548,397],gateway:[560,309],color:'#FFC76C',delay:1100}
+    ];
+    moves.forEach(move=>{
+      const group=document.createElementNS(SVGNS,'g'), block=document.createElementNS(SVGNS,'rect');
+      block.setAttribute('width','14');block.setAttribute('height','6');block.setAttribute('rx','1');block.setAttribute('fill',move.color);block.setAttribute('opacity','.96');block.style.filter='drop-shadow(0 0 3px '+move.color+')';group.appendChild(block);
+      const hCut=document.createElementNS(SVGNS,'line'), vCut=document.createElementNS(SVGNS,'line');
+      [hCut,vCut].forEach(line=>{line.setAttribute('stroke','#EDF3FF');line.setAttribute('stroke-width','.7');line.setAttribute('opacity','0');group.appendChild(line);});
+      const pieces=Array.from({length:4},()=>{const piece=document.createElementNS(SVGNS,'rect');piece.setAttribute('width','6.2');piece.setAttribute('height','2.3');piece.setAttribute('rx','.5');piece.setAttribute('fill',move.color);piece.setAttribute('opacity','0');piece.style.filter='drop-shadow(0 0 2px '+move.color+')';group.appendChild(piece);return piece;});
+      move.group=group;move.block=block;move.hCut=hCut;move.vCut=vCut;move.pieces=pieces;pLayer.appendChild(group);kvPoolFragments.push(group);
+    });
+    const began=performance.now();
+    const clamp=value=>Math.max(0,Math.min(1,value));
+    (function movePages(now){
+      if(run!==kvPoolRun) return;
+      let active=false;
+      moves.forEach(move=>{
+        const local=clamp((now-began-move.delay)/1950); if(local<1) active=true;
+        const lift=clamp(local/.32), split=clamp((local-.32)/.25), send=clamp((local-.57)/.43), liftEase=lift*lift*(3-2*lift);
+        const bx=move.from[0]+(move.cut[0]-move.from[0])*liftEase, by=move.from[1]+(move.cut[1]-move.from[1])*liftEase-Math.sin(liftEase*Math.PI)*7;
+        move.block.setAttribute('x',bx);move.block.setAttribute('y',by);move.block.setAttribute('opacity',send>.02?'0':'.96');
+        move.hCut.setAttribute('x1',bx);move.hCut.setAttribute('x2',bx+14*split);move.hCut.setAttribute('y1',by+3);move.hCut.setAttribute('y2',by+3);move.hCut.setAttribute('opacity',split);
+        move.vCut.setAttribute('x1',bx+7);move.vCut.setAttribute('x2',bx+7);move.vCut.setAttribute('y1',by);move.vCut.setAttribute('y2',by+6*split);move.vCut.setAttribute('opacity',split);
+        move.pieces.forEach((piece,index)=>{
+          const col=index%2,row=Math.floor(index/2), sx=bx+col*7,sy=by+row*3, tx=move.gateway[0]-7+col*7,ty=move.gateway[1]-6+row*3;
+          const e=send*send*(3-2*send), x=sx+(tx-sx)*e, y=sy+(ty-sy)*e-Math.sin(e*Math.PI)*10;
+          piece.setAttribute('x',x);piece.setAttribute('y',y);piece.setAttribute('opacity',send>.01 ? .92*(1-Math.max(0,send-.9)*8) : '0');
+        });
+      });
+      if(active){kvPoolFrame=requestAnimationFrame(movePages);}
+      else {kvPoolFragments.splice(0).forEach(page=>page.remove());kvPoolFrame=null;}
+    })(began);
+    kvPoolTimer=setTimeout(()=>{if(run===kvPoolRun){pool.classList.remove('rebalancing');pool.classList.add('rebalanced');}},3500);
+    return;
     // KV Cache 池中心位置
     const poolCX = 500, poolCY = 478;
     // 两个 Leaf-KV 设备位置（切分后小块飞向这里）
@@ -3299,13 +3999,12 @@
     })(t0);
   }
 
-  // 链路负载选择：heavy/warn → opt（均衡绿色），故障链路保持故障态
+  // 受扰路径保留为黄色高流量实线，其他业务链路切换为优化后的绿色。
   function selectOptLinks(){
-    // 所有非故障链路 → opt（优化后均衡负载）
     document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
-      if (l.classList.contains('link-fault')) return; // 跳过故障链路
-      l.classList.remove('link-heavy','link-warn','link-idle','link-opt');
-      l.classList.add('link-opt');
+      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault');
+      if (faultActive && (l.classList.contains('disturbance-link-a') || l.classList.contains('disturbance-link-b'))) l.classList.add('link-warn');
+      else l.classList.add('link-opt');
     });
   }
 
@@ -3335,22 +4034,35 @@
   // 采集状态徽标
   const cs = document.createElement('div');
   cs.className='collect-status';
-  cs.innerHTML='<span class="cs-dot"></span><span class="cs-text">未采集</span>';
+  cs.innerHTML='<div class="cs-flow"><span class="cs-stage" data-phase="idle"><i></i>未采集</span><span class="cs-stage" data-phase="collecting"><i></i>采集中</span><span class="cs-stage" data-phase="window"><i></i>时间窗口</span><span class="cs-stage" data-phase="baseline"><i></i>基线锁定</span><span class="cs-stage" data-phase="optimizing"><i></i>优化中</span><span class="cs-stage" data-phase="optimized"><i></i>已优化</span></div><span class="cs-text">未采集</span>';
   const topbar = document.querySelector('.topbar');
   topbar.insertBefore(cs, topbar.querySelector('.btn'));
+  const COLLECTION_PHASES = ['idle','collecting','window','baseline','optimizing','optimized'];
+  const COLLECTION_LABELS = { idle:'未采集', collecting:'采集中', window:'窗口累计', baseline:'基线锁定', optimizing:'优化中', optimized:'已优化' };
+  function setCollectionPhase(phase){
+    const current = Math.max(0, COLLECTION_PHASES.indexOf(phase));
+    cs.dataset.phase = phase;
+    cs.querySelectorAll('.cs-stage').forEach((stage, index) => {
+      stage.classList.toggle('is-complete', index < current);
+      stage.classList.toggle('is-current', index === current);
+    });
+    cs.querySelector('.cs-text').textContent = COLLECTION_LABELS[phase] || COLLECTION_LABELS.idle;
+  }
+  setCollectionPhase('idle');
 
   // 按钮事件
-  const btns = document.querySelectorAll('.btn');
+  const optimizeBtn = document.getElementById('optimizeBtn');
+  const resetBtn = document.querySelectorAll('.btn')[2];
   let collected=false;
 
   /* ===== 注入故障 / 故障恢复（部分链路故障，符合实际场景） ===== */
   // 可故障链路组：Spine-1 上排左侧 + 下排右侧（2组，部分故障）
-  const FAULT_GRPS = ['.fault-grp-1', '.fault-grp-2'];
+  const FAULT_GRPS = ['.disturbance-link-a', '.disturbance-link-b'];
   function setFaultLinks(fault){
     FAULT_GRPS.forEach(sel=>{
       document.querySelectorAll(sel).forEach(l=>{
-        l.classList.remove('link-heavy','link-warn','link-idle','link-opt','link-fault');
-        l.classList.add(fault ? 'link-fault' : (optimized ? 'link-opt' : 'link-warn'));
+        l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault');
+        l.classList.add(fault ? 'link-fault' : (optimized ? 'link-opt' : (l.classList.contains('link-s0') ? 'link-warn' : 'link-normal')));
       });
     });
   }
@@ -3359,10 +4071,14 @@
     if (!faultActive) {
       // 注入故障：Spine-1 部分链路失效（2组：上排左侧+下排右侧）
       faultActive = true;
+      disturbanceResolved = false;
       btn.textContent = '停止扰动';
       btn.classList.remove('danger');
-      document.getElementById('faultMarks').style.display = '';
+      document.getElementById('faultMarks').style.display = 'none';
       setFaultLinks(true);
+      startDisturbanceFlow();
+      // 让一批已在网络中的业务流到达碰撞点，清晰呈现脱轨与掉落。
+      for(let i=0;i<14;i++) setTimeout(()=>spawn([1,5][i%2], { speed:.00042 + (i%3)*.00005, r:1.8 }), i*95);
       // 若已优化，重新选路避开故障链路
       if (optimized && optSpawnTimer) {
         clearInterval(optSpawnTimer);
@@ -3378,6 +4094,7 @@
       btn.classList.add('danger');
       document.getElementById('faultMarks').style.display = 'none';
       setFaultLinks(false);
+      stopDisturbanceFlow();
       // 若已优化，恢复全部 8 条路径
       if (optimized && optSpawnTimer) {
         clearInterval(optSpawnTimer);
@@ -3387,20 +4104,66 @@
       if (collected) updateAllViz(optimized ? 'opt' : 'init');
     }
   }
-  btns[0].addEventListener('click',()=>{                       // 集群数据采集
-    if(collected) return; collected=true;
-    cs.querySelector('.cs-text').textContent='采集…';
-    setTimeout(populate, 300);
-  });
-  btns[1].addEventListener('click', optimize);                 // 一键优化
-  btns[2].addEventListener('click', toggleFault);              // 注入故障 / 故障恢复
-  btns[3].addEventListener('click',()=>{                        // 重置
+  function collectAndOptimize() {
+    if (optimizeBtn.disabled) return;
+    clearOptimizeTimers();
+    clearInterval(realtimeTimer); realtimeTimer = null;
+    if (optSpawnTimer) { clearInterval(optSpawnTimer); optSpawnTimer = null; }
+    optimized = false; perfDone = false; collected = true;
+    if (!defaultSpawnTimer) {
+      defaultSpawnTimer = setInterval(() => { getDefaultPaths().forEach(pi => spawn(pi)); }, 900);
+    }
+    optimizeBtn.disabled = true;
+    setCollectionPhase('collecting');
+    const preStepCards = Array.from(document.querySelectorAll('.opt-step-card'));
+    preStepCards.forEach((card, index) => { card.classList.remove('running', 'done'); card.querySelector('.opt-step-state').textContent = ['等待采样', '等待求解', '等待重排', '等待选路', '等待验证'][index]; });
+    preStepCards[0].classList.add('running');
+    preStepCards[0].querySelector('.opt-step-state').textContent = '采集中…';
+    const preStageStatus = document.getElementById('optStageStatus');
+    preStageStatus.textContent = '正在锁定全局基线';
+    preStageStatus.classList.add('live');
+    launchBaselineCapture();
+    const collectionPlan = [
+      { selector: '.zone-prefill', nodes: npuState.filter(s => s.isP).map(s => s.card), color: '#8B7BFF', offset: 0 },
+      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')), color: '#FFB547', offset: 180 },
+      { selector: '.zone-kv', nodes: Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), color: '#FF7AB6', offset: 360 },
+      { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 540 }
+    ];
+    collectionPlan.forEach(plan => {
+      const zone = document.querySelector(plan.selector);
+      zone.style.setProperty('--zone-collect', plan.color);
+      setTimeout(() => {
+        zone.classList.remove('collecting'); void zone.offsetWidth; zone.classList.add('collecting');
+        scanDevices(plan.nodes, plan.color, 0, 4);
+      }, plan.offset);
+    });
+    setTimeout(() => {
+      updateAllViz(faultActive ? 'fault' : 'init');
+      setCollectionPhase('window');
+    }, 2800);
+    setTimeout(() => {
+      setCollectionPhase('optimizing');
+      optimizeBtn.disabled = false;
+      optimize();
+    }, 5000);
+  }
+  optimizeBtn.addEventListener('click', collectAndOptimize);   // 采集后自动优化
+  document.getElementById('faultBtn').addEventListener('click', toggleFault);
+  resetBtn.addEventListener('click',()=>{                       // 重置
     collected=false; optimized=false; perfDone=false;
+    optimizeBtn.disabled = false;
     faultActive = false;
+    disturbanceResolved = false;
+    stopDisturbanceFlow();
+    disturbanceParticles.splice(0).forEach(p=>p.el.remove());
+    dropParticles.splice(0).forEach(p=>{p.dot.remove();p.tail.remove();});
     clearInterval(realtimeTimer); realtimeTimer=null;
     clearInterval(optSpawnTimer); optSpawnTimer=null;
     clearInterval(defaultSpawnTimer);
     clearOptimizeTimers();
+    resetCardVisuals();
+    clearKvPoolMotion();
+    document.getElementById('kvPool3d')?.classList.remove('rebalancing','rebalanced');
     telemetryFabric.classList.remove('telemetry-live');
     telemetryPulses.splice(0).forEach(p => p.el.remove());
     deviceSensors.forEach(sensor => sensor.classList.remove('sampled'));
@@ -3418,12 +4181,18 @@
     fbtn.classList.add('danger');
     document.getElementById('faultMarks').style.display = 'none';
     setPending();
-    cs.classList.remove('active');
-    cs.querySelector('.cs-text').textContent='未采集';
+    setCollectionPhase('idle');
+    document.querySelectorAll('.opt-step-card').forEach((card, index) => {
+      card.classList.remove('running', 'done');
+      card.querySelector('.opt-step-state').textContent = ['等待采样', '等待求解', '等待重排', '等待选路', '等待验证'][index];
+    });
+    const optStageStatus = document.getElementById('optStageStatus');
+    optStageStatus.textContent = '等待优化任务';
+    optStageStatus.classList.remove('live');
     // 重置链路负载：Spine-0 → heavy（过载），Spine-1 → warn（中负载）
     document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
-      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn');
-      l.classList.add(l.classList.contains('link-s0') ? 'link-heavy' : 'link-warn');
+      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal');
+      l.classList.add(l.classList.contains('link-s0') ? 'link-warn' : 'link-normal');
     });
     // 重置算法浮窗
     const algo = document.getElementById('algoPanel');
