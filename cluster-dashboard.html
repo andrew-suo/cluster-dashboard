@@ -61,18 +61,15 @@
   .opt-stage-sub { color: var(--text-dim); font: 700 8px var(--font-mono); letter-spacing: .1em; }
   .opt-stage-status { margin-left: auto; color: var(--text-dim); font: 700 10px var(--font-mono); }
   .opt-stage-status.live { color: var(--accent); }
-  .opt-step-grid { height: calc(100% - 37px); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding-top: 9px; }
+  .opt-step-grid { height: calc(100% - 37px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-top: 9px; }
   .opt-step-card { --step-color: var(--brand); position: relative; min-width: 0; padding: 10px 11px; border: 1px solid rgba(111,134,184,.22); background: linear-gradient(180deg, rgba(18,28,52,.72), rgba(8,15,31,.72)); overflow: hidden; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
+  .opt-step-grid > .opt-step-card:first-child { display:none; }
   .opt-step-card:nth-child(2) { --step-color: var(--warn); }.opt-step-card:nth-child(3) { --step-color: var(--pink); }.opt-step-card:nth-child(4) { --step-color: #65B4FF; }.opt-step-card:nth-child(5) { --step-color: var(--accent); }
   .opt-step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--step-color); transform:scaleX(.08); transform-origin:left; }
   .opt-step-card.running { opacity:1; border-color:color-mix(in srgb, var(--step-color) 68%, var(--border)); background:color-mix(in srgb, var(--step-color) 8%, rgba(12,20,39,.7)); box-shadow:0 0 18px color-mix(in srgb, var(--step-color) 28%, transparent); }
+  .opt-step-card.input-target { opacity:.72; border-color:rgba(216,226,250,.42); box-shadow:0 0 13px rgba(216,226,250,.16); }
   .opt-step-card.running::before { animation: stepTrace 1s linear infinite; }.opt-step-card.done { opacity:.5; border-color:color-mix(in srgb, var(--step-color) 34%, var(--border)); }.opt-step-card.done::before { transform:scaleX(1); }
   .opt-step-num { color:var(--step-color); font:700 10px var(--font-mono); }.opt-step-name { margin-left:6px; color:var(--text); font-size:13px; font-weight:700; }.opt-step-state { position:relative; z-index:1; margin-top:6px; color:var(--text-muted); font-size:10px; font-weight:600; }
-  .baseline-lock, .baseline-progress { display:none; margin-left:5px; font:700 8px var(--font-mono); letter-spacing:.03em; }
-  .baseline-progress { color:var(--brand); }
-  .opt-step-card[data-opt-step="0"].running .baseline-progress { display:inline; }
-  .opt-step-card[data-opt-step="0"].done .baseline-lock { display:inline; }
-  .opt-step-card[data-opt-step="0"] .opt-step-state { display:none; }
   .model-solved { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
   .opt-step-card[data-opt-step="1"].done .model-solved { display:inline; }
   .opt-step-card[data-opt-step="1"] .opt-step-state { display:none; }
@@ -87,8 +84,6 @@
   .opt-step-note { position:absolute; z-index:1; left:11px; right:11px; bottom:8px; min-height:24px; color:var(--text-dim); font:600 9px/1.3 var(--font-sans); letter-spacing:.02em; white-space:normal; overflow:hidden; }
   .opt-step-note b { display:block; color:color-mix(in srgb, var(--step-color) 70%, var(--text)); font-weight:700; }
   .opt-step-card.running .opt-step-note { color:var(--text-muted); }.opt-step-card.done .opt-step-note { color:rgba(184,198,224,.72); }
-  .opt-step-card[data-opt-step="0"] .opt-step-note { display:none; }
-  .opt-step-card[data-opt-step="0"] .opt-card-canvas { bottom:10px; height:92px; }
   .opt-viz .v-grid { stroke:rgba(139,155,201,.13); stroke-width:.55; }.opt-viz .v-muted { stroke:rgba(139,155,201,.24); stroke-width:.8; fill:none; }.opt-viz .v-accent { stroke:var(--step-color); fill:none; stroke-width:1.3; }.opt-viz .v-fill { fill:var(--step-color); }.opt-viz .v-frame { fill:rgba(5,11,24,.42); stroke:rgba(139,155,201,.24); stroke-width:.7; }
   .opt-viz .fp-port { fill:#0b1121; stroke:var(--step-color); stroke-width:1; opacity:.35; }.opt-viz .fp-cell { fill:rgba(139,155,201,.1); stroke:rgba(139,155,201,.14); stroke-width:.45; }.opt-viz .fp-cell.locked { fill:var(--step-color); stroke:var(--step-color); opacity:.8; filter:drop-shadow(0 0 2px var(--step-color)); }
   .opt-step-card.running .fp-port { animation: portReceive .78s ease-in-out infinite; }.opt-step-card.running .fp-scan { animation: fpScan 1s linear infinite; }.opt-step-card.done .fp-port { opacity:.8; }.opt-step-card.done .fp-scan { opacity:0; }
@@ -96,7 +91,7 @@
   .kv-before { fill:var(--step-color); opacity:.5; }.kv-after { fill:var(--step-color); opacity:0; }.kv-transfer { stroke:var(--step-color); stroke-width:1; stroke-dasharray:2 3; opacity:0; }.opt-step-card.running .kv-before { animation: kvDissolve 1.45s ease-in-out infinite; }.opt-step-card.running .kv-after { animation: kvSettle 1.45s ease-in-out infinite; }.opt-step-card.running .kv-transfer { animation: kvTransfer 1.45s linear infinite; }.opt-step-card.done .kv-before { opacity:.08; }.opt-step-card.done .kv-after { opacity:.74; filter:drop-shadow(0 0 1.5px var(--step-color)); }
   .route-link { stroke:rgba(139,155,201,.22); stroke-width:1; fill:none; }.route-link.candidate { stroke:var(--step-color); stroke-dasharray:3 2; opacity:0; }.route-node { fill:#0a1225; stroke:rgba(139,155,201,.38); stroke-width:1; }.route-node.live { fill:var(--step-color); }.opt-step-card.running .route-link.candidate { animation: routeProbe 1.25s linear infinite; }.opt-step-card.running .route-link.candidate.alt { animation-delay:.42s; }.opt-step-card.running .route-node.live { animation: routeNode 1.25s ease-in-out infinite; }.opt-step-card.done .route-link.candidate { opacity:.85; stroke-dasharray:none; }.opt-step-card.done .route-link.candidate.alt { opacity:.2; }.opt-step-card.done .route-node.live { fill:var(--step-color); }
   .forecast-band { fill:var(--accent); opacity:.1; }.forecast-range { fill:var(--step-color); opacity:.13; }.forecast-line { stroke:var(--step-color); fill:none; stroke-width:1.25; }.forecast-target { stroke:var(--accent); stroke-width:.7; stroke-dasharray:2 2; }.forecast-dot { fill:var(--step-color); opacity:0; }.opt-step-card.running .forecast-range { animation: rangeClose 1.25s ease-in-out infinite; transform-origin:62px 22px; }.opt-step-card.running .forecast-line { animation: forecastDraw 1.25s linear infinite; stroke-dasharray:80; }.opt-step-card.running .forecast-dot { animation: solutionPulse 1.25s ease-in-out infinite; }.opt-step-card.done .forecast-range { fill:var(--accent); opacity:.18; }.opt-step-card.done .forecast-line, .opt-step-card.done .forecast-dot { stroke:var(--accent); fill:var(--accent); opacity:1; }
-  .collection-particle-canvas { position:fixed; inset:0; z-index:20; pointer-events:none; mix-blend-mode:screen; }
+  .collection-particle-canvas { position:fixed; inset:0; z-index:80; pointer-events:none; mix-blend-mode:screen; }
   @keyframes stepTrace { 0% { transform:scaleX(.08); } 70% { transform:scaleX(1); } 100% { transform:scaleX(.35); } }
   @keyframes portReceive { 50% { opacity:1; filter:drop-shadow(0 0 2px var(--step-color)); } } @keyframes fpScan { from { transform:translateX(-15px); opacity:0; } 20% { opacity:.9; } to { transform:translateX(106px); opacity:0; } }
   @keyframes constraintSweep { 50% { stroke-dashoffset:-12; opacity:.9; } } @keyframes feasibleSet { 50% { transform:scale(.74); opacity:.22; } } @keyframes solutionPulse { 40% { opacity:1; filter:drop-shadow(0 0 3px var(--step-color)); } }
@@ -190,7 +185,7 @@
 
   /* ============ 黄金指标条（现代数据卡） ============ */
   .golden-bar {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
     background: var(--border-soft); border-bottom: 1px solid var(--border);
     position: relative;
   }
@@ -217,7 +212,6 @@
   }
   .gm-card.gm-throughput { --metric-color: var(--brand); }
   .gm-card.gm-tpot { --metric-color: var(--warn); }
-  .gm-card.gm-sla { --metric-color: var(--accent); }
   .gm-card .gm-head {
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -246,7 +240,7 @@
     text-transform: lowercase;
   }
   .gm-card .gm-hb {
-    width: 100%; height: 18px; display: block; margin-top: 0;
+    width: 100%; height: 46px; display: block; margin-top: 2px;
     background: rgba(0,0,0,0.2); border-radius: 2px;
   }
   .gm-card .gm-formula { display: none; }
@@ -851,14 +845,11 @@
   }
   .step-fx .fx-load-text { fill: var(--danger); font-size: 7px; font-family: var(--font-mono); }
   .step-fx .fx-path-highlight {
-    fill: none; stroke: var(--accent); stroke-width: 2.5;
-    stroke-dasharray: 6 4; opacity: 0;
-    filter: drop-shadow(0 0 4px rgba(45,212,168,0.6));
+    display:none;
   }
-  @keyframes pathDraw { to { opacity: 0.8; stroke-dashoffset: -20; } }
-  .step-fx .fx-path-highlight.active {
-    opacity: 0.8; animation: pathDraw 0.6s linear infinite;
-  }
+  .topo-link.path-group-lit { stroke:#65B4FF !important; stroke-width:2.3 !important; opacity:1; filter:drop-shadow(0 0 4px rgba(101,180,255,.78)); animation:linkGroupLight .9s ease-out both; }
+  .topo-link.path-group-selected { stroke:var(--accent) !important; stroke-width:2 !important; opacity:.94; filter:drop-shadow(0 0 3px rgba(45,212,168,.62)); }
+  @keyframes linkGroupLight { 0% { opacity:.16; stroke-width:1.2; } 38% { opacity:1; stroke-width:2.8; } 100% { opacity:1; stroke-width:2.3; } }
 
   /* ============ KV 切分动画 ============ */
   @keyframes kvSplit {
@@ -901,7 +892,7 @@
         <span class="gm-val" id="gmThruVal">--</span>
         <span class="gm-unit">k/s</span>
       </div>
-      <svg class="gm-hb" viewBox="0 0 200 24" preserveAspectRatio="none"><path id="gmThruHb" d="M 0,12 L 200,12"/></svg>
+      <svg class="gm-hb" viewBox="0 0 200 48" preserveAspectRatio="none"><path id="gmThruHb" d="M 0,24 L 200,24"/></svg>
     </div>
     <!-- TPOT 单Token延迟 -->
     <div class="gm-card gm-tpot" id="gmTpot">
@@ -914,20 +905,7 @@
         <span class="gm-val" id="gmTpotVal">--</span>
         <span class="gm-unit">ms</span>
       </div>
-      <svg class="gm-hb" viewBox="0 0 200 24" preserveAspectRatio="none"><path id="gmTpotHb" d="M 0,12 L 200,12"/></svg>
-    </div>
-    <!-- SLA 达标率 -->
-    <div class="gm-card gm-sla" id="gmSla">
-      <div class="gm-head">
-        <span class="gm-label">SLA · 达标率</span>
-        <span class="gm-trend" id="gmSlaTrend"></span>
-      </div>
-      <div class="gm-formula" id="gmSlaFormula">4 个域窗口 <b>→</b> SLA 预算</div>
-      <div class="gm-body">
-        <span class="gm-val" id="gmSlaVal">--</span>
-        <span class="gm-unit">%</span>
-      </div>
-      <svg class="gm-hb" viewBox="0 0 200 24" preserveAspectRatio="none"><path id="gmSlaHb" d="M 0,12 L 200,12"/></svg>
+      <svg class="gm-hb" viewBox="0 0 200 48" preserveAspectRatio="none"><path id="gmTpotHb" d="M 0,24 L 200,24"/></svg>
     </div>
   </div>
 
@@ -1961,7 +1939,13 @@
   ['algoPanel', 'solvePanel', 'forecastPanel'].forEach(id => optimizationStage.appendChild(document.getElementById(id)));
 
   /* ===== 优化决策台：跨域基线采集与卡片微型推演 ===== */
-  const decisionCards = Array.from(document.querySelectorAll('.opt-step-card'));
+  const decisionCards = Array.from(document.querySelectorAll('.opt-step-card')).slice(1);
+  decisionCards.forEach((card,index)=>{ card.querySelector('.opt-step-num').textContent='0'+(index+1); });
+  const sprayCard = decisionCards[3];
+  if (sprayCard) {
+    sprayCard.querySelector('.opt-step-name').textContent = '流量喷洒';
+    sprayCard.querySelector('.forecast-verified').textContent = '喷洒策略已生效';
+  }
   const stageCanvas = document.createElement('canvas');
   stageCanvas.className = 'collection-particle-canvas';
   stageCanvas.setAttribute('aria-hidden', 'true');
@@ -1988,7 +1972,8 @@
   function stepColor(card){ return getComputedStyle(card).getPropertyValue('--step-color').trim() || '#8B7BFF'; }
   function setStepNote(index, state){
     const view = cardCanvases[index]; if (!view) return;
-    const copy = STEP_NOTES[index][state] || STEP_NOTES[index].idle;
+    const noteSet = STEP_NOTES[index + 1];
+    const copy = noteSet[state] || noteSet.idle;
     view.note.innerHTML = '<b>' + copy[0] + '</b>' + copy[1];
   }
   function sizeCardCanvases(){
@@ -2059,7 +2044,7 @@
     if(cache>0&&cache<1) glowDot(ctx,trackX+trackW*cache,rows[2],1.5,'#EDF3FF',.94);
   }
   function drawModel(ctx,w,h,t,color,state){
-    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/4000)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const phase=state==='done'?1:(state==='idle'||baselineScene.active?0:Math.min(1,t/4000)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
     const build=clamp(phase/.24), search=clamp((phase-.16)/.55), lock=clamp((phase-.62)/.38);
     const cx=w*.53, cy=h*.54, sx=w*.20, sy=h*.25;
     const project=(x,y,z)=>[cx+x*sx-z*sx*.62,cy-y*sy+z*sy*.46];
@@ -2163,26 +2148,21 @@
     nodes.forEach((node,index)=>{const onFinal=candidates[selected].includes(index);glowDot(ctx,node[0]*w,node[1]*h,onFinal?(done?2.1:1.55):1.05,onFinal?'#65B4FF':'#7080A3',onFinal?.86:.28);});
   }
   function drawForecast(ctx,w,h,t,color,state){
-    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/3600)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
-    const simulate=clamp(phase/.38), pressure=clamp((phase-.28)/.22), settle=clamp((phase-.48)/.52);
-    const targetY=h*.31, targetH=h*.19, startX=w*.57, endX=w*.94;
-    const baseline=[[.05,.77],[.18,.61],[.3,.69],[.42,.44],[.55,.57],[.69,.39],[.82,.5],[.95,.45]];
-    const main=[[.05,.77],[.18,.61],[.3,.69],[.42,.44],[.55,.54],[.69,.38],[.82,.4],[.95,.4]];
-    const variants=[[[.05,.77],[.18,.61],[.3,.7],[.42,.48],[.55,.68],[.69,.62],[.82,.58],[.95,.57]],[[.05,.77],[.18,.64],[.3,.66],[.42,.42],[.55,.25],[.69,.18],[.82,.2],[.95,.24]],[[.05,.77],[.18,.59],[.3,.68],[.42,.46],[.55,.47],[.69,.52],[.82,.49],[.95,.5]]];
-    const drawTrack=(points,stroke,alpha,width=1)=>{ctx.strokeStyle=stroke;ctx.globalAlpha=alpha;ctx.lineWidth=width;ctx.beginPath();points.forEach((point,index)=>index?ctx.lineTo(point[0]*w,point[1]*h):ctx.moveTo(point[0]*w,point[1]*h));ctx.stroke();};
+    const phase=state==='done'?1:(state==='idle'?0:Math.min(1,t/4000)), done=state==='done', clamp=v=>Math.max(0,Math.min(1,v));
+    const slice=clamp(phase/.28), spray=clamp((phase-.2)/.58), settle=clamp((phase-.68)/.32);
+    const source=[w*.07,h*.5], fanX=w*.37, endX=w*.93, rails=[h*.18,h*.37,h*.62,h*.81], healthy=[0,1,3];
     grid(ctx,w,h);
-    // 基线残影作为对照，绿色窗口是校验目标而不是单纯图表区域。
-    drawTrack(baseline,'#7888AD',.22,1);
-    ctx.fillStyle='#2DD4A8';ctx.globalAlpha=.08+.11*simulate;ctx.fillRect(startX,targetY,endX-startX,targetH);
-    ctx.strokeStyle='#2DD4A8';ctx.globalAlpha=.28+.38*settle;ctx.lineWidth=.65;ctx.strokeRect(startX,targetY,endX-startX,targetH);
-    const envelope=Math.max(.04,.24*(1-settle*.78));ctx.fillStyle=color;ctx.globalAlpha=envelope;ctx.beginPath();ctx.moveTo(startX,h*.21);ctx.lineTo(endX,h*.27);ctx.lineTo(endX,h*.56);ctx.lineTo(startX,h*.61);ctx.closePath();ctx.fill();
-    // 数字孪生并行试算：压力注入后偏离的样本逐个熄灭，只保留能回到目标窗的主轨迹。
-    variants.forEach((track,index)=>drawTrack(track,index===2?'#FFB547':'#FF7AB6',(.36-.22*settle)*pressure,.8));
-    if(pressure>.04){const x=w*.54;ctx.strokeStyle='#FFB547';ctx.globalAlpha=.2+.52*pressure;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,h*.12);ctx.lineTo(x,h*.82);ctx.stroke();glowDot(ctx,x,h*.49,1.5,'#FFB547',.75);}
-    drawTrack(main,done?'#2DD4A8':color,.45+.42*simulate,1.35);
-    const mainPoint=main[Math.min(main.length-1,Math.floor(simulate*(main.length-1)))];
-    if(!done&&simulate>.03) glowDot(ctx,mainPoint[0]*w,mainPoint[1]*h,1.7,'#EDF3FF',.9);
-    glowDot(ctx,endX,h*.4,done?2.25:1.35,done?'#2DD4A8':color,.52+.38*settle);
+    rails.forEach((y,index)=>{ctx.strokeStyle=index===2?'#FFB547':'#6584B7';ctx.globalAlpha=index===2?.16:.26;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(fanX,y);ctx.lineTo(endX,y);ctx.stroke();});
+    ctx.strokeStyle='#D8E2FA';ctx.globalAlpha=.34*slice;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(...source);ctx.lineTo(fanX,h*.5);ctx.stroke();
+    // 大流在扇出点被切成细粒度 slice，健康 rail 承接更多切片；暖色 rail 因质量不足自然降权。
+    for(let i=0;i<18;i++){
+      const rail=i%4, q=(phase*1.8+i*.113)%1, active=rail!==2||spray<.32, startY=h*.5+(rail-h*.5)*Math.min(1,slice*1.5);
+      const x=q<.32?source[0]+(fanX-source[0])*(q/.32):fanX+(endX-fanX)*((q-.32)/.68), y=q<.32?source[1]+(rails[rail]-source[1])*(q/.32):rails[rail];
+      const tint=rail===2?'#FFB547':['#8B7BFF','#2DD4A8','#65B4FF'][healthy.indexOf(rail)%3];
+      if(active&&spray>.02) glowDot(ctx,x,y,rail===2?1:1.35,tint,rail===2?.25:.72);
+    }
+    if(settle>.02||done){healthy.forEach((rail,index)=>{ctx.strokeStyle=['#8B7BFF','#2DD4A8','#65B4FF'][index];ctx.globalAlpha=.28+.45*settle;ctx.lineWidth=1.55;ctx.beginPath();ctx.moveTo(fanX,rails[rail]);ctx.lineTo(endX,rails[rail]);ctx.stroke();});}
+    glowDot(ctx,source[0],source[1],done?2.1:1.4,color,.8);glowDot(ctx,fanX,h*.5,done?2.1:1.5,'#EDF3FF',.92);glowDot(ctx,endX,h*.5,done?2.2:1.35,done?'#2DD4A8':color,.8);
   }
   function drawCardCanvases(time){
     let active=false; sizeCardCanvases();
@@ -2191,7 +2171,7 @@
       ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
       const state=view.card.classList.contains('running')?'running':view.card.classList.contains('done')?'done':'idle';
       const color=stepColor(view.card); const localT=reduceMotion?0:(state==='running' ? time-(view.startedAt||time) : time);
-      [drawBaseline,drawModel,drawKv,drawRoutes,drawForecast][view.index](ctx,w,h,localT,color,state);
+      [drawModel,drawKv,drawRoutes,drawForecast][view.index](ctx,w,h,localT,color,state);
       active ||= state==='running';
     });
     cardRenderFrame=active?requestAnimationFrame(drawCardCanvases):null;
@@ -2208,6 +2188,7 @@
     baselineFrame = null;
     stageCtx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
     decisionCards.forEach(card => card.querySelectorAll('.fp-cell').forEach(cell => cell.classList.remove('locked')));
+    decisionCards.forEach(card => card.classList.remove('input-target'));
     cardCanvases.forEach(view => setStepNote(view.index, 'idle'));
     refreshCardRenderers();
   }
@@ -2267,9 +2248,16 @@
     if (!baselineScene.active && !baselineScene.frozen) return;
     const rect=svg.getBoundingClientRect(); if (!rect.width || !rect.height) return;
     const elapsed=now-baselineScene.started;
-    const traffic=Math.max(0,Math.min(1,(elapsed-980)/2150));
-    const windows=Math.max(0,Math.min(1,(elapsed-2500)/1900));
+    const traffic=0;
+    const windows=0;
     const freeze=Math.max(0,Math.min(1,(elapsed-4650)/350));
+    // 约束建模接收核心：所有业务域的数据粒子在此汇聚，再进入三维可行域求解。
+    if (elapsed >= 1050 && elapsed < 4850 && decisionCards[0]) {
+      const target=decisionCards[0].getBoundingClientRect(), pulse=Math.max(0,Math.min(1,(elapsed-1050)/500));
+      const x=target.left+target.width*.5, y=target.top+target.height*.53;
+      ctxSaveArc(stageCtx,x,y,7+pulse*7,'#D8E2FA',.18+.25*Math.sin(elapsed/210)**2);
+      glowDot(stageCtx,x,y,2.2,'#EDF3FF',.5+.34*pulse);
+    }
 
     // 资源唤醒：按设备所在域渐次出现细小能量环。
     if (elapsed < 1150) baselineScene.samples.forEach((sample,index)=>{
@@ -2309,7 +2297,6 @@
       }
       stageCtx.strokeStyle='rgba(169,183,222,.25)';stageCtx.globalAlpha=1;stageCtx.beginPath();stageCtx.moveTo(left,y);stageCtx.lineTo(left+width,y);stageCtx.stroke();
     }
-    if (elapsed >= 4650 || baselineScene.frozen) drawBaselineFingerprint(stageCtx,rect,baselineScene.frozen ? .34 : freeze*.86);
   }
   function ctxSaveArc(ctx,x,y,r,color,alpha){ ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();ctx.restore(); }
   function drawBaselineParticles(now){
@@ -2320,19 +2307,26 @@
       const progress = Math.max(0, Math.min(1, (now - p.start) / p.duration));
       if (progress <= 0 || progress >= 1) return progress < 1;
       const pos = cubicPoint(p, progress);
+      const tailStart = cubicPoint(p, Math.max(0, progress - .045));
       const alpha = Math.min(progress * 5, (1 - progress) * 6, 1) * .9;
+      // 每束数据都有可见的短尾迹与到达闪光，强调是跨域汇聚而非普通网络粒子。
+      stageCtx.strokeStyle = p.color; stageCtx.globalAlpha = alpha * .28; stageCtx.lineWidth = p.radius * .72;
+      stageCtx.beginPath(); stageCtx.moveTo(tailStart.x, tailStart.y); stageCtx.lineTo(pos.x, pos.y); stageCtx.stroke();
+      if (progress < .22) ctxSaveArc(stageCtx,p.x1,p.y1,7+progress*42,p.color,.45-progress*.7);
+      if (progress > .78) ctxSaveArc(stageCtx,p.x2,p.y2,5+(progress-.78)*42,p.color,(progress-.78)*2.25);
       stageCtx.fillStyle = p.color;
       stageCtx.globalAlpha = alpha;
-      stageCtx.shadowBlur = 8; stageCtx.shadowColor = p.color;
-      stageCtx.beginPath(); stageCtx.arc(pos.x, pos.y, p.radius, 0, Math.PI * 2); stageCtx.fill();
+      stageCtx.shadowBlur = 13; stageCtx.shadowColor = p.color;
+      stageCtx.beginPath(); stageCtx.arc(pos.x, pos.y, p.radius*1.45, 0, Math.PI * 2); stageCtx.fill();
+      stageCtx.fillStyle = '#FFFFFF'; stageCtx.globalAlpha = alpha*.96; stageCtx.beginPath(); stageCtx.arc(pos.x, pos.y, Math.max(1.1,p.radius*.52), 0, Math.PI * 2); stageCtx.fill();
       return true;
     });
     stageCtx.globalAlpha = 1; stageCtx.shadowBlur = 0; stageCtx.globalCompositeOperation = 'source-over';
     if (baselineParticles.length || baselineScene.active) baselineFrame = requestAnimationFrame(drawBaselineParticles);
-    else baselineFrame = null;
+    else { stageCtx.clearRect(0, 0, window.innerWidth, window.innerHeight); baselineFrame = null; }
   }
   function launchBaselineCapture(){
-    resetCardVisuals(); resizeStageCanvas(); setCardVisual(0, 'running');
+    resetCardVisuals(); resizeStageCanvas(); setCardVisual(0, 'idle'); decisionCards[0].classList.add('input-target');
     baselineScene.active=true; baselineScene.frozen=false; baselineScene.started=performance.now();
     const metricNames=['利用率','带宽','往返时延','缓存规模','队列深度','Token 吞吐'];
     const allSources=[
@@ -2343,19 +2337,20 @@
     ];
     baselineScene.samples=allSources;
     const target = decisionCards[0].querySelector('.opt-card-canvas').getBoundingClientRect();
-    const ports = [0.12, .37, .63, .88].map(x => ({ x:target.left + target.width * x, y:target.bottom - 3 }));
+    const ports = [0.32, .44, .56, .68].map(x => ({ x:target.left + target.width * x, y:target.top + target.height * .53 }));
     const domains = [
-      { nodes:sampleRects(npuState.filter(s => s.isP).map(s => s.card), 5), color:'#8B7BFF' },
-      { nodes:sampleRects(Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf:not(.leaf-kv) .device-body')), 5), color:'#FFB547' },
-      { nodes:sampleRects(Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), 4), color:'#FF7AB6' },
-      { nodes:sampleRects(npuState.filter(s => !s.isP).map(s => s.card), 5), color:'#2DD4A8' }
+      { nodes:npuState.filter(s => s.isP).map(s => s.card) },
+      { nodes:Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')) },
+      { nodes:Array.from(svg.querySelectorAll('#kvPool3d .kv-tier')) },
+      { nodes:npuState.filter(s => !s.isP).map(s => s.card) }
     ];
     const now = performance.now();
-    domains.forEach((domain, domainIndex) => domain.nodes.forEach((rect, sampleIndex) => {
+    domains.forEach((domain, domainIndex) => domain.nodes.forEach((node, sampleIndex) => {
+      const rect=node.getBoundingClientRect();
       const source = { x:rect.left + rect.width / 2, y:rect.top + rect.height / 2 };
       const end = ports[domainIndex];
-      const delay = 520 + domainIndex * 720 + sampleIndex * (reduceMotion ? 90 : 64);
-      baselineParticles.push({ x1:source.x, y1:source.y, x2:end.x, y2:end.y, cx1:source.x, cy1:source.y - 42, cx2:end.x, cy2:end.y + 38, color:domain.color, start:now + delay, duration:reduceMotion ? 650 : 1280, radius:reduceMotion ? 1.35 : 1.8 });
+      const delay = 2380 + domainIndex * 58 + sampleIndex * (reduceMotion ? 34 : 14);
+      baselineParticles.push({ x1:source.x, y1:source.y, x2:end.x, y2:end.y, cx1:source.x+(sampleIndex%2?16:-16), cy1:source.y - 72, cx2:end.x+(sampleIndex%2?8:-8), cy2:end.y + 58, color:'#F4F7FF', start:now + delay, duration:reduceMotion ? 950 : 1420, radius:reduceMotion ? 1.8 : 2.8 });
     }));
     baselineFrame = requestAnimationFrame(drawBaselineParticles);
     [2100, 3000, 3900, 4900].forEach((time, column) => baselineTimers.push(setTimeout(() => {
@@ -2363,7 +2358,6 @@
     }, time)));
     baselineTimers.push(setTimeout(() => {
       decisionCards[0].querySelectorAll('.fp-cell').forEach(cell => cell.classList.add('locked'));
-      setCardVisual(0, 'done');
       baselineScene.active=false; baselineScene.frozen=true;
       setCollectionPhase('baseline');
     }, 5000));
@@ -3025,16 +3019,19 @@
 
   /* ===== 黄金指标数据（提前声明，避免暂时性死区） ===== */
   const GOLDEN = {
-    init:     { thru:2.1, tpot:38, sla:92 },
-    opt:      { thru:3.8, tpot:24, sla:99 },
-    fault:    { thru:1.8, tpot:62, sla:88 },
-    faultOpt: { thru:3.2, tpot:32, sla:95 }
+    init:     { thru:2.8, tpot:42 },
+    opt:      { thru:4.0, tpot:28 },
+    fault:    { thru:1.8, tpot:68 },
+    faultOpt: { thru:3.5, tpot:33 }
   };
-  const GM_MAX = { thru:5.0, tpot:80, sla:100 };
+  const GM_MAX = { thru:5.0, tpot:80 };
+  const GOLDEN_TARGET = { thru:3.5, tpot:35 };
+  // 心跳线表达指标原始值，而非健康分：TPOT 越高，曲线越高，直接对应网络/队列恶化。
+  const HEARTBEAT_RANGE = { thru:{ min:1.4, max:4.3, invert:false }, tpot:{ min:22, max:72, invert:false } };
 
   /* ===== 黄金指标心跳线历史数据（提前声明，避免 TDZ） ===== */
   const HB_LEN = 40;
-  const gmHistory = { thru: [], tpot: [], sla: [] };
+  const gmHistory = { thru: [], tpot: [] };
 
   // 初始清空所有数值
   function setPending() {
@@ -3083,14 +3080,17 @@
   /* ===== 黄金指标：现代数据卡 + 心跳线 ===== */
   function pushHeartbeat(key, val, max) {
     const arr = gmHistory[key];
-    arr.push(Math.min(1, Math.max(0, val / max)));
+    const range=HEARTBEAT_RANGE[key] || {min:0,max,invert:false};
+    let normalized=Math.min(1,Math.max(0,(val-range.min)/(range.max-range.min)));
+    if(range.invert) normalized=1-normalized;
+    arr.push(normalized);
     if (arr.length > HB_LEN) arr.shift();
     const pathEl = document.getElementById('gm' + key.charAt(0).toUpperCase() + key.slice(1) + 'Hb');
     if (!pathEl || arr.length < 2) return;
     let d = '';
     for (let i = 0; i < arr.length; i++) {
-      const x = (i / (HB_LEN - 1)) * 200;
-      const y = 22 - arr[i] * 20;
+      const x = (i / Math.max(1, arr.length - 1)) * 200;
+      const y = 44 - arr[i] * 40;
       d += (i === 0 ? 'M ' : 'L ') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
     }
     pathEl.setAttribute('d', d);
@@ -3100,7 +3100,8 @@
     const valEl = document.getElementById(valId);
     if (!valEl) return;
     valEl.textContent = (val % 1 === 0) ? Math.round(val) : val.toFixed(1);
-    const good = isLowerBetter ? val <= max * 0.4 : val >= max * 0.7;
+    const target = GOLDEN_TARGET[hbKey] ?? (isLowerBetter ? max * 0.4 : max * 0.7);
+    const good = isLowerBetter ? val <= target : val >= target;
     valEl.style.color = good ? '' : 'var(--warn)';
     pushHeartbeat(hbKey, val, max);
   }
@@ -3111,17 +3112,15 @@
     bar.classList.remove('dim');
     setGoldenGauge('gmThruVal', 'thru', g.thru, GM_MAX.thru, false);
     setGoldenGauge('gmTpotVal', 'tpot', g.tpot, GM_MAX.tpot, true);
-    setGoldenGauge('gmSlaVal', 'sla', g.sla, GM_MAX.sla, false);
-    document.getElementById('gmThruTrend').innerHTML = '<span style="color:' + (g.thru >= 3.0 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.thru >= 3.0 ? '↑ 良好' : '↓ 偏低') + '</span>';
-    document.getElementById('gmTpotTrend').innerHTML = '<span style="color:' + (g.tpot <= 30 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.tpot <= 30 ? '↓ 良好' : '↑ 偏高') + '</span>';
-    document.getElementById('gmSlaTrend').innerHTML = '<span style="color:' + (g.sla >= 95 ? 'var(--accent)' : 'var(--warn)') + '">' + (g.sla >= 95 ? '↑ 良好' : '↓ 偏低') + '</span>';
+    document.getElementById('gmThruTrend').innerHTML = '<span style="color:' + (g.thru >= GOLDEN_TARGET.thru ? 'var(--accent)' : 'var(--warn)') + '">' + (g.thru >= GOLDEN_TARGET.thru ? '↑ 良好' : '↓ 偏低') + '</span>';
+    document.getElementById('gmTpotTrend').innerHTML = '<span style="color:' + (g.tpot <= GOLDEN_TARGET.tpot ? 'var(--accent)' : 'var(--warn)') + '">' + (g.tpot <= GOLDEN_TARGET.tpot ? '↓ 良好' : '↑ 偏高') + '</span>';
     const formula = {
-      init: ['预填充 <b>→</b> KV <b>→</b> 解码', '队列 · 网络 · 缓存 <b>→</b> 关键路径', '4 个域窗口 <b>→</b> SLA 预算'],
-      opt: ['三个域供给已对齐', '关键路径已收敛', '4 个窗口保有预算'],
-      fault: ['KV / 解码供给受限', '网络段拉长关键路径', '网络窗口正在消耗预算'],
-      faultOpt: ['跨域供给已恢复', '关键路径已回到目标内', '各域预算正在恢复']
+      init: ['预填充 <b>→</b> KV <b>→</b> 解码', '队列 · 网络 · 缓存 <b>→</b> 关键路径'],
+      opt: ['三个域供给已对齐', '关键路径已收敛'],
+      fault: ['KV / 解码供给受限', '网络段拉长关键路径'],
+      faultOpt: ['跨域供给已恢复', '关键路径已回到目标内']
     }[state] || [];
-    ['gmThruFormula', 'gmTpotFormula', 'gmSlaFormula'].forEach((id, index) => {
+    ['gmThruFormula', 'gmTpotFormula'].forEach((id, index) => {
       const el = document.getElementById(id);
       if (el && formula[index]) el.innerHTML = formula[index];
     });
@@ -3129,12 +3128,12 @@
 
   function revealGolden(index, state) {
     const g = GOLDEN[state] || GOLDEN.init;
-    const ids = [['gmThruVal','gmThruHb','gmThruTrend', g.thru, GM_MAX.thru, false, 'k/s'], ['gmTpotVal','gmTpotHb','gmTpotTrend', g.tpot, GM_MAX.tpot, true, 'ms'], ['gmSlaVal','gmSlaHb','gmSlaTrend', g.sla, GM_MAX.sla, false, '%']];
+    const ids = [['gmThruVal','gmThruHb','gmThruTrend', g.thru, GM_MAX.thru, false, 'k/s'], ['gmTpotVal','gmTpotHb','gmTpotTrend', g.tpot, GM_MAX.tpot, true, 'ms']];
     const item = ids[index];
     if (!item) return;
     const card = document.querySelectorAll('.gm-card')[index];
     document.getElementById('goldenBar').classList.remove('dim');
-    setGoldenGauge(item[0], index === 0 ? 'thru' : index === 1 ? 'tpot' : 'sla', item[3], item[4], item[5]);
+    setGoldenGauge(item[0], index === 0 ? 'thru' : 'tpot', item[3], item[4], item[5]);
     document.getElementById(item[2]).innerHTML = '<span style="color:var(--accent)">✓ 已推导</span>';
     card.classList.remove('global-receive'); void card.offsetWidth; card.classList.add('global-receive');
     card.classList.remove('global-update'); void card.offsetWidth; card.classList.add('global-update');
@@ -3143,23 +3142,22 @@
 
   function resetGolden() {
     document.getElementById('goldenBar').classList.add('dim');
-    gmHistory.thru = []; gmHistory.tpot = []; gmHistory.sla = [];
-    [['gmThruVal','gmThruHb'],['gmTpotVal','gmTpotHb'],['gmSlaVal','gmSlaHb']].forEach(function(pair) {
+    gmHistory.thru = []; gmHistory.tpot = [];
+    [['gmThruVal','gmThruHb'],['gmTpotVal','gmTpotHb']].forEach(function(pair) {
       const valEl = document.getElementById(pair[0]);
       const hbEl = document.getElementById(pair[1]);
       if (valEl) { valEl.textContent = '--'; valEl.style.color = ''; }
-      if (hbEl) hbEl.setAttribute('d', 'M 0,12 L 200,12');
+      if (hbEl) hbEl.setAttribute('d', 'M 0,24 L 200,24');
     });
-    ['gmThruTrend','gmTpotTrend','gmSlaTrend'].forEach(function(id) {
+    ['gmThruTrend','gmTpotTrend'].forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.innerHTML = '';
     });
     const pendingFormula = [
       '预填充 <b>→</b> KV <b>→</b> 解码',
-      '队列 · 网络 · 缓存 <b>→</b> 关键路径',
-      '4 个域窗口 <b>→</b> SLA 预算'
+      '队列 · 网络 · 缓存 <b>→</b> 关键路径'
     ];
-    ['gmThruFormula', 'gmTpotFormula', 'gmSlaFormula'].forEach(function(id, index) {
+    ['gmThruFormula', 'gmTpotFormula'].forEach(function(id, index) {
       const el = document.getElementById(id);
       if (el) el.innerHTML = pendingFormula[index];
     });
@@ -3411,16 +3409,13 @@
     if (!optimized || perfDone) {
       // 黄金指标仪表盘带动态波动
       const g = GOLDEN[vizState] || GOLDEN.init;
-      const thruCur = Math.max(0, g.thru + (Math.random() - 0.5) * 0.4);
-      const tpotCur = Math.max(0, g.tpot + (Math.random() - 0.5) * 4);
-      const slaCur = Math.max(0, Math.min(100, g.sla + (Math.random() - 0.5) * 1.5));
+      const thruCur = Math.max(0, g.thru + (Math.random() - 0.5) * 0.14);
+      const tpotCur = Math.max(0, g.tpot + (Math.random() - 0.5) * 1.8);
       setGoldenGauge('gmThruVal', 'thru', thruCur, GM_MAX.thru, false);
       setGoldenGauge('gmTpotVal', 'tpot', tpotCur, GM_MAX.tpot, true);
-      setGoldenGauge('gmSlaVal', 'sla', slaCur, GM_MAX.sla, false);
       // 趋势标签
-      document.getElementById('gmThruTrend').innerHTML = '<span style="color:' + (thruCur >= 3.0 ? 'var(--accent)' : 'var(--warn)') + '">' + (thruCur >= 3.0 ? '↑ 良好' : '↓ 偏低') + '</span>';
-      document.getElementById('gmTpotTrend').innerHTML = '<span style="color:' + (tpotCur <= 30 ? 'var(--accent)' : 'var(--warn)') + '">' + (tpotCur <= 30 ? '↓ 良好' : '↑ 偏高') + '</span>';
-      document.getElementById('gmSlaTrend').innerHTML = '<span style="color:' + (slaCur >= 95 ? 'var(--accent)' : 'var(--warn)') + '">' + (slaCur >= 95 ? '↑ 良好' : '↓ 偏低') + '</span>';
+      document.getElementById('gmThruTrend').innerHTML = '<span style="color:' + (thruCur >= GOLDEN_TARGET.thru ? 'var(--accent)' : 'var(--warn)') + '">' + (thruCur >= GOLDEN_TARGET.thru ? '↑ 良好' : '↓ 偏低') + '</span>';
+      document.getElementById('gmTpotTrend').innerHTML = '<span style="color:' + (tpotCur <= GOLDEN_TARGET.tpot ? 'var(--accent)' : 'var(--warn)') + '">' + (tpotCur <= GOLDEN_TARGET.tpot ? '↓ 良好' : '↑ 偏高') + '</span>';
     }
   }
 
@@ -3450,63 +3445,49 @@
     // 多次点击：先清理上一次的动画状态
     clearOptimizeTimers();
     if (optSpawnTimer) { clearInterval(optSpawnTimer); optSpawnTimer=null; }
-    optimized = true; perfDone = false;
+    // 复用已持续采集的实时状态。扰动是否使旧策略失效，由扰动注入时显式切换，
+    // 避免每次点击求解都把指标人为打回未优化态。
     clearInterval(defaultSpawnTimer); defaultSpawnTimer = null;
     // 清理上次的性能高亮
     document.querySelectorAll('.zm-val.improved').forEach(t=>t.classList.remove('improved'));
 
     const algo = document.getElementById('algoPanel');
     const steps = ['apStep1','apStep2','apStep3','apStep4','apStep5'].map(id=>document.getElementById(id));
-    const stageCards = Array.from(document.querySelectorAll('.opt-step-card'));
+    const stageCards = decisionCards;
     const decisionStatus = document.getElementById('optStageStatus');
-    const runningText = ['正在锁定全局基线', '正在构建约束模型', '正在重整 KV 布局', '正在编排读写路径', '正在校验策略收益'];
-    const doneText = ['基线已锁定', '可行解空间确定', '均衡分片已确认', '最优路径已下发', '策略验证通过'];
+    const runningText = ['正在构建约束模型', 'KV 重整、路径编排与流量喷洒并行推演'];
+    const doneText = ['可行解空间确定', '均衡分片已确认', '最优路径已下发', '喷洒策略已生效'];
     algo.classList.remove('done');
 
     function setStep(i){
-      steps.forEach((s,j)=>{
-        s.classList.remove('active','done');
-        if(j<i) s.classList.add('done');
-        else if(j===i) s.classList.add('active');
-      });
-      stageCards.forEach((card, j) => {
-        card.classList.remove('running', 'done');
-        const state = card.querySelector('.opt-step-state');
-        if (j < i) { card.classList.add('done'); state.textContent = doneText[j]; setCardVisual(j, 'done'); }
-        else if (j === i) { card.classList.add('running'); state.textContent = '执行中…'; setCardVisual(j, 'running'); }
-        else { state.textContent = ['等待采样', '等待求解', '等待重排', '等待选路', '等待验证'][j]; setCardVisual(j, 'idle'); }
-      });
-      decisionStatus.textContent = runningText[i];
+      steps.forEach((s,j)=>{ s.classList.remove('active','done'); if(j<i+1) s.classList.add('done'); else if(j===i+1) s.classList.add('active'); });
+      stageCards.forEach((card,j)=>setCardVisual(j,j===0?'running':'idle'));
+      decisionStatus.textContent = runningText[0];
       decisionStatus.classList.add('live');
+    }
+    function runParallel(){
+      stageCards.forEach((card,j)=>setCardVisual(j,j===0?'done':'running'));
+      steps.forEach((s,j)=>{s.classList.remove('active');if(j<2)s.classList.add('done');else if(j<5)s.classList.add('active');});
+      decisionStatus.textContent=runningText[1];
+      showKvSplit(); fxStep4(); fxStep5();
+      optimizeTimers.push(setTimeout(selectOptLinks, 2850));
     }
     const T = (fn,ms)=>{ optimizeTimers.push(setTimeout(fn,ms)); };
 
-    // 基线已在采集阶段完成；后续四步在决策台内连续推进。
+    // 四域数据在采集阶段已飞入约束建模卡；随后先建模，再并行推演三个策略面。
     algo.classList.add('show');
     document.getElementById('apTitle').textContent = faultActive ? '扰动感知优化求解中' : '优化模型求解中';
-    setStep(1);
+    stageCards[0].classList.remove('input-target');
+    setStep(0);
     fxStep1();
     fxStep2();
 
-    // 约束空间寻优与 KV 分片评估均保留完整观察时间，避免一闪而过。
-    T(()=>{ setStep(2); showKvSplit(); }, 4000);
-
-    // ── 步骤4：多候选路径编排（8000~11600ms）──
-    T(()=>{
-      setStep(3);
-      fxStep4();
-    }, 8000);
-
-    // ── 步骤5：数字孪生预测校验（11600~15200ms）──
-    T(()=>{
-      setStep(4);
-      fxStep5();
-      selectOptLinks();
-    }, 11600);
+    T(runParallel, 4000);
 
     // ── 完成：持续优化态 + 性能高亮 ──
     T(()=>{
-      steps[4].classList.remove('active'); steps[4].classList.add('done');
+      optimized = true;
+      steps.forEach(step=>{step.classList.remove('active');step.classList.add('done');});
       document.getElementById('apTitle').textContent = faultActive ? '扰动规避策略已生效' : '优化策略已生效';
       algo.classList.add('done');
       stageCards.forEach((card, index) => { card.classList.remove('running'); card.classList.add('done'); card.querySelector('.opt-step-state').textContent = doneText[index]; setCardVisual(index, 'done'); });
@@ -3521,9 +3502,10 @@
       // 性能高亮（故障态性能稍差但仍优于未优化）
       highlightPerf();
       tickRealtime();
-      if (!realtimeTimer) realtimeTimer = setInterval(tickRealtime, 2000);
+      if (!realtimeTimer) realtimeTimer = setInterval(tickRealtime, 1200);
+      optimizeBtn.disabled = false;
       clearStepFx();
-    }, 15200);
+    }, 8000);
   }
 
   /* 获取当前可用的优化路径索引（故障态避开 Spine-1 故障链路 → 仅用 Spine-0 路径） */
@@ -3676,12 +3658,21 @@
 
   /* === 步骤4 画布动效：双向选路路径高亮（故障态仅高亮 Spine-0 路径） === */
   function fxStep4(){
-    const paths = getActiveOptPaths();
-    paths.forEach((pi, i)=>{
-      setTimeout(()=>{
-        document.getElementById('fxPath'+pi).classList.add('active');
-      }, i*150);
+    const core0=Array.from(svg.querySelectorAll('.link-s0'));
+    const core1=Array.from(svg.querySelectorAll('.link-s1'));
+    const uplinks=Array.from(svg.querySelectorAll('.topo-link')).filter(link=>{
+      const x1=Number(link.getAttribute('x1')), x2=Number(link.getAttribute('x2'));
+      return Number.isFinite(x1)&&Number.isFinite(x2)&&((x1===440&&x2===440)||(x1===560&&x2===560));
     });
+    const groups=[core0.slice(0,4),core1.slice(0,4),[...core0.slice(4),...core1.slice(4),...uplinks]];
+    document.querySelectorAll('.topo-link.path-group-lit,.topo-link.path-group-selected').forEach(link=>link.classList.remove('path-group-lit','path-group-selected'));
+    groups.forEach((group,index)=>{
+      optimizeTimers.push(setTimeout(()=>group.forEach(link=>link.classList.add('path-group-lit')),index*620));
+    });
+    optimizeTimers.push(setTimeout(()=>{
+      const preferred=faultActive ? groups[1] : groups[0];
+      preferred.forEach(link=>link.classList.add('path-group-selected'));
+    },2050));
   }
 
   /* === 步骤5 动效：负载预测曲线 + 链路实施 === */
@@ -4002,7 +3993,7 @@
   // 受扰路径保留为黄色高流量实线，其他业务链路切换为优化后的绿色。
   function selectOptLinks(){
     document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
-      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault');
+      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
       if (faultActive && (l.classList.contains('disturbance-link-a') || l.classList.contains('disturbance-link-b'))) l.classList.add('link-warn');
       else l.classList.add('link-opt');
     });
@@ -4031,24 +4022,8 @@
     setTimeout(() => { perfDone = true; }, 1200);
   }
 
-  // 采集状态徽标
-  const cs = document.createElement('div');
-  cs.className='collect-status';
-  cs.innerHTML='<div class="cs-flow"><span class="cs-stage" data-phase="idle"><i></i>未采集</span><span class="cs-stage" data-phase="collecting"><i></i>采集中</span><span class="cs-stage" data-phase="window"><i></i>时间窗口</span><span class="cs-stage" data-phase="baseline"><i></i>基线锁定</span><span class="cs-stage" data-phase="optimizing"><i></i>优化中</span><span class="cs-stage" data-phase="optimized"><i></i>已优化</span></div><span class="cs-text">未采集</span>';
-  const topbar = document.querySelector('.topbar');
-  topbar.insertBefore(cs, topbar.querySelector('.btn'));
-  const COLLECTION_PHASES = ['idle','collecting','window','baseline','optimizing','optimized'];
-  const COLLECTION_LABELS = { idle:'未采集', collecting:'采集中', window:'窗口累计', baseline:'基线锁定', optimizing:'优化中', optimized:'已优化' };
-  function setCollectionPhase(phase){
-    const current = Math.max(0, COLLECTION_PHASES.indexOf(phase));
-    cs.dataset.phase = phase;
-    cs.querySelectorAll('.cs-stage').forEach((stage, index) => {
-      stage.classList.toggle('is-complete', index < current);
-      stage.classList.toggle('is-current', index === current);
-    });
-    cs.querySelector('.cs-text').textContent = COLLECTION_LABELS[phase] || COLLECTION_LABELS.idle;
-  }
-  setCollectionPhase('idle');
+  // 顶部采集状态条已移除；一键优化的状态由决策台与业务画布动效直接表达。
+  function setCollectionPhase(){ }
 
   // 按钮事件
   const optimizeBtn = document.getElementById('optimizeBtn');
@@ -4061,7 +4036,7 @@
   function setFaultLinks(fault){
     FAULT_GRPS.forEach(sel=>{
       document.querySelectorAll(sel).forEach(l=>{
-        l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault');
+        l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
         l.classList.add(fault ? 'link-fault' : (optimized ? 'link-opt' : (l.classList.contains('link-s0') ? 'link-warn' : 'link-normal')));
       });
     });
@@ -4079,14 +4054,14 @@
       startDisturbanceFlow();
       // 让一批已在网络中的业务流到达碰撞点，清晰呈现脱轨与掉落。
       for(let i=0;i<14;i++) setTimeout(()=>spawn([1,5][i%2], { speed:.00042 + (i%3)*.00005, r:1.8 }), i*95);
-      // 若已优化，重新选路避开故障链路
-      if (optimized && optSpawnTimer) {
-        clearInterval(optSpawnTimer);
-        const paths = getActiveOptPaths();
-        optSpawnTimer = setInterval(()=>{ paths.forEach(pi=>spawnOpt(pi)); }, 350);
+      // 新扰动会让既有策略失效，真实指标应立即进入劣化态；等待下一次优化完成后再恢复。
+      if (collected) {
+        optimized = false;
+        perfDone = false;
+        if (optSpawnTimer) { clearInterval(optSpawnTimer); optSpawnTimer = null; }
+        updateAllViz('fault');
+        tickRealtime();
       }
-      // 立即更新可视化组件
-      if (collected) updateAllViz(optimized ? 'faultOpt' : 'fault');
     } else {
       // 故障恢复：链路恢复
       faultActive = false;
@@ -4106,6 +4081,12 @@
   }
   function collectAndOptimize() {
     if (optimizeBtn.disabled) return;
+    // 首次点击执行全域采集；此后指标已常驻采集，重优化直接使用当前实时状态求解。
+    if (collected && realtimeTimer) {
+      optimizeBtn.disabled = true;
+      optimize();
+      return;
+    }
     clearOptimizeTimers();
     clearInterval(realtimeTimer); realtimeTimer = null;
     if (optSpawnTimer) { clearInterval(optSpawnTimer); optSpawnTimer = null; }
@@ -4115,6 +4096,10 @@
     }
     optimizeBtn.disabled = true;
     setCollectionPhase('collecting');
+    // 一键优化从点击那一刻就开始采样；此时展示真实的当前基线，而不是等待下一轮操作。
+    updateGolden(faultActive ? 'fault' : 'init');
+    tickRealtime();
+    realtimeTimer = setInterval(tickRealtime, 1200);
     const preStepCards = Array.from(document.querySelectorAll('.opt-step-card'));
     preStepCards.forEach((card, index) => { card.classList.remove('running', 'done'); card.querySelector('.opt-step-state').textContent = ['等待采样', '等待求解', '等待重排', '等待选路', '等待验证'][index]; });
     preStepCards[0].classList.add('running');
@@ -4125,9 +4110,9 @@
     launchBaselineCapture();
     const collectionPlan = [
       { selector: '.zone-prefill', nodes: npuState.filter(s => s.isP).map(s => s.card), color: '#8B7BFF', offset: 0 },
-      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')), color: '#FFB547', offset: 180 },
-      { selector: '.zone-kv', nodes: Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), color: '#FF7AB6', offset: 360 },
-      { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 540 }
+      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')), color: '#FFB547', offset: 520 },
+      { selector: '.zone-kv', nodes: Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), color: '#FF7AB6', offset: 1040 },
+      { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 1560 }
     ];
     collectionPlan.forEach(plan => {
       const zone = document.querySelector(plan.selector);
@@ -4143,7 +4128,6 @@
     }, 2800);
     setTimeout(() => {
       setCollectionPhase('optimizing');
-      optimizeBtn.disabled = false;
       optimize();
     }, 5000);
   }
@@ -4191,7 +4175,7 @@
     optStageStatus.classList.remove('live');
     // 重置链路负载：Spine-0 → heavy（过载），Spine-1 → warn（中负载）
     document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
-      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal');
+      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal','path-group-lit','path-group-selected');
       l.classList.add(l.classList.contains('link-s0') ? 'link-warn' : 'link-normal');
     });
     // 重置算法浮窗
