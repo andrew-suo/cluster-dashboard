@@ -280,23 +280,12 @@
   .cv-title .tier-sep { color: var(--text-dim); }
   /* 三段分区背景 */
   .zone {
-    position: absolute; top: 38px; bottom: 14px; border-radius: 12px;
-    border: 1px dashed; pointer-events: none;
+    position: absolute; top: 38px; bottom: 14px; pointer-events: none;
+    border: 0; background: transparent;
   }
-  .zone .zone-label {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; padding: 4px 14px; border-radius: 4px;
-    white-space: nowrap;
-  }
-  .zone-prefill { left: 1%; width: 22%; border-color: rgba(139,123,255,0.28); background: rgba(139,123,255,0.04); }
-  .zone-prefill .zone-label { background: rgba(139,123,255,0.18); color: var(--brand); }
-  .zone-network { left: 24%; right: 24%; bottom: 33%; border-color: rgba(255,181,71,0.28); background: rgba(255,181,71,0.04); }
-  .zone-network .zone-label { background: rgba(255,181,71,0.18); color: var(--warn); }
-  .zone-kv { left: 24%; right: 24%; top: 68%; border-color: rgba(255,122,182,0.28); background: rgba(255,122,182,0.04); }
-  .zone-kv .zone-label { background: rgba(255,122,182,0.18); color: var(--pink); }
-  .zone-decode { right: 1%; width: 22%; border-color: rgba(45,212,168,0.28); background: rgba(45,212,168,0.04); }
-  .zone-decode .zone-label { background: rgba(45,212,168,0.18); color: var(--accent); }
+  .zone-prefill { left: 1%; width: 47%; top: 35%; }
+  .zone-network { left: 1%; right: 1%; top: 38px; bottom: auto; height: 32%; }
+  .zone-decode { right: 1%; width: 47%; top: 35%; }
   .zone.collecting { animation: zoneCollect 1.35s ease-out; }
   @keyframes zoneCollect { 0% { box-shadow: inset 0 0 0 0 transparent; } 35% { box-shadow: inset 0 0 28px var(--zone-collect, var(--brand)), 0 0 16px var(--zone-collect, var(--brand)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
   .domain-collector {
@@ -322,6 +311,7 @@
   @keyframes valueUpdate { 0%, 100% { filter: none; } 22%, 62% { color: #fff; filter: drop-shadow(0 0 6px currentColor); } 42%, 80% { filter: none; } }
   .npu-card.collect-scan, .device-body.collect-scan { filter: drop-shadow(0 0 4px var(--collect-color, var(--brand))); animation: collectDevice .42s ease-out; }
   .device-body.collect-scan { fill: rgba(255,255,255,.18); }
+  .kv-tier.collect-scan { filter: drop-shadow(0 0 5px var(--collect-color, var(--pink))); animation: collectDevice .42s ease-out; }
   @keyframes collectDevice { 0% { opacity: .35; } 45% { opacity: 1; } 100% { opacity: .9; } }
 
   /* ============ Zone 内嵌指标卡 ============ */
@@ -508,6 +498,31 @@
   .inter-node-link.d { stroke: rgba(45,212,168,0.3); }
   .inter-node-lbl { fill: #9CA9CA; font-size: 5.8px; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; }
   .npu-id { fill: #CDD7F1; font-size: 6.8px; font-weight: 700; pointer-events: none; font-family: var(--font-mono); }
+  /* POD 计算舱：交换板向外，D1-D8 朝向 UB 网络，芯片层保留可采集的 full-mesh 关系。 */
+  .pod-frame { fill: rgba(9,16,35,.48); stroke-width: .8; }
+  .pod-title { font: 700 10px var(--font-mono); letter-spacing: .08em; }
+  .pod-subtitle { fill: #8291b4; font: 600 5.5px var(--font-mono); letter-spacing: .05em; }
+  .pod-device-shell { fill: rgba(9,17,37,.86); stroke-width: .7; }
+  .pod-device-top { opacity: .42; }
+  .pod-device-label { font: 700 7px var(--font-mono); }
+  .pod-chip { stroke: rgba(225,237,255,.32); stroke-width: .25; transition: fill .6s; }
+  .pod-mesh { stroke-width: .26; fill: none; opacity: .28; }
+  .pod-chip-link { fill: none; stroke-width: .24; stroke-linecap: round; opacity: .16; }
+  .pod-fabric-link { fill:none; stroke-width:.38; stroke-linecap:round; opacity:.31; }
+  .pod-board { fill: rgba(12,21,42,.92); stroke: rgba(255,181,71,.68); stroke-width: .7; }
+  .pod-board-grid { fill: rgba(255,181,71,.72); }
+  .pod-board-u2 { fill: #FFD07C; filter: drop-shadow(0 0 1.4px rgba(255,181,71,.78)); }
+  .pod-board-link { stroke: rgba(255,181,71,.28); stroke-width: .32; }
+  .pod-board-odd { stroke: rgba(139,123,255,.42); }
+  .pod-board-even { stroke: rgba(45,212,168,.42); }
+  .pod-board-label { fill: #FFE2A8; font: 700 5px var(--font-mono); }
+  .ub-cabinet { fill: rgba(10,20,40,.9); stroke: rgba(100,180,255,.72); stroke-width: 1; }
+  .ddr-rack { fill: rgba(8,15,30,.72); stroke: rgba(45,212,168,.44); stroke-width: .7; }
+  .ddr-module { fill: rgba(45,212,168,.42); stroke: rgba(130,255,222,.72); stroke-width: .35; }
+  .ddr-module.alt { fill: rgba(139,123,255,.48); stroke: rgba(196,184,255,.74); }
+  .ddr-bus { fill:none; stroke:rgba(45,212,168,.55); stroke-width:.7; stroke-dasharray:2 2; }
+  .ddr-pool-shell { fill: rgba(45,212,168,.07); stroke: rgba(45,212,168,.58); stroke-width: .75; }
+  .ddr-pool-label { fill:#BFFFF1; font:700 7px var(--font-mono); letter-spacing:.06em; }
   .kv-label { fill: #CBD4EB; font-size: 8.8px; font-weight: 600; pointer-events: none; }
   .kv-bar-bg { fill: var(--bg); stroke: var(--border); stroke-width: 0.6; }
   .kv-bar-p { fill: var(--brand); }
@@ -581,25 +596,24 @@
   /* KV 数据粒子 */
   .kv-particle { pointer-events: none; }
   /* 3D KV Cache 池：介质色与运行健康状态分离，页块亮度表达热度与占用。 */
-  #kvPool3d { transform-origin: 500px 478px; }
+  #kvPool3d { transform-origin: 500px 133px; }
   .kv-tier { transform-box: fill-box; transform-origin: center; }
   .kv-face-top { stroke-width: .75; }
   .kv-face-front, .kv-face-side { stroke-width: .65; }
   .kv-tier-hbm .kv-face-top { fill:rgba(139,123,255,.24); stroke:rgba(139,123,255,.78); }.kv-tier-hbm .kv-face-front { fill:rgba(46,34,86,.78); stroke:rgba(139,123,255,.62); }.kv-tier-hbm .kv-face-side { fill:rgba(28,20,61,.84); stroke:rgba(139,123,255,.5); }
   .kv-tier-ddr .kv-face-top { fill:rgba(45,212,168,.18); stroke:rgba(45,212,168,.72); }.kv-tier-ddr .kv-face-front { fill:rgba(13,65,64,.76); stroke:rgba(45,212,168,.56); }.kv-tier-ddr .kv-face-side { fill:rgba(8,43,46,.84); stroke:rgba(45,212,168,.46); }
-  .kv-tier-ssd .kv-face-top { fill:rgba(255,181,71,.18); stroke:rgba(255,181,71,.72); }.kv-tier-ssd .kv-face-front { fill:rgba(74,52,25,.76); stroke:rgba(255,181,71,.56); }.kv-tier-ssd .kv-face-side { fill:rgba(47,33,18,.84); stroke:rgba(255,181,71,.46); }
   .kv-tier-label { fill:#E6ECFC; font:700 7.2px var(--font-sans); letter-spacing:.09em; pointer-events:none; }
   .kv-page { stroke:rgba(236,244,255,.34); stroke-width:.3; filter:drop-shadow(0 0 1.8px currentColor); transform-box:fill-box; transform-origin:center; }
-  .kv-tier-hbm .kv-page { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page { fill:#42DDB6; color:#42DDB6; }.kv-tier-ssd .kv-page { fill:#FFC76C; color:#FFC76C; }
+  .kv-tier-hbm .kv-page { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page { fill:#42DDB6; color:#42DDB6; }.kv-tier-ddr .ddr-module.alt { fill:rgba(139,123,255,.55); color:#9B8CFF; stroke:rgba(196,184,255,.74); }
   .kv-page.hot { fill:#FF7AB6; color:#FF7AB6; }.kv-page.dim { opacity:.27; }
-  .kv-tier-hbm { animation:kvTrayFloat 3.8s ease-in-out infinite; }.kv-tier-ddr { animation:kvTrayFloat 4.6s ease-in-out -.8s infinite; }.kv-tier-ssd { animation:kvTrayFloat 5.1s ease-in-out -1.5s infinite; }
+  .kv-tier-hbm { animation:kvTrayFloat 3.8s ease-in-out infinite; }.kv-tier-ddr { animation:kvTrayFloat 4.6s ease-in-out -.8s infinite; }
   .kv-page:nth-of-type(3n) { animation:kvPageBeat 1.8s ease-in-out infinite; }.kv-page:nth-of-type(4n) { animation-delay:-.7s; }
   .kv-pool-flow { fill:none; stroke-width:1; stroke-linecap:round; opacity:.42; stroke-dasharray:2 3; animation:kvBusFlow 1.4s linear infinite; }
-  .kv-pool-flow.hbm { stroke:var(--brand); }.kv-pool-flow.ddr { stroke:var(--accent); }.kv-pool-flow.ssd { stroke:var(--warn); }
-  .kv-pool-dot { filter:drop-shadow(0 0 2px currentColor); }.kv-pool-dot.hbm { fill:var(--brand); color:var(--brand); }.kv-pool-dot.ddr { fill:var(--accent); color:var(--accent); }.kv-pool-dot.ssd { fill:var(--warn); color:var(--warn); }
+  .kv-pool-flow.hbm { stroke:var(--brand); }.kv-pool-flow.ddr { stroke:var(--accent); }
+  .kv-pool-dot { filter:drop-shadow(0 0 2px currentColor); }.kv-pool-dot.hbm { fill:var(--brand); color:var(--brand); }.kv-pool-dot.ddr { fill:var(--accent); color:var(--accent); }
   #kvPool3d.rebalancing .kv-tier-hbm { animation:kvHotPressure .48s ease-in-out infinite; }.kv-tier-hbm .kv-page.hot { animation:kvHotPage .62s ease-in-out infinite; }
-  #kvPool3d.rebalanced .kv-tier-hbm .kv-page.hot { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page.reserve, .kv-tier-ssd .kv-page.reserve { opacity:.2; }
-  #kvPool3d.rebalanced .kv-tier-ddr .kv-page.reserve, #kvPool3d.rebalanced .kv-tier-ssd .kv-page.reserve { opacity:.9; animation:kvPageLock .7s ease-out both; }
+  #kvPool3d.rebalanced .kv-tier-hbm .kv-page.hot { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page.reserve { opacity:.2; }
+  #kvPool3d.rebalanced .kv-tier-ddr .kv-page.reserve { opacity:.9; animation:kvPageLock .7s ease-out both; }
   @keyframes kvTrayFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-1.8px); } }
   @keyframes kvPageBeat { 0%,100% { opacity:.5; } 50% { opacity:1; } }
   @keyframes kvBusFlow { to { stroke-dashoffset:-12; } }
@@ -922,42 +936,30 @@
 
   <!-- ============ 拓扑画布 ============ -->
   <div class="canvas-wrap">
-    <div class="cv-title"><span class="tier-label">业务数据平面</span><span class="tier-sep">·</span>Prefill 集群 · Decode 集群 · 华为灵衢总线 · KV Cache 池</div>
+    <div class="cv-title"><span class="tier-label">业务数据平面</span><span class="tier-sep">·</span>POD-A Prefill · POD-B Decode · 华为灵衢总线 · KV Cache 池</div>
     <div class="zone zone-prefill">
-      <div class="zone-label">Prefill 集群</div>
       <div class="zone-metrics" id="zmPrefill" data-stage="Σ THROUGHPUT · W-AVG LOAD">
         <div class="zm-item"><div class="zm-val brand" id="zmPNpu">--<span class="zu">%</span></div><div class="zm-lbl">P NPU</div></div>
         <div class="zm-item"><div class="zm-val" id="zmPThru">--<span class="zu">k/s</span></div><div class="zm-lbl">P吞吐</div></div>
         <div class="zm-item"><div class="zm-val" id="zmPReq">--</div><div class="zm-lbl">活跃</div></div>
       </div>
-      <div class="domain-collector prefill" id="dcPrefill"><div class="dc-head"><span>域内归约 · 求和 / 加权均值</span><span class="dc-count">0 / 32</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
+      <div class="domain-collector prefill" id="dcPrefill"><div class="dc-head"><span>域内归约 · 求和 / 加权均值</span><span class="dc-count">0 / 64</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
     </div>
     <div class="zone zone-network">
-      <div class="zone-label">华为灵衢总线 UB 网络拓扑</div>
       <div class="zone-metrics" id="zmNetwork" data-stage="P95 LATENCY · RATE LOSS">
         <div class="zm-item"><div class="zm-val warn" id="zmLinkUse">--<span class="zu">%</span></div><div class="zm-lbl">链路利用率</div></div>
         <div class="zm-item"><div class="zm-val danger" id="zmMigLat">--<span class="zu">ms</span></div><div class="zm-lbl">迁移延迟</div></div>
         <div class="zm-item"><div class="zm-val accent" id="zmPktLoss">--<span class="zu">‱</span></div><div class="zm-lbl">丢包率</div></div>
       </div>
-      <div class="domain-collector network" id="dcNetwork"><div class="dc-head"><span>域内归约 · P95 / 峰值</span><span class="dc-count">0 / 16</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
-    </div>
-    <div class="zone zone-kv">
-      <div class="zone-label">KV Cache 池</div>
-      <div class="zone-metrics" id="zmKv" data-stage="W-AVG HIT · Σ BANDWIDTH">
-        <div class="zm-item"><div class="zm-val pink" id="zmHbm">--<span class="zu">%</span></div><div class="zm-lbl">HBM</div></div>
-        <div class="zm-item"><div class="zm-val accent" id="zmHit">--<span class="zu">%</span></div><div class="zm-lbl">命中率</div></div>
-        <div class="zm-item"><div class="zm-val brand" id="zmMigBw">--<span class="zu">GB/s</span></div><div class="zm-lbl">迁移带宽</div></div>
-      </div>
-      <div class="domain-collector kv" id="dcKv"><div class="dc-head"><span>域内归约 · 加权均值 / 求和</span><span class="dc-count">0 / 5</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
+      <div class="domain-collector network" id="dcNetwork"><div class="dc-head"><span>域内归约 · 5808 / DDR 模块 / 峰值</span><span class="dc-count">0 / 14</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
     </div>
     <div class="zone zone-decode">
-      <div class="zone-label">Decode 集群</div>
       <div class="zone-metrics" id="zmDecode" data-stage="Σ THROUGHPUT · P95 QUEUE">
         <div class="zm-item"><div class="zm-val accent" id="zmDNpu">--<span class="zu">%</span></div><div class="zm-lbl">D NPU</div></div>
         <div class="zm-item"><div class="zm-val" id="zmDThru">--<span class="zu">k/s</span></div><div class="zm-lbl">D吞吐</div></div>
         <div class="zm-item"><div class="zm-val warn" id="zmQueue">--</div><div class="zm-lbl">队列</div></div>
       </div>
-      <div class="domain-collector decode" id="dcDecode"><div class="dc-head"><span>域内归约 · 求和 / P95</span><span class="dc-count">0 / 32</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
+      <div class="domain-collector decode" id="dcDecode"><div class="dc-head"><span>域内归约 · 求和 / P95</span><span class="dc-count">0 / 64</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
     </div>
 
     <!-- 算法决策浮窗（网络传输区域内，横向紧凑条） -->
@@ -1386,7 +1388,7 @@
       <line class="topo-link" x1="440" y1="316" x2="440" y2="410"/>
       <line class="topo-link" x1="560" y1="316" x2="560" y2="410"/>
 
-      <!-- ============ KV Cache 池：三层 3D 缓存托盘 ============ -->
+      <!-- ============ UB 网络域内的 KV Cache：HBM / DDR 两层 3D 缓存托盘 ============ -->
       <g id="kvPool3d">
         <path class="kv-pool-flow hbm" d="M440 410 C440 418 454 421 468 424 M560 410 C560 418 546 421 532 424"/>
         <circle class="kv-pool-dot hbm" cx="446" cy="416" r="1.4"><animateMotion dur="1.9s" repeatCount="indefinite" path="M0 0 C0 8 14 11 28 14"/></circle>
@@ -1405,13 +1407,6 @@
           <polygon class="kv-face-side" points="610,470 624,457 624,482 610,495"/>
           <text class="kv-tier-label" x="500" y="480" text-anchor="middle">DDR · 温数据层</text>
           <rect class="kv-page" x="402" y="484" width="15" height="5"/><rect class="kv-page reserve" x="420" y="484" width="15" height="5"/><rect class="kv-page" x="438" y="484" width="15" height="5"/><rect class="kv-page reserve" x="456" y="484" width="15" height="5"/><rect class="kv-page" x="474" y="484" width="15" height="5"/><rect class="kv-page reserve" x="492" y="484" width="15" height="5"/><rect class="kv-page" x="510" y="484" width="15" height="5"/><rect class="kv-page reserve" x="528" y="484" width="15" height="5"/><rect class="kv-page" x="546" y="484" width="15" height="5"/><rect class="kv-page reserve" x="564" y="484" width="15" height="5"/>
-        </g>
-        <g class="kv-tier kv-tier-ssd">
-          <polygon class="kv-face-top" points="350,510 650,510 666,496 366,496"/>
-          <polygon class="kv-face-front" points="350,510 650,510 650,538 350,538"/>
-          <polygon class="kv-face-side" points="650,510 666,496 666,524 650,538"/>
-          <text class="kv-tier-label" x="500" y="520" text-anchor="middle">SSD · 冷数据层</text>
-          <rect class="kv-page" x="365" y="526" width="22" height="6"/><rect class="kv-page reserve" x="391" y="526" width="22" height="6"/><rect class="kv-page" x="417" y="526" width="22" height="6"/><rect class="kv-page reserve" x="443" y="526" width="22" height="6"/><rect class="kv-page" x="469" y="526" width="22" height="6"/><rect class="kv-page reserve" x="495" y="526" width="22" height="6"/><rect class="kv-page" x="521" y="526" width="22" height="6"/><rect class="kv-page reserve" x="547" y="526" width="22" height="6"/><rect class="kv-page" x="573" y="526" width="22" height="6"/><rect class="kv-page reserve" x="599" y="526" width="22" height="6"/>
         </g>
       </g>
 
@@ -1955,7 +1950,7 @@
   let baselineParticles = [], baselineFrame = null, baselineTimers = [];
   const baselineScene = { active:false, frozen:false, started:0, samples:[] };
   const STEP_NOTES = [
-    { idle:['等待四域设备采样', '尚未生成全局基线'], running:['采集 Prefill集群、UB网络、KV Cache、Decode集群', '设备覆盖进度正在逐域注满'], done:['四个业务域已完成采集', '全局基线已锁定'] },
+    { idle:['等待三域设备采样', '尚未生成全局基线'], running:['采集 POD-A、UB 网络与 KV Cache、POD-B', '设备覆盖进度正在逐域注满'], done:['三个业务域已完成采集', '全局基线已锁定'] },
     { idle:['等待资源与服务约束', '尚未建立可行解空间'], running:['联立资源、时延与服务等级约束', '正在排除冲突策略'], done:['约束边界已完成收敛', '可执行策略空间已锁定'] },
     { idle:['等待缓存页重排', '尚未生成迁移计划'], running:['识别热点、碎片与迁移窗口', '正在编排 KV 页面迁移'], done:['缓存页已完成均衡归位', 'KV 布局已重整'] },
     { idle:['等待链路策略推演', '尚未选择读写路径'], running:['评估读写链路与可用带宽', '正在筛选最优双向路径'], done:['无效候选路径已剔除', '最优读写路径已下发'] },
@@ -2033,8 +2028,8 @@
       ctx.fillStyle=filled?stroke:'rgba(129,150,196,.17)';ctx.globalAlpha=filled?.88:1;ctx.fillRect(nodeX[index]-2.8,rows[1]-2.8,5.6,5.6);
     });
     if(network>0&&network<1) glowDot(ctx,trackX+trackW*network,rows[1],1.6,'#EDF3FF',.94);
-    // KV Cache：数值和容量长度与业务画布 HBM/DDR/SSD 三层保持一致。
-    const kv=[{name:'HBM',used:85,hit:92,color:'#8B7BFF'},{name:'DDR',used:70,hit:78,color:'#2DD4A8'},{name:'SSD',used:40,hit:45,color:'#FFB547'}];
+    // KV Cache：与 UB 网络域内 HBM / DDR 两层缓存托盘保持一致。
+    const kv=[{name:'HBM',used:85,hit:92,color:'#8B7BFF'},{name:'DDR',used:70,hit:78,color:'#2DD4A8'}];
     ctx.font='700 6.5px var(--font-mono)';
     kv.forEach((layer,index)=>{
       const y=rows[2]-8+index*6.4, layerProgress=clamp(cache*3-index), used=layer.used/100;
@@ -2331,17 +2326,15 @@
     const metricNames=['利用率','带宽','往返时延','缓存规模','队列深度','Token 吞吐'];
     const allSources=[
       ...sampleRects(npuState.filter(s=>s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#8B7BFF',metric:metricNames[i]})),
-      ...sampleRects(Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf:not(.leaf-kv) .device-body')),2).map((rect,i)=>({rect,color:'#FFB547',metric:metricNames[i+1]})),
-      ...sampleRects(Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')),2).map((rect,i)=>({rect,color:'#FF7AB6',metric:metricNames[i+3]})),
+      ...sampleRects(Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')),4).map((rect,i)=>({rect,color:i>1?'#2DD4A8':'#FFB547',metric:metricNames[i+1]})),
       ...sampleRects(npuState.filter(s=>!s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#2DD4A8',metric:metricNames[(i+4)%metricNames.length]}))
     ];
     baselineScene.samples=allSources;
     const target = decisionCards[0].querySelector('.opt-card-canvas').getBoundingClientRect();
-    const ports = [0.32, .44, .56, .68].map(x => ({ x:target.left + target.width * x, y:target.top + target.height * .53 }));
+    const ports = [.36, .5, .64].map(x => ({ x:target.left + target.width * x, y:target.top + target.height * .53 }));
     const domains = [
       { nodes:npuState.filter(s => s.isP).map(s => s.card) },
-      { nodes:Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')) },
-      { nodes:Array.from(svg.querySelectorAll('#kvPool3d .kv-tier')) },
+      { nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')) },
       { nodes:npuState.filter(s => !s.isP).map(s => s.card) }
     ];
     const now = performance.now();
@@ -2364,10 +2357,129 @@
   }
   window.addEventListener('resize', () => { if (baselineParticles.length) resizeStageCanvas(); refreshCardRenderers(); });
 
-  /* ===== 1. NPU 负载动态模型（64 张卡随机游走，颜色表示利用率） ===== */
-  const npuCards = Array.from(svg.querySelectorAll('.npu-card'));
+  /* ===== 1. 双 POD 计算舱：每 POD 8 个 D，每 D 8 个 full-mesh 芯片 ===== */
+  function podSvg(tag, attrs, parent){
+    const el=document.createElementNS(SVGNS,tag);
+    Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,value));
+    parent.appendChild(el); return el;
+  }
+  function podText(parent, x, y, value, className, anchor){
+    const text=podSvg('text',{x,y,class:className,'text-anchor':anchor || 'start'},parent);
+    text.textContent=value; return text;
+  }
+  function addSwitchBoard(parent, x, y, index, mirror){
+    const board=podSvg('g',{class:'pod-switch-board'},parent), width=48, height=86;
+    podSvg('rect',{x,y,width,height,rx:4,class:'pod-board'},board);
+    podText(board,x+width/2,y+9,'交换板 '+index,'pod-board-label','middle');
+    const u1=[];
+    for(let i=0;i<16;i++){
+      const px=x+7+(i%4)*9.5, py=y+17+Math.floor(i/4)*8;
+      u1.push([px+2.5,py+2.5]);
+      const node=podSvg('rect',{x:px,y:py,width:5,height:5,rx:1,class:'pod-board-grid','data-union':'U1.'+(i+1)},board);
+      podSvg('title',{},node).textContent='U1.'+(i+1);
+    }
+    const u2=[[x+14,y+58],[x+32,y+58],[x+14,y+72],[x+32,y+72]];
+    u1.forEach((point,i)=>{
+      const target=i%2===0 ? u2[(i/2)%2] : u2[2+((i-1)/2)%2];
+      podSvg('line',{x1:point[0],y1:point[1],x2:target[0],y2:target[1],class:'pod-board-link '+(i%2?'pod-board-even':'pod-board-odd')},board);
+    });
+    u2.forEach((point,i)=>{ const node=podSvg('circle',{cx:point[0],cy:point[1],r:3,class:'pod-board-u2','data-union':'U2.'+(i+1)},board); podSvg('title',{},node).textContent='U2.'+(i+1); });
+    podText(board,x+width/2,y+53,'U1.1–16','pod-board-label','middle');
+    podText(board,x+width/2,y+83,'U2.1–4','pod-board-label','middle');
+    return { edge: mirror ? x : x+width, midY:y+height/2, pairs:Array.from({length:8},(_,i)=>[u1[i*2],u1[i*2+1]]) };
+  }
+  function addPodDevice(parent, x, y, index, isPrefill){
+    const color=isPrefill ? '#8B7BFF' : '#2DD4A8', shell=podSvg('g',{class:'pod-device','data-pod':isPrefill?'prefill':'decode','data-device':'D'+index},parent);
+    podSvg('polygon',{points:(x+3)+','+(y+5)+' '+(x+60)+','+(y+5)+' '+(x+64)+','+y+' '+(x+7)+','+y,class:'pod-device-top',fill:color},shell);
+    podSvg('rect',{x,y:y+5,width:60,height:47,rx:4,class:'pod-device-shell',stroke:color},shell);
+    podText(shell,x+5,y+16,'D'+index,'pod-device-label','start').setAttribute('fill',color);
+    const chips=[];
+    for(let i=0;i<8;i++){
+      const cx=x+8+(i%4)*13.2, cy=y+24+Math.floor(i/4)*12;
+      const chip=podSvg('rect',{x:cx,y:cy,width:10,height:7,rx:1,class:'npu-card pod-chip','data-chip':i,fill:isPrefill?'rgba(139,123,255,.52)':'rgba(45,212,168,.52)'},shell);
+      chips.push([cx+5,cy+3.5]);
+    }
+    for(let a=0;a<chips.length;a++) for(let b=a+1;b<chips.length;b++) podSvg('line',{x1:chips[a][0],y1:chips[a][1],x2:chips[b][0],y2:chips[b][1],class:'pod-mesh',stroke:color},shell);
+    return { edge:isPrefill ? x : x+60, portX:isPrefill ? x+2 : x+58, midY:y+29, chips };
+  }
+  const podPorts={};
+  function buildPod(side, isPrefill){
+    const group=podSvg('g',{class:'pod-layout '+(isPrefill?'pod-prefill':'pod-decode')},svg);
+    const frameX=isPrefill?18:522, color=isPrefill?'#8B7BFF':'#2DD4A8', frameY=270;
+    podSvg('rect',{x:frameX,y:frameY,width:460,height:266,rx:8,class:'pod-frame',stroke:color},group);
+    podText(group,frameX+12,286,isPrefill?'POD-A · PREFILL':'POD-B · DECODE','pod-title','start').setAttribute('fill',color);
+    podText(group,frameX+12,296,'8 D · 64 CHIPS · FULL-MESH','pod-subtitle','start');
+    const boardPositions=isPrefill?[[38,314],[98,314],[38,416],[98,416]]:[[854,314],[914,314],[854,416],[914,416]];
+    const deviceXs=isPrefill?[175,250,325,400]:[570,635,700,765], deviceYs=[334,434];
+    const linkLayer=podSvg('g',{class:'pod-chip-link-layer'},group);
+    const boards=boardPositions.map((position,i)=>addSwitchBoard(group,position[0],position[1],i+1,!isPrefill));
+    const devices=[];
+    deviceYs.forEach((y,row)=>deviceXs.forEach((x,column)=>devices.push(addPodDevice(group,x,y,row*2+column+1,isPrefill))));
+    // 每对 U1 通过设备侧的汇聚端口连接 D1-D8；D 内部以 full-mesh 表达八颗芯片全连接。
+    boards.forEach(board=>devices.forEach((device,deviceIndex)=>{
+      const pair=board.pairs[deviceIndex];
+      pair.forEach((source,pairIndex)=>{
+        const targetY=device.midY+(pairIndex ? 4 : -4), bend=isPrefill?source[0]+16:source[0]-16;
+        podSvg('path',{d:'M '+source[0]+' '+source[1]+' C '+bend+' '+source[1]+', '+(device.portX+(isPrefill?-12:12))+' '+targetY+', '+device.portX+' '+targetY,class:'pod-fabric-link',stroke:color,'data-map':'U1.'+(deviceIndex*2+pairIndex+1)+'→D'+(deviceIndex+1)+'.CHIP1–8'},linkLayer);
+      });
+    }));
+    const boardOne=boardPositions[0];
+    podPorts[isPrefill?'prefill':'decode']={ x:boardOne[0]+24, y:boardOne[1]+18 };
+  }
+  // 旧的四平面集群不再参与渲染；网络、KV 与原有动画层继续保留。
+  svg.querySelectorAll('.npu-card,.npu-side-p,.npu-front-p,.npu-side-d,.npu-front-d,.npu-id,.fullmesh-group,.inter-node-group,.node-server-p,.node-server-d,.plane-side-p,.plane-front-p,.plane-top-p,.plane-side-d,.plane-front-d,.plane-top-d,.plane-grid-p,.plane-grid-d,.node-name').forEach(el=>el.style.display='none');
+  buildPod('left',true); buildPod('right',false);
+
+  /* ===== UB 网络柜：两台 5808 液冷设备上联两个 POD 的交换板 1，DDR 直接插入柜内 ===== */
+  function addUbDevice(parent, x, y, width, name, role){
+    const group=podSvg('g',{class:role==='spine'?'device-spine':'device-leaf '+(role==='prefill'?'leaf-p':'leaf-d')},parent);
+    podSvg('rect',{x,y,width,height:18,rx:2,class:'device-body'},group);
+    podSvg('rect',{x:x+3,y:y+4,width:10,height:4,rx:.5,class:'device-screen'},group);
+    podSvg('circle',{cx:x+18,cy:y+9,r:1,class:'device-led'},group);
+    for(let i=0;i<7;i++) podSvg('rect',{x:x+25+i*4.2,y:y+11,width:2.5,height:3,rx:.3,class:'device-port '+(i<4?'active':'')},group);
+    podText(group,x+width/2,y-4,name,'device-name','middle'); return {x:x+width/2,y:y+9};
+  }
+  function buildUbCabinet(){
+    const oldKv=document.getElementById('kvPool3d'); if(oldKv) oldKv.id='legacyKvPool3d';
+    svg.querySelectorAll('.net-plane-top-p,.net-plane-front-p,.net-plane-side-p,.net-plane-grid-p,.net-plane-top-d,.net-plane-front-d,.net-plane-side-d,.net-plane-grid-d,.net-plane-top-s,.net-plane-front-s,.net-plane-side-s,.net-plane-grid-s,.net-plane-top-k,.net-plane-front-k,.net-plane-side-k,.net-plane-grid-k,.net-plane-label,.device-leaf,.device-spine,.topo-link,#legacyKvPool3d,#faultMarks').forEach(el=>el.style.display='none');
+    document.getElementById('telemetryFabric').style.display='none'; document.getElementById('stepFx').style.display='none';
+    const group=podSvg('g',{id:'ubCabinet'},svg), cabinet={x:18,y:62,w:964,h:170};
+    podSvg('rect',{x:cabinet.x,y:cabinet.y,width:cabinet.w,height:cabinet.h,rx:9,class:'ub-cabinet'},group);
+    podText(group,cabinet.x+12,84,'华为灵衢总线 · UB 网络柜','pod-title','start').setAttribute('fill','#FFB547');
+    podText(group,cabinet.x+12,96,'2 × 5808 液冷  ·  双 POD 上联  ·  DDR VIRTUAL POOL','pod-subtitle','start');
+    const liquidA=addUbDevice(group,295,150,150,'5808 液冷-A','spine');
+    const liquidB=addUbDevice(group,555,150,150,'5808 液冷-B','spine');
+    const curve=(from,to,classes)=>podSvg('path',{d:'M '+from[0]+' '+from[1]+' C '+from[0]+' '+(from[1]+34)+', '+to[0]+' '+(to[1]-34)+', '+to[0]+' '+to[1],class:'topo-link '+classes},group);
+    curve([liquidA.x-25,168],[podPorts.prefill.x,podPorts.prefill.y],'link-s0 link-warn disturbance-link-b');
+    curve([liquidB.x-25,168],[podPorts.prefill.x+10,podPorts.prefill.y],'link-s1 link-normal');
+    curve([liquidA.x+25,168],[podPorts.decode.x-10,podPorts.decode.y],'link-s1 link-normal');
+    curve([liquidB.x+25,168],[podPorts.decode.x,podPorts.decode.y],'link-s0 link-warn disturbance-link-a');
+    const tier=podSvg('g',{id:'kvPool3d',class:'kv-tier kv-tier-ddr'},group);
+    podSvg('rect',{x:55,y:120,width:190,height:68,rx:6,class:'ddr-rack'},tier);
+    podSvg('rect',{x:755,y:120,width:190,height:68,rx:6,class:'ddr-rack'},tier);
+    podText(tier,67,133,'DDR 插槽 · A','pod-subtitle','start');
+    podText(tier,767,133,'DDR 插槽 · B','pod-subtitle','start');
+    const modules=[];
+    for(let i=0;i<12;i++){
+      const isLeft=i<6, slot=i%6;
+      const mx=(isLeft?85:785)+(slot%3)*45, my=143+Math.floor(slot/3)*18;
+      const module=podSvg('rect',{x:mx,y:my,width:29,height:13,rx:1.5,class:'kv-page ddr-module '+(i%3===2?'alt':'')},tier);
+      podSvg('title',{},module).textContent='DDR-'+String(i+1).padStart(2,'0'); modules.push([mx+14.5,my+6.5]);
+    }
+    podSvg('rect',{x:445,y:107,width:110,height:20,rx:5,class:'ddr-pool-shell'},tier);
+    podText(tier,500,121,'虚拟 DDR 池 · KV Cache','ddr-pool-label','middle');
+    modules.forEach((point,index)=>{
+      const isLeft=index<6, targetX=isLeft?445:555, liftX=isLeft?Math.min(point[0]+64,330):Math.max(point[0]-64,670);
+      podSvg('path',{d:'M '+point[0]+' '+(point[1]+7)+' C '+liftX+' '+(point[1]-8)+', '+(isLeft?360:640)+' 117, '+targetX+' 117',class:'ddr-bus'},tier);
+    });
+    podSvg('circle',{cx:500,cy:133,r:2.2,class:'kv-pool-dot ddr'},tier);
+  }
+  buildUbCabinet();
+
+  /* ===== 2. NPU 负载动态模型（128 张芯片随机游走，颜色表示利用率） ===== */
+  const npuCards = Array.from(svg.querySelectorAll('.pod-layout .npu-card'));
   const npuState = npuCards.map((card, i) => {
-    const isP = i < 32;                                   // 0-31: Prefill, 32-63: Decode
+    const isP = i < 64;                                   // 0-63: Prefill, 64-127: Decode
     const base = isP ? 78 + Math.floor(Math.random()*8) : 64 + Math.floor(Math.random()*9);
     return { card, base, cur: base, isP };
   });
@@ -2389,19 +2501,17 @@
 
   /* ===== 2. KV Cache 容量条已移至独立 KV Cache 池卡片 ===== */
 
-  /* ===== 3. 网络数据粒子流（Prefill → Leaf-P → Spine → Leaf-KV → KV Cache → Leaf-KV → Spine → Leaf-D → Decode） ===== */
-  /* 8 条路径：[0-3]写路径(Prefill→KV Cache)，[4-7]读路径(KV Cache→Decode) */
+  /* ===== 3. 网络数据粒子流（POD → Leaf → 单 Spine → 柜内虚拟 DDR 池） ===== */
+  /* 8 条逻辑路径：[0-3]写入虚拟 DDR 池，[4-7]从虚拟 DDR 池读回 Decode POD。 */
   const PATHS = [
-    // 写路径：Prefill → Leaf-P → Spine → Leaf-KV → KV Cache
-    [[204,128],[337,121],[438,230],[440,309],[440,410]],  // W: P0→Leaf-P0→Spine0→KV
-    [[204,363],[411,121],[438,230],[440,309],[440,410]],  // W: P2→Leaf-P1→Spine0→KV
-    [[204,223],[337,121],[562,230],[560,309],[560,410]],  // W: P1→Leaf-P0→Spine1→KV
-    [[204,458],[411,121],[562,230],[560,309],[560,410]],  // W: P3→Leaf-P1→Spine1→KV
-    // 读路径：KV Cache → Leaf-KV → Spine → Leaf-D → Decode
-    [[440,410],[440,309],[438,230],[597,121],[796,128]],  // R: KV→Spine0→Leaf-D0→D0
-    [[440,410],[440,309],[438,230],[671,121],[796,363]],  // R: KV→Spine0→Leaf-D1→D2
-    [[560,410],[560,309],[562,230],[597,121],[796,223]],  // R: KV→Spine1→Leaf-D0→D1
-    [[560,410],[560,309],[562,230],[671,121],[796,458]],  // R: KV→Spine1→Leaf-D1→D3
+    [[205,360],[62,332],[370,159],[500,117]],
+    [[280,460],[62,332],[370,159],[500,117]],
+    [[355,360],[62,332],[630,159],[500,117]],
+    [[430,460],[62,332],[630,159],[500,117]],
+    [[500,117],[370,159],[878,332],[600,360]],
+    [[500,117],[370,159],[878,332],[665,460]],
+    [[500,117],[630,159],[878,332],[730,360]],
+    [[500,117],[630,159],[878,332],[795,460]],
   ].map(pts => {
     const segs=[]; let total=0;
     for (let i=0;i<pts.length-1;i++){
@@ -2412,7 +2522,7 @@
     return {segs,total};
   });
   // 外部流从 Decode 接入叶交换机借道核心 Fabric，再到 Prefill 接入叶；不进入 PD 或 KV Cache。
-  const DISTURBANCE_PATH = [[716,72],[704,120],[671,128],[446,224],[411,128],[382,120],[362,72]].map((point,index,array)=>point).reduce((path, point, index, array) => {
+  const DISTURBANCE_PATH = [[744,54],[726,86],[680,122],[630,159],[370,159],[320,122],[274,86],[256,54]].map((point,index,array)=>point).reduce((path, point, index, array) => {
     if(index === 0) return { segs:[], total:0, points:array };
     const [x1,y1]=array[index-1],[x2,y2]=point,len=Math.hypot(x2-x1,y2-y1);
     path.segs.push({x1,y1,x2,y2,len,acc:path.total}); path.total+=len; return path;
@@ -2429,11 +2539,11 @@
     const last=DISTURBANCE_PATH.segs[DISTURBANCE_PATH.segs.length-1], lastStart=last.acc/DISTURBANCE_PATH.total;
     if(progress<edge){
       const t=progress/edge, u=1-t;
-      return [u*u*u*716 + 3*u*u*t*750 + 3*u*t*t*672 + t*t*t*704, u*u*u*72 + 3*u*u*t*82 + 3*u*t*t*90 + t*t*t*120];
+      return [u*u*u*744 + 3*u*u*t*772 + 3*u*t*t*702 + t*t*t*726, u*u*u*54 + 3*u*u*t*64 + 3*u*t*t*76 + t*t*t*86];
     }
     if(progress>lastStart){
       const t=(progress-lastStart)/(1-lastStart), u=1-t;
-      return [u*u*u*382 + 3*u*u*t*354 + 3*u*t*t*424 + t*t*t*362, u*u*u*120 + 3*u*u*t*112 + 3*u*t*t*98 + t*t*t*72];
+      return [u*u*u*274 + 3*u*u*t*246 + 3*u*t*t*316 + t*t*t*256, u*u*u*86 + 3*u*u*t*76 + 3*u*t*t*64 + t*t*t*54];
     }
     return ptAt(DISTURBANCE_PATH,progress);
   }
@@ -2446,12 +2556,12 @@
   disturbanceLayer.setAttribute('id','disturbanceLayer'); svg.appendChild(disturbanceLayer);
   const disturbanceSource = document.createElementNS(SVGNS,'g');
   disturbanceSource.setAttribute('class','disturbance-source');
-  disturbanceSource.innerHTML='<path class="source-link" d="M 716 72 C 750 82 672 90 704 120"/><path class="source-link" d="M 382 120 C 354 112 424 98 362 72"/>';
+  disturbanceSource.innerHTML='<path class="source-link" d="M 744 54 C 772 64 702 76 726 86"/><path class="source-link" d="M 274 86 C 246 76 316 64 256 54"/>';
   disturbanceLayer.appendChild(disturbanceSource);
   const disturbanceParticles = [], dropParticles = [];
   const DISTURBANCE_IMPACTS = [
-    { point:[554,176], paths:[5] },
-    { point:[430,175], paths:[1] }
+    { point:[600,159], paths:[2,7] },
+    { point:[400,159], paths:[0,5] }
   ];
   let disturbanceTimer = null;
   function spawnDrop(x, y, color, count){
@@ -2491,33 +2601,6 @@
   }
 
   /* 平面内部的数据流：独立于跨域传输链路，只在各自承载面上滑行。 */
-  const planeFlowLayer = document.createElementNS(SVGNS, 'g');
-  planeFlowLayer.setAttribute('id', 'planeFlowLayer');
-  svg.appendChild(planeFlowLayer);
-  const planeFlowParticles = [];
-  const PLANE_FLOW_TRACKS = [
-    [80,116,94,116,'#8B7BFF'], [118,116,132,116,'#8B7BFF'], [156,116,170,116,'#8B7BFF'],
-    [80,211,94,211,'#8B7BFF'], [118,211,132,211,'#8B7BFF'], [156,211,170,211,'#8B7BFF'],
-    [80,351,94,351,'#8B7BFF'], [118,351,132,351,'#8B7BFF'], [156,351,170,351,'#8B7BFF'],
-    [80,446,94,446,'#8B7BFF'], [118,446,132,446,'#8B7BFF'], [156,446,170,446,'#8B7BFF'],
-    [368,121,380,121,'#FFB547'], [444,121,554,121,'#FFB547'], [630,121,640,121,'#FFB547'], [480,235,520,235,'#FFB547'],
-    [476,309,524,309,'#FF7AB6'],
-    [834,116,848,116,'#2DD4A8'], [872,116,886,116,'#2DD4A8'], [910,116,924,116,'#2DD4A8'],
-    [834,211,848,211,'#2DD4A8'], [872,211,886,211,'#2DD4A8'], [910,211,924,211,'#2DD4A8'],
-    [834,351,848,351,'#2DD4A8'], [872,351,886,351,'#2DD4A8'], [910,351,924,351,'#2DD4A8'],
-    [834,446,848,446,'#2DD4A8'], [872,446,886,446,'#2DD4A8'], [910,446,924,446,'#2DD4A8']
-  ];
-  PLANE_FLOW_TRACKS.forEach((track, index) => {
-    for (let copy = 0; copy < 2; copy++) {
-      const dot = document.createElementNS(SVGNS, 'circle');
-      dot.setAttribute('r', copy ? '0.9' : '1.35');
-      dot.setAttribute('fill', track[4]);
-      dot.style.filter = 'drop-shadow(0 0 2px ' + track[4] + ')';
-      planeFlowLayer.appendChild(dot);
-      planeFlowParticles.push({ el: dot, x1: track[0], y1: track[1], x2: track[2], y2: track[3], phase: (index * .13 + copy * .48) % 1, speed: .00011 + (index % 3) * .00002 });
-    }
-  });
-
   /* 原有的设备观测条与胶囊已撤除，网络平面回归纯拓扑承载。 */
   const deviceSensors = [];
   const deviceFascias = [];
@@ -2578,12 +2661,7 @@
     deviceSensorLayer.appendChild(sensor);
     deviceSensors.push(sensor);
   }
-  svg.querySelectorAll('.node-server-p').forEach(node => addDeviceSensor(node, 'p', false));
-  svg.querySelectorAll('.node-server-d').forEach(node => addDeviceSensor(node, 'd', false));
-  svg.querySelectorAll('.device-leaf.leaf-p .device-body').forEach(node => addDeviceSensor(node, 'p', true));
-  svg.querySelectorAll('.device-leaf.leaf-d .device-body').forEach(node => addDeviceSensor(node, 'd', true));
-  svg.querySelectorAll('.device-leaf.leaf-kv .device-body').forEach(node => addDeviceSensor(node, 'kv', true));
-  svg.querySelectorAll('.device-spine .device-body').forEach(node => addDeviceSensor(node, 'net', true));
+  svg.querySelectorAll('#ubCabinet .device-spine .device-body').forEach(node => addDeviceSensor(node, 'net', true));
 
   /* 每个 3D 平面前缘的遥测面板：三路采样 → 一个设备数据胶囊 */
   const deviceFasciaLayer = document.createElementNS(SVGNS, 'g');
@@ -2646,12 +2724,7 @@
     deviceFasciaLayer.appendChild(fascia);
     deviceFascias.push(fascia);
   }
-  svg.querySelectorAll('.node-server-p').forEach(node => addTelemetryFascia(node, 'p', false));
-  svg.querySelectorAll('.node-server-d').forEach(node => addTelemetryFascia(node, 'd', false));
-  svg.querySelectorAll('.device-leaf.leaf-p .device-body').forEach(node => addTelemetryFascia(node, 'p', true));
-  svg.querySelectorAll('.device-leaf.leaf-d .device-body').forEach(node => addTelemetryFascia(node, 'd', true));
-  svg.querySelectorAll('.device-leaf.leaf-kv .device-body').forEach(node => addTelemetryFascia(node, 'kv', true));
-  svg.querySelectorAll('.device-spine .device-body').forEach(node => addTelemetryFascia(node, 'net', true));
+  svg.querySelectorAll('#ubCabinet .device-spine .device-body').forEach(node => addTelemetryFascia(node, 'net', true));
   function pulseDeviceSensors() {
     deviceSensors.forEach((sensor, index) => {
       setTimeout(() => {
@@ -2805,13 +2878,6 @@
       pulse.el.setAttribute('cy', pos[1]);
       pulse.el.setAttribute('opacity', Math.min(pulse.progress * 7, (1 - pulse.progress) * 7, 1));
     }
-    planeFlowParticles.forEach(flow => {
-      flow.phase = (flow.phase + flow.speed * dt) % 1;
-      const x = flow.x1 + (flow.x2 - flow.x1) * flow.phase;
-      const y = flow.y1 + (flow.y2 - flow.y1) * flow.phase;
-      flow.el.setAttribute('cx', x); flow.el.setAttribute('cy', y);
-      flow.el.setAttribute('opacity', Math.min(flow.phase * 6, (1 - flow.phase) * 6, .9));
-    });
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
@@ -2858,7 +2924,7 @@
   const allTv = Array.from(document.querySelectorAll('.zm-val'));
   const domainCollectors = {
     prefill: document.getElementById('dcPrefill'), network: document.getElementById('dcNetwork'),
-    kv: document.getElementById('dcKv'), decode: document.getElementById('dcDecode')
+    decode: document.getElementById('dcDecode')
   };
   const observationCards = {
     compute: document.getElementById('obsCompute'), storage: document.getElementById('obsStorage'), network: document.getElementById('obsNetwork')
@@ -2975,7 +3041,7 @@
     }, 820);
   }
   function clearCollectionSurface() {
-    Object.values(domainCollectors).forEach(el => { el.classList.remove('open', 'dismiss'); el.querySelector('.dc-count').textContent = el.id === 'dcNetwork' ? '0 / 16' : el.id === 'dcKv' ? '0 / 5' : '0 / 32'; el.querySelector('.dc-progress i').style.width = '0%'; el.querySelector('.dc-chips').innerHTML = ''; });
+    Object.values(domainCollectors).forEach(el => { el.classList.remove('open', 'dismiss'); el.querySelector('.dc-count').textContent = el.id === 'dcNetwork' ? '0 / 14' : '0 / 64'; el.querySelector('.dc-progress i').style.width = '0%'; el.querySelector('.dc-chips').innerHTML = ''; });
     Object.values(observationCards).forEach(el => { el.classList.remove('receiving'); el.querySelectorAll('.obs-value').forEach(value => value.textContent = '--'); el.querySelector('.obs-source').textContent = '等待域级数据'; });
     document.querySelectorAll('.compute-mode').forEach(el => el.classList.remove('active'));
     document.getElementById('computeDock').classList.remove('running', 'settled');
@@ -3260,7 +3326,6 @@
     const zones = [
       { el: document.getElementById('zmPrefill'), color: '#8B7BFF', key: 'prefill' },
       { el: document.getElementById('zmNetwork'), color: '#FFB547', key: 'network' },
-      { el: document.getElementById('zmKv'), color: '#FF7AB6', key: 'kv' },
       { el: document.getElementById('zmDecode'), color: '#2DD4A8', key: 'decode' }
     ];
 
@@ -3291,10 +3356,9 @@
     // ① 设备分批采样，并在各自主卡片的空白区完成域内归约。
     clearCollectionSurface();
     const scanPlan = [
-      { key:'prefill', total:32, color:'#8B7BFF', nodes:npuState.filter(s => s.isP).map(s => s.card), chips:['8 张 NPU · 3.1k/s','16 张 NPU · 6.4k/s','24 张 NPU · 9.3k/s','32 张 NPU · 12.4k/s'] },
-      { key:'network', total:16, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')), chips:['4 个端口 · P95 18ms','8 个端口 · P95 31ms','12 个端口 · P95 42ms','16 条链路 · P95 45ms'] },
-      { key:'kv', total:5, color:'#FF7AB6', nodes:Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), chips:['1 节点 · 命中 88%','3 节点 · 命中 91%','5 节点 · 命中 92%','迁移汇总 12GB/s'] },
-      { key:'decode', total:32, color:'#2DD4A8', nodes:npuState.filter(s => !s.isP).map(s => s.card), chips:['8 张 NPU · 0.8k/s','16 张 NPU · 1.6k/s','24 张 NPU · 2.4k/s','32 张 NPU · 3.2k/s'] }
+      { key:'prefill', total:64, color:'#8B7BFF', nodes:npuState.filter(s => s.isP).map(s => s.card), chips:['16 芯片 · 3.1k/s','32 芯片 · 6.4k/s','48 芯片 · 9.3k/s','64 芯片 · 12.4k/s'] },
+      { key:'network', total:14, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')), chips:['2 台 5808 · 链路已发现','6 个模块 · DDR 已发现','12 个模块 · KV 命中 92%','14 个资源 · P95 45ms'] },
+      { key:'decode', total:64, color:'#2DD4A8', nodes:npuState.filter(s => !s.isP).map(s => s.card), chips:['16 芯片 · 0.8k/s','32 芯片 · 1.6k/s','48 芯片 · 2.4k/s','64 芯片 · 3.2k/s'] }
     ];
     scanPlan.forEach((plan, zoneIndex) => {
       const offset = zoneIndex * 220;
@@ -3313,11 +3377,11 @@
       }
     });
 
-    // ② 四域结果逐个进入三类观测卡；每次输入都改变观测数值。
+    // ② 三域结果逐个进入三类观测卡；UB 网络域已包含 KV Cache。
     const observationStart = 1920;
-    ['prefill', 'network', 'kv', 'decode'].forEach((domain, index) => {
+    ['prefill', 'network', 'decode'].forEach((domain, index) => {
       setTimeout(() => {
-        Object.keys(observationCards).forEach(kind => receiveObservation(kind, Math.min(index, 2), (index + 1) / 4));
+        Object.keys(observationCards).forEach(kind => receiveObservation(kind, Math.min(index, 2), (index + 1) / 3));
         setTimeout(() => domainCollectors[domain].classList.add('dismiss'), 640);
       }, observationStart + index * 300);
     });
@@ -3656,15 +3720,11 @@
     }, 400));
   }
 
-  /* === 步骤4 画布动效：双向选路路径高亮（故障态仅高亮 Spine-0 路径） === */
+  /* === 步骤4 画布动效：单 Spine 柜内双 Rail 选路高亮 === */
   function fxStep4(){
-    const core0=Array.from(svg.querySelectorAll('.link-s0'));
-    const core1=Array.from(svg.querySelectorAll('.link-s1'));
-    const uplinks=Array.from(svg.querySelectorAll('.topo-link')).filter(link=>{
-      const x1=Number(link.getAttribute('x1')), x2=Number(link.getAttribute('x2'));
-      return Number.isFinite(x1)&&Number.isFinite(x2)&&((x1===440&&x2===440)||(x1===560&&x2===560));
-    });
-    const groups=[core0.slice(0,4),core1.slice(0,4),[...core0.slice(4),...core1.slice(4),...uplinks]];
+    const core0=Array.from(svg.querySelectorAll('#ubCabinet .link-s0'));
+    const core1=Array.from(svg.querySelectorAll('#ubCabinet .link-s1'));
+    const groups=[core0.slice(0,3),core1.slice(0,3),[...core0.slice(3),...core1.slice(3)]];
     document.querySelectorAll('.topo-link.path-group-lit,.topo-link.path-group-selected').forEach(link=>link.classList.remove('path-group-lit','path-group-selected'));
     groups.forEach((group,index)=>{
       optimizeTimers.push(setTimeout(()=>group.forEach(link=>link.classList.add('path-group-lit')),index*620));
@@ -3761,8 +3821,8 @@
           const peak = Math.max(...predData);
           peakVal.textContent = peak + '%';
           peakVal.style.color = peak > 90 ? 'var(--warn)' : 'var(--accent)';
-          // 故障态推荐 Spine-0，正常态推荐双 Spine 均衡
-          linkVal.textContent = faultActive ? 'Spine-0' : '双 Spine';
+          // 单 Spine 柜内以双 Rail 选路；扰动时规避受扰 Rail-B。
+          linkVal.textContent = faultActive ? 'Rail-A' : '双 Rail';
           linkVal.style.color = 'var(--accent)';
           status.textContent = '已预测 ✓';
           status.style.color = 'var(--accent)';
@@ -3798,14 +3858,14 @@
     const pool=document.getElementById('kvPool3d'); if(!pool) return;
     const run=++kvPoolRun;
     pool.classList.remove('rebalanced'); pool.classList.add('rebalancing');
-    // 从三层缓存托盘抽取多个 KV 块，在上方切分位完成横竖组合切分，再发往两台 KV 网关。
+    // 从网络柜内 DDR 模块抽取 KV 块，切分后汇入同柜虚拟 DDR 池。
     const moves=[
-      {from:[436,446],cut:[426,397],gateway:[440,309],color:'#FF7AB6',delay:0},
-      {from:[478,446],cut:[474,389],gateway:[440,309],color:'#9B8CFF',delay:220},
-      {from:[528,446],cut:[526,397],gateway:[560,309],color:'#FF7AB6',delay:440},
-      {from:[438,484],cut:[474,405],gateway:[440,309],color:'#42DDB6',delay:660},
-      {from:[510,484],cut:[526,405],gateway:[560,309],color:'#42DDB6',delay:880},
-      {from:[573,526],cut:[548,397],gateway:[560,309],color:'#FFC76C',delay:1100}
+      {from:[87,149],cut:[300,126],gateway:[468,117],color:'#42DDB6',delay:0},
+      {from:[132,149],cut:[346,122],gateway:[482,117],color:'#8B7BFF',delay:220},
+      {from:[177,149],cut:[392,126],gateway:[496,117],color:'#42DDB6',delay:440},
+      {from:[787,167],cut:[608,126],gateway:[510,117],color:'#42DDB6',delay:660},
+      {from:[832,167],cut:[654,122],gateway:[524,117],color:'#8B7BFF',delay:880},
+      {from:[877,167],cut:[700,126],gateway:[538,117],color:'#42DDB6',delay:1100}
     ];
     moves.forEach(move=>{
       const group=document.createElementNS(SVGNS,'g'), block=document.createElementNS(SVGNS,'rect');
@@ -4110,9 +4170,8 @@
     launchBaselineCapture();
     const collectionPlan = [
       { selector: '.zone-prefill', nodes: npuState.filter(s => s.isP).map(s => s.card), color: '#8B7BFF', offset: 0 },
-      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('.device-spine .device-body, .device-leaf .device-body')), color: '#FFB547', offset: 520 },
-      { selector: '.zone-kv', nodes: Array.from(svg.querySelectorAll('.device-leaf.leaf-kv .device-body')), color: '#FF7AB6', offset: 1040 },
-      { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 1560 }
+      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')), color: '#FFB547', offset: 720 },
+      { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 1440 }
     ];
     collectionPlan.forEach(plan => {
       const zone = document.querySelector(plan.selector);
