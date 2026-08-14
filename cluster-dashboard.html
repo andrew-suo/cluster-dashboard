@@ -45,30 +45,36 @@
   /* ============ 总体布局 ============ */
   .app {
     display: grid;
-    grid-template-rows: 56px 96px 208px minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "metrics"
+      "topology"
+      "decision";
+    grid-template-rows: 52px 112px minmax(0, 1fr) 220px;
     height: 100vh;
     gap: 1px;
     background: var(--border-soft);
   }
-  .topbar { background: var(--bg-panel); }
-  .golden-bar { background: var(--bg-panel); }
-  .canvas-wrap { background: var(--bg); position: relative; overflow: hidden; min-height: 0; }
-  .optimization-stage { position: relative; overflow: hidden; padding: 10px 16px 12px; background: #0D1426; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .topbar { grid-area:topbar; background: var(--bg-panel); }
+  .golden-bar { grid-area:metrics; background: var(--bg-panel); }
+  .canvas-wrap { grid-area:topology; background: var(--bg); position: relative; overflow: hidden; min-height: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.025), inset 0 -1px 0 rgba(111,134,184,.14); }
+  .optimization-stage { grid-area:decision; position: relative; overflow: hidden; padding: 9px 20px 10px; background: #0D1426; border-top: 1px solid var(--border); }
   .optimization-stage .algo-panel, .optimization-stage .solve-panel, .optimization-stage .forecast-panel { display: none !important; }
-  .opt-stage-head { height: 31px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid rgba(111,134,184,.26); }
+  .opt-stage-head { height: 29px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid rgba(111,134,184,.26); }
   .opt-stage-mark { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 7px rgba(139,123,255,.55); }
   .opt-stage-title { color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: .08em; }
   .opt-stage-sub { color: var(--text-dim); font: 700 8px var(--font-mono); letter-spacing: .1em; }
   .opt-stage-status { margin-left: auto; color: var(--text-dim); font: 700 10px var(--font-mono); }
   .opt-stage-status.live { color: var(--accent); }
-  .opt-step-grid { height: calc(100% - 37px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-top: 9px; }
-  .opt-step-card { --step-color: var(--brand); position: relative; min-width: 0; padding: 10px 11px; border: 1px solid rgba(111,134,184,.22); background: linear-gradient(180deg, rgba(18,28,52,.72), rgba(8,15,31,.72)); overflow: hidden; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
+  .opt-step-grid { height: calc(100% - 34px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; padding-top: 8px; }
+  .opt-step-card { --step-color: var(--brand); position: relative; min-width: 0; padding: 9px 11px; border: 1px solid rgba(111,134,184,.2); background: rgba(13,22,42,.62); overflow: visible; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
   .opt-step-grid > .opt-step-card:first-child { display:none; }
   .opt-step-card:nth-child(2) { --step-color: var(--warn); }.opt-step-card:nth-child(3) { --step-color: var(--pink); }.opt-step-card:nth-child(4) { --step-color: #65B4FF; }.opt-step-card:nth-child(5) { --step-color: var(--accent); }
   .opt-step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--step-color); transform:scaleX(.08); transform-origin:left; }
-  .opt-step-card.running { opacity:1; border-color:color-mix(in srgb, var(--step-color) 68%, var(--border)); background:color-mix(in srgb, var(--step-color) 8%, rgba(12,20,39,.7)); box-shadow:0 0 18px color-mix(in srgb, var(--step-color) 28%, transparent); }
+  .opt-step-card:not(:last-child)::after { content:''; position:absolute; top:50%; left:calc(100% + 1px); width:16px; height:1px; background:rgba(125,143,189,.24); }
+  .opt-step-card.running { opacity:1; border-color:color-mix(in srgb, var(--step-color) 68%, var(--border)); background:color-mix(in srgb, var(--step-color) 8%, rgba(12,20,39,.7)); box-shadow:0 0 14px color-mix(in srgb, var(--step-color) 22%, transparent); }
   .opt-step-card.input-target { opacity:.72; border-color:rgba(216,226,250,.42); box-shadow:0 0 13px rgba(216,226,250,.16); }
-  .opt-step-card.running::before { animation: stepTrace 1s linear infinite; }.opt-step-card.done { opacity:.5; border-color:color-mix(in srgb, var(--step-color) 34%, var(--border)); }.opt-step-card.done::before { transform:scaleX(1); }
+  .opt-step-card.running::before { animation: stepTrace 1s linear infinite; }.opt-step-card.done { opacity:.56; border-color:color-mix(in srgb, var(--step-color) 34%, var(--border)); background:rgba(13,22,42,.46); }.opt-step-card.done::before { transform:scaleX(1); }
   .opt-step-num { color:var(--step-color); font:700 10px var(--font-mono); }.opt-step-name { margin-left:6px; color:var(--text); font-size:13px; font-weight:700; }.opt-step-state { position:relative; z-index:1; margin-top:6px; color:var(--text-muted); font-size:10px; font-weight:600; }
   .model-solved { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
   .opt-step-card[data-opt-step="1"].done .model-solved { display:inline; }
@@ -83,7 +89,7 @@
   .opt-card-canvas { position:absolute; z-index:0; left:11px; right:11px; bottom:36px; width:calc(100% - 22px); height:62px; pointer-events:none; }
   .opt-step-note { position:absolute; z-index:1; left:11px; right:11px; bottom:8px; min-height:24px; color:var(--text-dim); font:600 9px/1.3 var(--font-sans); letter-spacing:.02em; white-space:normal; overflow:hidden; }
   .opt-step-note b { display:block; color:color-mix(in srgb, var(--step-color) 70%, var(--text)); font-weight:700; }
-  .opt-step-card.running .opt-step-note { color:var(--text-muted); }.opt-step-card.done .opt-step-note { color:rgba(184,198,224,.72); }
+  .opt-step-card.running .opt-step-note { color:var(--text-muted); }.opt-step-card.done .opt-step-note { color:rgba(184,198,224,.62); }
   .opt-viz .v-grid { stroke:rgba(139,155,201,.13); stroke-width:.55; }.opt-viz .v-muted { stroke:rgba(139,155,201,.24); stroke-width:.8; fill:none; }.opt-viz .v-accent { stroke:var(--step-color); fill:none; stroke-width:1.3; }.opt-viz .v-fill { fill:var(--step-color); }.opt-viz .v-frame { fill:rgba(5,11,24,.42); stroke:rgba(139,155,201,.24); stroke-width:.7; }
   .opt-viz .fp-port { fill:#0b1121; stroke:var(--step-color); stroke-width:1; opacity:.35; }.opt-viz .fp-cell { fill:rgba(139,155,201,.1); stroke:rgba(139,155,201,.14); stroke-width:.45; }.opt-viz .fp-cell.locked { fill:var(--step-color); stroke:var(--step-color); opacity:.8; filter:drop-shadow(0 0 2px var(--step-color)); }
   .opt-step-card.running .fp-port { animation: portReceive .78s ease-in-out infinite; }.opt-step-card.running .fp-scan { animation: fpScan 1s linear infinite; }.opt-step-card.done .fp-port { opacity:.8; }.opt-step-card.done .fp-scan { opacity:0; }
@@ -162,7 +168,7 @@
 
   /* ============ 顶部状态栏 ============ */
   .topbar {
-    display: flex; align-items: center; padding: 0 20px; gap: 14px;
+    display: flex; align-items: center; padding: 0 24px; gap: 14px;
     border-bottom: 1px solid var(--border);
   }
   .topbar .title { font-weight: 650; font-size: 15px; white-space: nowrap; }
@@ -185,8 +191,8 @@
 
   /* ============ 黄金指标条（现代数据卡） ============ */
   .golden-bar {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
-    background: var(--border-soft); border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;
+    padding: 7px 22px 6px; background: #10172A; border-bottom: 1px solid var(--border);
     position: relative;
   }
   .gm-tier {
@@ -200,18 +206,19 @@
   .golden-bar.dim .gm-tier .gm-tier-txt { opacity: 0.4; }
   /* 现代数据卡 */
   .gm-card {
-    background: var(--bg-panel);
-    padding: 7px 16px 5px;
+    background: transparent;
+    padding: 5px 20px 3px;
     display: flex; flex-direction: column; gap: 2px;
     position: relative; overflow: hidden;
   }
   .gm-card::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px;
     background: var(--metric-color, var(--brand));
     box-shadow: 0 0 8px var(--metric-color, var(--brand));
   }
   .gm-card.gm-throughput { --metric-color: var(--brand); }
   .gm-card.gm-tpot { --metric-color: var(--warn); }
+  .gm-card + .gm-card { border-left: 1px solid rgba(111,134,184,.22); }
   .gm-card .gm-head {
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -240,8 +247,8 @@
     text-transform: lowercase;
   }
   .gm-card .gm-hb {
-    width: 100%; height: 46px; display: block; margin-top: 2px;
-    background: rgba(0,0,0,0.2); border-radius: 2px;
+    width: 100%; height: 44px; display: block; margin-top: 2px;
+    background: rgba(0,0,0,0.12); border-top: 1px solid rgba(111,134,184,.12);
   }
   .gm-card .gm-formula { display: none; }
   .gm-card .gm-hb path {
@@ -266,18 +273,24 @@
 
   /* ============ 拓扑画布 ============ */
   .canvas-wrap .cv-title {
-    position: absolute; top: 12px; left: 18px; z-index: 5;
-    font-size: 13px; font-weight: 650; color: var(--text-muted);
-    display: flex; align-items: center; gap: 6px;
+    position: absolute; top: 9px; left: 20px; z-index: 5;
+    display: flex; align-items: center; gap: 10px;
+    min-height: 22px;
   }
-  .cv-title .tier-num {
-    font-size: 12px; font-weight: 700; color: var(--brand);
-    width: 18px; height: 18px; border-radius: 4px;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: rgba(139,123,255,0.14);
+  .cv-title-mark {
+    width: 4px; height: 22px; border-radius: 2px; flex: 0 0 auto;
+    background: var(--brand);
+    box-shadow: 0 0 10px rgba(139,123,255,.5);
   }
-  .cv-title .tier-label { color: var(--brand); font-weight: 700; }
-  .cv-title .tier-sep { color: var(--text-dim); }
+  .cv-title-copy { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .cv-title-main {
+    color: var(--text); font-size: 16px; line-height: 1; font-weight: 720;
+    letter-spacing: .06em; white-space: nowrap;
+  }
+  .cv-title-sub {
+    color: var(--text-dim); font: 700 10px/1 var(--font-mono);
+    letter-spacing: .06em; white-space: nowrap;
+  }
   /* 三段分区背景 */
   .zone {
     position: absolute; top: 38px; bottom: 14px; pointer-events: none;
@@ -309,8 +322,8 @@
   .causal-source-line { fill: none; stroke-width: 1; stroke-dasharray: 3 5; opacity: .32; }.causal-result-line { fill:none; stroke:var(--accent); stroke-width:1.2; stroke-dasharray:4 5; opacity:.65; }
   @keyframes sourcePick { 50% { background: color-mix(in srgb, var(--obs-color) 16%, transparent); } }
   @keyframes valueUpdate { 0%, 100% { filter: none; } 22%, 62% { color: #fff; filter: drop-shadow(0 0 6px currentColor); } 42%, 80% { filter: none; } }
-  .npu-card.collect-scan, .device-body.collect-scan { filter: drop-shadow(0 0 4px var(--collect-color, var(--brand))); animation: collectDevice .42s ease-out; }
-  .device-body.collect-scan { fill: rgba(255,255,255,.18); }
+  .npu-card.collect-scan, .device-spine.collect-scan { filter: drop-shadow(0 0 4px var(--collect-color, var(--brand))); animation: collectDevice .42s ease-out; }
+  .device-spine.collect-scan .device-body { fill: rgba(255,255,255,.18); }
   .kv-tier.collect-scan { filter: drop-shadow(0 0 5px var(--collect-color, var(--pink))); animation: collectDevice .42s ease-out; }
   @keyframes collectDevice { 0% { opacity: .35; } 45% { opacity: 1; } 100% { opacity: .9; } }
 
@@ -499,16 +512,16 @@
   .inter-node-lbl { fill: #9CA9CA; font-size: 5.8px; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; }
   .npu-id { fill: #CDD7F1; font-size: 6.8px; font-weight: 700; pointer-events: none; font-family: var(--font-mono); }
   /* POD 计算舱：交换板向外，D1-D8 朝向 UB 网络，芯片层保留可采集的 full-mesh 关系。 */
-  .pod-frame { fill: rgba(9,16,35,.48); stroke-width: .8; }
+  .pod-frame { fill: rgba(9,16,35,.42); stroke-width: .8; }
   .pod-title { font: 700 10px var(--font-mono); letter-spacing: .08em; }
   .pod-subtitle { fill: #8291b4; font: 600 5.5px var(--font-mono); letter-spacing: .05em; }
   .pod-device-shell { fill: rgba(9,17,37,.86); stroke-width: .7; }
   .pod-device-top { opacity: .42; }
   .pod-device-label { font: 700 7px var(--font-mono); }
   .pod-chip { stroke: rgba(225,237,255,.32); stroke-width: .25; transition: fill .6s; }
-  .pod-mesh { stroke-width: .26; fill: none; opacity: .28; }
-  .pod-chip-link { fill: none; stroke-width: .24; stroke-linecap: round; opacity: .16; }
-  .pod-fabric-link { fill:none; stroke-width:.38; stroke-linecap:round; opacity:.31; }
+  .pod-mesh { stroke-width: .38; fill: none; opacity: .42; }
+  .pod-chip-link { fill: none; stroke-width: .25; stroke-linecap: round; opacity: .15; }
+  .pod-chip-link.pod-chip-link-alt { opacity: .11; }
   .pod-board { fill: rgba(12,21,42,.92); stroke: rgba(255,181,71,.68); stroke-width: .7; }
   .pod-board-grid { fill: rgba(255,181,71,.72); }
   .pod-board-u2 { fill: #FFD07C; filter: drop-shadow(0 0 1.4px rgba(255,181,71,.78)); }
@@ -516,12 +529,13 @@
   .pod-board-odd { stroke: rgba(139,123,255,.42); }
   .pod-board-even { stroke: rgba(45,212,168,.42); }
   .pod-board-label { fill: #FFE2A8; font: 700 5px var(--font-mono); }
-  .ub-cabinet { fill: rgba(10,20,40,.9); stroke: rgba(100,180,255,.72); stroke-width: 1; }
-  .ddr-rack { fill: rgba(8,15,30,.72); stroke: rgba(45,212,168,.44); stroke-width: .7; }
+  .ub-cabinet { fill: rgba(10,20,40,.84); stroke: rgba(100,180,255,.62); stroke-width: 1; }
   .ddr-module { fill: rgba(45,212,168,.42); stroke: rgba(130,255,222,.72); stroke-width: .35; }
   .ddr-module.alt { fill: rgba(139,123,255,.48); stroke: rgba(196,184,255,.74); }
   .ddr-bus { fill:none; stroke:rgba(45,212,168,.55); stroke-width:.7; stroke-dasharray:2 2; }
   .ddr-pool-shell { fill: rgba(45,212,168,.07); stroke: rgba(45,212,168,.58); stroke-width: .75; }
+  .ddr-pool-cap { fill: rgba(45,212,168,.15); stroke: rgba(129,255,223,.58); stroke-width:.65; }
+  .ddr-pool-link { fill:none; stroke:rgba(45,212,168,.76); stroke-width:1; stroke-linecap:round; }
   .ddr-pool-label { fill:#BFFFF1; font:700 7px var(--font-mono); letter-spacing:.06em; }
   .kv-label { fill: #CBD4EB; font-size: 8.8px; font-weight: 600; pointer-events: none; }
   .kv-bar-bg { fill: var(--bg); stroke: var(--border); stroke-width: 0.6; }
@@ -596,7 +610,7 @@
   /* KV 数据粒子 */
   .kv-particle { pointer-events: none; }
   /* 3D KV Cache 池：介质色与运行健康状态分离，页块亮度表达热度与占用。 */
-  #kvPool3d { transform-origin: 500px 133px; }
+  #kvPool3d { transform-origin: 500px 134px; }
   .kv-tier { transform-box: fill-box; transform-origin: center; }
   .kv-face-top { stroke-width: .75; }
   .kv-face-front, .kv-face-side { stroke-width: .65; }
@@ -880,6 +894,26 @@
     100% { color: var(--accent); transform: scale(1); }
   }
   .zm-val.improved { animation: perfImprove 0.8s ease-out; }
+
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    .app { min-height: 100vh; height: auto; grid-template-rows: 52px 112px minmax(380px, 1fr) 236px; }
+    .topbar { padding: 0 12px; gap: 8px; }
+    .topbar .title { font-size: 13px; }
+    .btn { padding: 6px 9px; font-size: 11px; }
+    .golden-bar { padding-left: 10px; padding-right: 10px; }
+    .gm-card { padding-left: 12px; padding-right: 10px; }
+    .gm-card .gm-val { font-size: 22px; }
+    .opt-step-grid { gap: 8px; }
+    .opt-step-card { padding: 8px; }
+    .opt-step-card:not(:last-child)::after { width: 7px; }
+    .opt-step-name { font-size: 11px; margin-left: 3px; }
+    .opt-card-canvas { left:8px; right:8px; width:calc(100% - 16px); height:54px; }
+    .opt-step-note { left:8px; right:8px; font-size:8px; }
+    .cv-title { left: 12px !important; }
+    .cv-title-main { font-size: 14px; }
+    .cv-title-sub { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -936,7 +970,13 @@
 
   <!-- ============ 拓扑画布 ============ -->
   <div class="canvas-wrap">
-    <div class="cv-title"><span class="tier-label">业务数据平面</span><span class="tier-sep">·</span>POD-A Prefill · POD-B Decode · 华为灵衢总线 · KV Cache 池</div>
+    <div class="cv-title">
+      <span class="cv-title-mark"></span>
+      <div class="cv-title-copy">
+        <span class="cv-title-main">AI 推理集群资源拓扑</span>
+        <span class="cv-title-sub">双 POD · 华为灵衢总线 UB 网络柜 · DDR 资源池</span>
+      </div>
+    </div>
     <div class="zone zone-prefill">
       <div class="zone-metrics" id="zmPrefill" data-stage="Σ THROUGHPUT · W-AVG LOAD">
         <div class="zm-item"><div class="zm-val brand" id="zmPNpu">--<span class="zu">%</span></div><div class="zm-lbl">P NPU</div></div>
@@ -2018,7 +2058,7 @@
     }
     deviceRail(rows[0],prefill,true); deviceRail(rows[3],decode,false);
     // UB 网络：采到的微型节点和链段直接复用业务拓扑上的黄、绿、红状态。
-    const s0=Array.from(svg.querySelectorAll('.link-s0')), s1=Array.from(svg.querySelectorAll('.link-s1'));
+    const s0=Array.from(svg.querySelectorAll('#ubCabinet .link-s0')), s1=Array.from(svg.querySelectorAll('#ubCabinet .link-s1'));
     const links=[s0[0],s0[1],s0[3],s1[0],s1[1],s1[3]].filter(Boolean);
     const nodeX=links.map((_,index)=>trackX+index*(trackW/(links.length-1)));
     links.forEach((link,index)=>{
@@ -2326,7 +2366,7 @@
     const metricNames=['利用率','带宽','往返时延','缓存规模','队列深度','Token 吞吐'];
     const allSources=[
       ...sampleRects(npuState.filter(s=>s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#8B7BFF',metric:metricNames[i]})),
-      ...sampleRects(Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')),4).map((rect,i)=>({rect,color:i>1?'#2DD4A8':'#FFB547',metric:metricNames[i+1]})),
+      ...sampleRects(Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #kvPool3d .ddr-module')),4).map((rect,i)=>({rect,color:i>1?'#2DD4A8':'#FFB547',metric:metricNames[i+1]})),
       ...sampleRects(npuState.filter(s=>!s.isP).map(s=>s.card),3).map((rect,i)=>({rect,color:'#2DD4A8',metric:metricNames[(i+4)%metricNames.length]}))
     ];
     baselineScene.samples=allSources;
@@ -2334,7 +2374,7 @@
     const ports = [.36, .5, .64].map(x => ({ x:target.left + target.width * x, y:target.top + target.height * .53 }));
     const domains = [
       { nodes:npuState.filter(s => s.isP).map(s => s.card) },
-      { nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')) },
+      { nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #kvPool3d .ddr-module')) },
       { nodes:npuState.filter(s => !s.isP).map(s => s.card) }
     ];
     const now = performance.now();
@@ -2368,111 +2408,111 @@
     text.textContent=value; return text;
   }
   function addSwitchBoard(parent, x, y, index, mirror){
-    const board=podSvg('g',{class:'pod-switch-board'},parent), width=48, height=86;
+    const board=podSvg('g',{class:'pod-switch-board'},parent), width=84, height=66;
     podSvg('rect',{x,y,width,height,rx:4,class:'pod-board'},board);
     podText(board,x+width/2,y+9,'交换板 '+index,'pod-board-label','middle');
     const u1=[];
     for(let i=0;i<16;i++){
-      const px=x+7+(i%4)*9.5, py=y+17+Math.floor(i/4)*8;
+      const px=x+8+(i%8)*9, py=y+37+Math.floor(i/8)*9;
       u1.push([px+2.5,py+2.5]);
       const node=podSvg('rect',{x:px,y:py,width:5,height:5,rx:1,class:'pod-board-grid','data-union':'U1.'+(i+1)},board);
       podSvg('title',{},node).textContent='U1.'+(i+1);
     }
-    const u2=[[x+14,y+58],[x+32,y+58],[x+14,y+72],[x+32,y+72]];
+    const u2=[[x+16,y+20],[x+35,y+20],[x+54,y+20],[x+73,y+20]];
     u1.forEach((point,i)=>{
       const target=i%2===0 ? u2[(i/2)%2] : u2[2+((i-1)/2)%2];
       podSvg('line',{x1:point[0],y1:point[1],x2:target[0],y2:target[1],class:'pod-board-link '+(i%2?'pod-board-even':'pod-board-odd')},board);
     });
     u2.forEach((point,i)=>{ const node=podSvg('circle',{cx:point[0],cy:point[1],r:3,class:'pod-board-u2','data-union':'U2.'+(i+1)},board); podSvg('title',{},node).textContent='U2.'+(i+1); });
-    podText(board,x+width/2,y+53,'U1.1–16','pod-board-label','middle');
-    podText(board,x+width/2,y+83,'U2.1–4','pod-board-label','middle');
-    return { edge: mirror ? x : x+width, midY:y+height/2, pairs:Array.from({length:8},(_,i)=>[u1[i*2],u1[i*2+1]]) };
+    podText(board,x+width/2,y+30,'U2.1–4','pod-board-label','middle');
+    podText(board,x+width/2,y+63,'U1.1–16','pod-board-label','middle');
+    return { edge: mirror ? x : x+width, midY:y+height/2, u2, pairs:Array.from({length:8},(_,i)=>[u1[i*2],u1[i*2+1]]) };
   }
   function addPodDevice(parent, x, y, index, isPrefill){
-    const color=isPrefill ? '#8B7BFF' : '#2DD4A8', shell=podSvg('g',{class:'pod-device','data-pod':isPrefill?'prefill':'decode','data-device':'D'+index},parent);
-    podSvg('polygon',{points:(x+3)+','+(y+5)+' '+(x+60)+','+(y+5)+' '+(x+64)+','+y+' '+(x+7)+','+y,class:'pod-device-top',fill:color},shell);
-    podSvg('rect',{x,y:y+5,width:60,height:47,rx:4,class:'pod-device-shell',stroke:color},shell);
-    podText(shell,x+5,y+16,'D'+index,'pod-device-label','start').setAttribute('fill',color);
+    const color=isPrefill ? '#8B7BFF' : '#2DD4A8', width=48, shell=podSvg('g',{class:'pod-device','data-pod':isPrefill?'prefill':'decode','data-device':'D'+index},parent);
+    podSvg('polygon',{points:(x+3)+','+(y+4)+' '+(x+width)+','+(y+4)+' '+(x+width+4)+','+y+' '+(x+7)+','+y,class:'pod-device-top',fill:color},shell);
+    podSvg('rect',{x,y:y+4,width,height:53,rx:4,class:'pod-device-shell',stroke:color},shell);
+    podText(shell,x+4,y+14,'D'+index,'pod-device-label','start').setAttribute('fill',color);
     const chips=[];
     for(let i=0;i<8;i++){
-      const cx=x+8+(i%4)*13.2, cy=y+24+Math.floor(i/4)*12;
-      const chip=podSvg('rect',{x:cx,y:cy,width:10,height:7,rx:1,class:'npu-card pod-chip','data-chip':i,fill:isPrefill?'rgba(139,123,255,.52)':'rgba(45,212,168,.52)'},shell);
-      chips.push([cx+5,cy+3.5]);
+      const cx=x+4+(i%4)*10, cy=y+25+Math.floor(i/4)*14;
+      const chip=podSvg('rect',{x:cx,y:cy,width:8,height:7,rx:1,class:'npu-card pod-chip','data-chip':i,fill:isPrefill?'rgba(139,123,255,.52)':'rgba(45,212,168,.52)'},shell);
+      chips.push([cx+4,cy+3.5]);
     }
     for(let a=0;a<chips.length;a++) for(let b=a+1;b<chips.length;b++) podSvg('line',{x1:chips[a][0],y1:chips[a][1],x2:chips[b][0],y2:chips[b][1],class:'pod-mesh',stroke:color},shell);
-    return { edge:isPrefill ? x : x+60, portX:isPrefill ? x+2 : x+58, midY:y+29, chips };
+    return { edge:isPrefill ? x : x+width, portX:isPrefill ? x+2 : x+width-2, midY:y+31, chips };
   }
   const podPorts={};
   function buildPod(side, isPrefill){
     const group=podSvg('g',{class:'pod-layout '+(isPrefill?'pod-prefill':'pod-decode')},svg);
     const frameX=isPrefill?18:522, color=isPrefill?'#8B7BFF':'#2DD4A8', frameY=270;
-    podSvg('rect',{x:frameX,y:frameY,width:460,height:266,rx:8,class:'pod-frame',stroke:color},group);
+    podSvg('rect',{x:frameX,y:frameY,width:460,height:246,rx:8,class:'pod-frame',stroke:color},group);
     podText(group,frameX+12,286,isPrefill?'POD-A · PREFILL':'POD-B · DECODE','pod-title','start').setAttribute('fill',color);
     podText(group,frameX+12,296,'8 D · 64 CHIPS · FULL-MESH','pod-subtitle','start');
-    const boardPositions=isPrefill?[[38,314],[98,314],[38,416],[98,416]]:[[854,314],[914,314],[854,416],[914,416]];
-    const deviceXs=isPrefill?[175,250,325,400]:[570,635,700,765], deviceYs=[334,434];
+    const boardPositions=isPrefill?[[374,312],[262,312],[150,312],[38,312]]:[[542,312],[654,312],[766,312],[878,312]];
+    const deviceXs=isPrefill?[30,82.5,135,187.5,240,292.5,345,397.5]:[546,598.5,651,703.5,756,808.5,861,913.5], deviceYs=[425];
     const linkLayer=podSvg('g',{class:'pod-chip-link-layer'},group);
     const boards=boardPositions.map((position,i)=>addSwitchBoard(group,position[0],position[1],i+1,!isPrefill));
     const devices=[];
     deviceYs.forEach((y,row)=>deviceXs.forEach((x,column)=>devices.push(addPodDevice(group,x,y,row*2+column+1,isPrefill))));
-    // 每对 U1 通过设备侧的汇聚端口连接 D1-D8；D 内部以 full-mesh 表达八颗芯片全连接。
+    // 每对 U1 直接扇出到对应 D 的全部 8 颗芯片：U1.1/2→D1，…，U1.15/16→D8。
     boards.forEach(board=>devices.forEach((device,deviceIndex)=>{
       const pair=board.pairs[deviceIndex];
       pair.forEach((source,pairIndex)=>{
-        const targetY=device.midY+(pairIndex ? 4 : -4), bend=isPrefill?source[0]+16:source[0]-16;
-        podSvg('path',{d:'M '+source[0]+' '+source[1]+' C '+bend+' '+source[1]+', '+(device.portX+(isPrefill?-12:12))+' '+targetY+', '+device.portX+' '+targetY,class:'pod-fabric-link',stroke:color,'data-map':'U1.'+(deviceIndex*2+pairIndex+1)+'→D'+(deviceIndex+1)+'.CHIP1–8'},linkLayer);
+        device.chips.forEach((chip,chipIndex)=>{
+          const targetX=chip[0]+(pairIndex ? 1.7 : -1.7), targetY=chip[1]-3.7;
+          const sourceY=source[1], controlY=sourceY+18;
+          podSvg('path',{d:'M '+source[0]+' '+sourceY+' C '+source[0]+' '+controlY+', '+targetX+' '+(targetY-19)+', '+targetX+' '+targetY,class:'pod-chip-link'+(pairIndex?' pod-chip-link-alt':''),stroke:color,'data-map':'U1.'+(deviceIndex*2+pairIndex+1)+'→D'+(deviceIndex+1)+'.CHIP'+(chipIndex+1)},linkLayer);
+        });
       });
     }));
-    const boardOne=boardPositions[0];
-    podPorts[isPrefill?'prefill':'decode']={ x:boardOne[0]+24, y:boardOne[1]+18 };
+    podPorts[isPrefill?'prefill':'decode']={ u2:boards[0].u2 };
   }
   // 旧的四平面集群不再参与渲染；网络、KV 与原有动画层继续保留。
   svg.querySelectorAll('.npu-card,.npu-side-p,.npu-front-p,.npu-side-d,.npu-front-d,.npu-id,.fullmesh-group,.inter-node-group,.node-server-p,.node-server-d,.plane-side-p,.plane-front-p,.plane-top-p,.plane-side-d,.plane-front-d,.plane-top-d,.plane-grid-p,.plane-grid-d,.node-name').forEach(el=>el.style.display='none');
   buildPod('left',true); buildPod('right',false);
 
   /* ===== UB 网络柜：两台 5808 液冷设备上联两个 POD 的交换板 1，DDR 直接插入柜内 ===== */
-  function addUbDevice(parent, x, y, width, name, role){
+  function addUbDevice(parent, x, y, width, name, role, height){
+    const deviceHeight=height || 18;
     const group=podSvg('g',{class:role==='spine'?'device-spine':'device-leaf '+(role==='prefill'?'leaf-p':'leaf-d')},parent);
-    podSvg('rect',{x,y,width,height:18,rx:2,class:'device-body'},group);
-    podSvg('rect',{x:x+3,y:y+4,width:10,height:4,rx:.5,class:'device-screen'},group);
-    podSvg('circle',{cx:x+18,cy:y+9,r:1,class:'device-led'},group);
-    for(let i=0;i<7;i++) podSvg('rect',{x:x+25+i*4.2,y:y+11,width:2.5,height:3,rx:.3,class:'device-port '+(i<4?'active':'')},group);
-    podText(group,x+width/2,y-4,name,'device-name','middle'); return {x:x+width/2,y:y+9};
+    podSvg('polygon',{points:(x+5)+','+y+' '+(x+width)+','+y+' '+(x+width+5)+','+(y-5)+' '+(x+10)+','+(y-5),class:'device-top'},group);
+    podSvg('polygon',{points:(x+width)+','+y+' '+(x+width+5)+','+(y-5)+' '+(x+width+5)+','+(y+deviceHeight-5)+' '+(x+width)+','+(y+deviceHeight),class:'device-side'},group);
+    podSvg('rect',{x,y,width,height:deviceHeight,rx:2,class:'device-body'},group);
+    podSvg('rect',{x:x+6,y:y+7,width:17,height:6,rx:.8,class:'device-screen'},group);
+    podSvg('circle',{cx:x+31,cy:y+10,r:1.25,class:'device-led'},group);
+    for(let i=0;i<8;i++) podSvg('rect',{x:x+width/2-31+i*8.5,y:y+deviceHeight-8,width:4.4,height:4,rx:.5,class:'device-port '+(i<5?'active':'')},group);
+    podText(group,x+width/2,y-9,name,'device-name','middle'); return {x:x+width/2,y:y+deviceHeight/2};
+    podText(group,x+width/2,y-8,name,'device-name','middle'); return {x:x+width/2,y:y+9};
   }
   function buildUbCabinet(){
     const oldKv=document.getElementById('kvPool3d'); if(oldKv) oldKv.id='legacyKvPool3d';
     svg.querySelectorAll('.net-plane-top-p,.net-plane-front-p,.net-plane-side-p,.net-plane-grid-p,.net-plane-top-d,.net-plane-front-d,.net-plane-side-d,.net-plane-grid-d,.net-plane-top-s,.net-plane-front-s,.net-plane-side-s,.net-plane-grid-s,.net-plane-top-k,.net-plane-front-k,.net-plane-side-k,.net-plane-grid-k,.net-plane-label,.device-leaf,.device-spine,.topo-link,#legacyKvPool3d,#faultMarks').forEach(el=>el.style.display='none');
     document.getElementById('telemetryFabric').style.display='none'; document.getElementById('stepFx').style.display='none';
-    const group=podSvg('g',{id:'ubCabinet'},svg), cabinet={x:18,y:62,w:964,h:170};
+    const group=podSvg('g',{id:'ubCabinet'},svg), cabinet={x:18,y:62,w:964,h:197};
     podSvg('rect',{x:cabinet.x,y:cabinet.y,width:cabinet.w,height:cabinet.h,rx:9,class:'ub-cabinet'},group);
     podText(group,cabinet.x+12,84,'华为灵衢总线 · UB 网络柜','pod-title','start').setAttribute('fill','#FFB547');
-    podText(group,cabinet.x+12,96,'2 × 5808 液冷  ·  双 POD 上联  ·  DDR VIRTUAL POOL','pod-subtitle','start');
-    const liquidA=addUbDevice(group,295,150,150,'5808 液冷-A','spine');
-    const liquidB=addUbDevice(group,555,150,150,'5808 液冷-B','spine');
+    podText(group,cabinet.x+12,96,'2 × 5808 液冷  ·  双 POD 上联  ·  DDR 统一资源池','pod-subtitle','start');
+    const liquidA=addUbDevice(group,235,190,220,'5808 液冷-A','spine',28);
+    const liquidB=addUbDevice(group,545,190,220,'5808 液冷-B','spine',28);
     const curve=(from,to,classes)=>podSvg('path',{d:'M '+from[0]+' '+from[1]+' C '+from[0]+' '+(from[1]+34)+', '+to[0]+' '+(to[1]-34)+', '+to[0]+' '+to[1],class:'topo-link '+classes},group);
-    curve([liquidA.x-25,168],[podPorts.prefill.x,podPorts.prefill.y],'link-s0 link-warn disturbance-link-b');
-    curve([liquidB.x-25,168],[podPorts.prefill.x+10,podPorts.prefill.y],'link-s1 link-normal');
-    curve([liquidA.x+25,168],[podPorts.decode.x-10,podPorts.decode.y],'link-s1 link-normal');
-    curve([liquidB.x+25,168],[podPorts.decode.x,podPorts.decode.y],'link-s0 link-warn disturbance-link-a');
+    // 两台 5808 分别上联两个 POD 的交换板 1，端点精确落在 U2 外联层的 Union 节点。
+    curve([liquidA.x-25,218],podPorts.prefill.u2[0],'link-s0 link-warn disturbance-link-b');
+    curve([liquidB.x-25,218],podPorts.prefill.u2[1],'link-s1 link-normal');
+    curve([liquidA.x+25,218],podPorts.decode.u2[2],'link-s1 link-normal');
+    curve([liquidB.x+25,218],podPorts.decode.u2[3],'link-s0 link-warn disturbance-link-a');
     const tier=podSvg('g',{id:'kvPool3d',class:'kv-tier kv-tier-ddr'},group);
-    podSvg('rect',{x:55,y:120,width:190,height:68,rx:6,class:'ddr-rack'},tier);
-    podSvg('rect',{x:755,y:120,width:190,height:68,rx:6,class:'ddr-rack'},tier);
-    podText(tier,67,133,'DDR 插槽 · A','pod-subtitle','start');
-    podText(tier,767,133,'DDR 插槽 · B','pod-subtitle','start');
-    const modules=[];
+    podSvg('rect',{x:190,y:108,width:620,height:52,rx:6,class:'ddr-pool-shell'},tier);
+    podSvg('polygon',{points:'196,108 804,108 810,102 202,102',class:'ddr-pool-cap'},tier);
+    podText(tier,500,123,'DDR 池 · 统一缓存资源','ddr-pool-label','middle');
     for(let i=0;i<12;i++){
-      const isLeft=i<6, slot=i%6;
-      const mx=(isLeft?85:785)+(slot%3)*45, my=143+Math.floor(slot/3)*18;
-      const module=podSvg('rect',{x:mx,y:my,width:29,height:13,rx:1.5,class:'kv-page ddr-module '+(i%3===2?'alt':'')},tier);
-      podSvg('title',{},module).textContent='DDR-'+String(i+1).padStart(2,'0'); modules.push([mx+14.5,my+6.5]);
+      const mx=260+i*40, my=138;
+      const module=podSvg('rect',{x:mx,y:my,width:34,height:9,rx:1.5,class:'kv-page ddr-module ddr-pool-cell '+(i%3===2?'alt':'')},tier);
+      podSvg('title',{},module).textContent='DDR-'+String(i+1).padStart(2,'0');
     }
-    podSvg('rect',{x:445,y:107,width:110,height:20,rx:5,class:'ddr-pool-shell'},tier);
-    podText(tier,500,121,'虚拟 DDR 池 · KV Cache','ddr-pool-label','middle');
-    modules.forEach((point,index)=>{
-      const isLeft=index<6, targetX=isLeft?445:555, liftX=isLeft?Math.min(point[0]+64,330):Math.max(point[0]-64,670);
-      podSvg('path',{d:'M '+point[0]+' '+(point[1]+7)+' C '+liftX+' '+(point[1]-8)+', '+(isLeft?360:640)+' 117, '+targetX+' 117',class:'ddr-bus'},tier);
-    });
-    podSvg('circle',{cx:500,cy:133,r:2.2,class:'kv-pool-dot ddr'},tier);
+    podSvg('path',{d:'M 345 160 C 345 172, 345 180, 345 190 M 655 160 C 655 172, 655 180, 655 190',class:'ddr-pool-link'},tier);
+    podSvg('circle',{cx:345,cy:173,r:2.2,class:'kv-pool-dot ddr'},tier);
+    podSvg('circle',{cx:655,cy:173,r:2.2,class:'kv-pool-dot ddr'},tier);
   }
   buildUbCabinet();
 
@@ -2501,17 +2541,17 @@
 
   /* ===== 2. KV Cache 容量条已移至独立 KV Cache 池卡片 ===== */
 
-  /* ===== 3. 网络数据粒子流（POD → Leaf → 单 Spine → 柜内虚拟 DDR 池） ===== */
-  /* 8 条逻辑路径：[0-3]写入虚拟 DDR 池，[4-7]从虚拟 DDR 池读回 Decode POD。 */
+  /* ===== 3. 网络数据粒子流（POD → 5808 液冷 → 柜内 DDR 池） ===== */
+  /* 8 条逻辑路径：[0-3]写入 DDR 池，[4-7]从 DDR 池读回 Decode POD。 */
   const PATHS = [
-    [[205,360],[62,332],[370,159],[500,117]],
-    [[280,460],[62,332],[370,159],[500,117]],
-    [[355,360],[62,332],[630,159],[500,117]],
-    [[430,460],[62,332],[630,159],[500,117]],
-    [[500,117],[370,159],[878,332],[600,360]],
-    [[500,117],[370,159],[878,332],[665,460]],
-    [[500,117],[630,159],[878,332],[730,360]],
-    [[500,117],[630,159],[878,332],[795,460]],
+    [[390,332],[374,310],[348,270],[324,226],[320,218],[345,190],[345,160],[500,145]],
+    [[409,332],[456,310],[548,270],[626,226],[630,218],[655,190],[655,160],[500,145]],
+    [[390,332],[374,310],[348,270],[324,226],[320,218],[345,190],[345,160],[500,145]],
+    [[409,332],[456,310],[548,270],[626,226],[630,218],[655,190],[655,160],[500,145]],
+    [[500,145],[345,160],[345,190],[370,218],[407,226],[490,270],[558,310],[596,332]],
+    [[500,145],[345,160],[345,190],[370,218],[407,226],[490,270],[558,310],[596,332]],
+    [[500,145],[655,160],[655,190],[680,218],[665,226],[640,270],[622,310],[615,332]],
+    [[500,145],[655,160],[655,190],[680,218],[665,226],[640,270],[622,310],[615,332]],
   ].map(pts => {
     const segs=[]; let total=0;
     for (let i=0;i<pts.length-1;i++){
@@ -2522,7 +2562,7 @@
     return {segs,total};
   });
   // 外部流从 Decode 接入叶交换机借道核心 Fabric，再到 Prefill 接入叶；不进入 PD 或 KV Cache。
-  const DISTURBANCE_PATH = [[744,54],[726,86],[680,122],[630,159],[370,159],[320,122],[274,86],[256,54]].map((point,index,array)=>point).reduce((path, point, index, array) => {
+  const DISTURBANCE_PATH = [[744,54],[726,86],[700,138],[655,204],[345,204],[300,138],[274,86],[256,54]].map((point,index,array)=>point).reduce((path, point, index, array) => {
     if(index === 0) return { segs:[], total:0, points:array };
     const [x1,y1]=array[index-1],[x2,y2]=point,len=Math.hypot(x2-x1,y2-y1);
     path.segs.push({x1,y1,x2,y2,len,acc:path.total}); path.total+=len; return path;
@@ -2556,12 +2596,12 @@
   disturbanceLayer.setAttribute('id','disturbanceLayer'); svg.appendChild(disturbanceLayer);
   const disturbanceSource = document.createElementNS(SVGNS,'g');
   disturbanceSource.setAttribute('class','disturbance-source');
-  disturbanceSource.innerHTML='<path class="source-link" d="M 744 54 C 772 64 702 76 726 86"/><path class="source-link" d="M 274 86 C 246 76 316 64 256 54"/>';
+  disturbanceSource.innerHTML='<path class="source-link" d="M 744 54 C 772 68 720 112 700 138 S 676 188 655 204"/><path class="source-link" d="M 345 204 C 324 188 300 164 300 138 S 242 68 256 54"/>';
   disturbanceLayer.appendChild(disturbanceSource);
   const disturbanceParticles = [], dropParticles = [];
   const DISTURBANCE_IMPACTS = [
-    { point:[600,159], paths:[2,7] },
-    { point:[400,159], paths:[0,5] }
+    { point:[625,204], paths:[2,7] },
+    { point:[375,204], paths:[0,5] }
   ];
   let disturbanceTimer = null;
   function spawnDrop(x, y, color, count){
@@ -3357,7 +3397,7 @@
     clearCollectionSurface();
     const scanPlan = [
       { key:'prefill', total:64, color:'#8B7BFF', nodes:npuState.filter(s => s.isP).map(s => s.card), chips:['16 芯片 · 3.1k/s','32 芯片 · 6.4k/s','48 芯片 · 9.3k/s','64 芯片 · 12.4k/s'] },
-      { key:'network', total:14, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')), chips:['2 台 5808 · 链路已发现','6 个模块 · DDR 已发现','12 个模块 · KV 命中 92%','14 个资源 · P95 45ms'] },
+      { key:'network', total:14, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #kvPool3d .ddr-module')), chips:['2 台 5808 · 链路已发现','6 个模块 · DDR 已发现','12 个模块 · KV 命中 92%','14 个资源 · P95 45ms'] },
       { key:'decode', total:64, color:'#2DD4A8', nodes:npuState.filter(s => !s.isP).map(s => s.card), chips:['16 芯片 · 0.8k/s','32 芯片 · 1.6k/s','48 芯片 · 2.4k/s','64 芯片 · 3.2k/s'] }
     ];
     scanPlan.forEach((plan, zoneIndex) => {
@@ -3858,14 +3898,14 @@
     const pool=document.getElementById('kvPool3d'); if(!pool) return;
     const run=++kvPoolRun;
     pool.classList.remove('rebalanced'); pool.classList.add('rebalancing');
-    // 从网络柜内 DDR 模块抽取 KV 块，切分后汇入同柜虚拟 DDR 池。
+    // 从 DDR 池抽取 KV 块，切分后分别下发到两台 5808 液冷设备。
     const moves=[
-      {from:[87,149],cut:[300,126],gateway:[468,117],color:'#42DDB6',delay:0},
-      {from:[132,149],cut:[346,122],gateway:[482,117],color:'#8B7BFF',delay:220},
-      {from:[177,149],cut:[392,126],gateway:[496,117],color:'#42DDB6',delay:440},
-      {from:[787,167],cut:[608,126],gateway:[510,117],color:'#42DDB6',delay:660},
-      {from:[832,167],cut:[654,122],gateway:[524,117],color:'#8B7BFF',delay:880},
-      {from:[877,167],cut:[700,126],gateway:[538,117],color:'#42DDB6',delay:1100}
+      {from:[277,142],cut:[300,176],gateway:[300,204],color:'#42DDB6',delay:0},
+      {from:[317,142],cut:[323,180],gateway:[345,204],color:'#8B7BFF',delay:220},
+      {from:[357,142],cut:[345,176],gateway:[390,204],color:'#42DDB6',delay:440},
+      {from:[637,142],cut:[655,176],gateway:[610,204],color:'#42DDB6',delay:660},
+      {from:[677,142],cut:[677,180],gateway:[655,204],color:'#8B7BFF',delay:880},
+      {from:[717,142],cut:[700,176],gateway:[700,204],color:'#42DDB6',delay:1100}
     ];
     moves.forEach(move=>{
       const group=document.createElementNS(SVGNS,'g'), block=document.createElementNS(SVGNS,'rect');
@@ -4052,7 +4092,7 @@
 
   // 受扰路径保留为黄色高流量实线，其他业务链路切换为优化后的绿色。
   function selectOptLinks(){
-    document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
+    document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
       l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
       if (faultActive && (l.classList.contains('disturbance-link-a') || l.classList.contains('disturbance-link-b'))) l.classList.add('link-warn');
       else l.classList.add('link-opt');
@@ -4170,7 +4210,7 @@
     launchBaselineCapture();
     const collectionPlan = [
       { selector: '.zone-prefill', nodes: npuState.filter(s => s.isP).map(s => s.card), color: '#8B7BFF', offset: 0 },
-      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('#ubCabinet .device-spine .device-body, #kvPool3d .ddr-module')), color: '#FFB547', offset: 720 },
+      { selector: '.zone-network', nodes: Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #kvPool3d .ddr-module')), color: '#FFB547', offset: 720 },
       { selector: '.zone-decode', nodes: npuState.filter(s => !s.isP).map(s => s.card), color: '#2DD4A8', offset: 1440 }
     ];
     collectionPlan.forEach(plan => {
@@ -4233,7 +4273,7 @@
     optStageStatus.textContent = '等待优化任务';
     optStageStatus.classList.remove('live');
     // 重置链路负载：Spine-0 → heavy（过载），Spine-1 → warn（中负载）
-    document.querySelectorAll('.link-s0, .link-s1').forEach(l=>{
+    document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
       l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal','path-group-lit','path-group-selected');
       l.classList.add(l.classList.contains('link-s0') ? 'link-warn' : 'link-normal');
     });
