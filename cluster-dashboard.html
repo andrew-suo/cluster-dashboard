@@ -724,6 +724,13 @@
     stroke-dasharray: none; opacity: 0.7;
     animation: none;
   }
+  /* 共享扰动段：原有绿链路抬升为黄色高负载态，丢包由对冲粒子表达。 */
+  .link-disturbed {
+    stroke: var(--warn) !important; stroke-width: 2.15 !important; opacity: .96;
+    filter: drop-shadow(0 0 3px rgba(255,181,71,.72));
+    animation: disturbedLinkPulse 1.15s ease-in-out infinite;
+  }
+  @keyframes disturbedLinkPulse { 0%,100%{opacity:.72} 50%{opacity:1} }
   .fault-mark {
     fill: var(--danger); font-size: 10px; font-weight: 700;
     pointer-events: none; display: none;
@@ -4246,10 +4253,10 @@
     })(t0);
   }
 
-  // 受扰路径保留为黄色高流量实线，其他业务链路切换为优化后的绿色。
+  // 优化后受扰共享段保留为黄色高流量实线，其他业务链路切换为绿色。
   function selectOptLinks(){
     document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
-      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
+      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','link-disturbed','path-group-lit','path-group-selected');
       if (faultActive && l.classList.contains('disturbance-link-b')) l.classList.add('link-warn');
       else l.classList.add('link-opt');
     });
@@ -4286,21 +4293,21 @@
   const resetBtn = document.querySelectorAll('.btn')[2];
   let collected=false;
 
-  /* ===== 注入故障 / 故障恢复（部分链路故障，符合实际场景） ===== */
-  // 扰动只借道 Spine-02 → Leaf-D 这一条 Fabric 分支。
+  /* ===== 扰动注入 / 恢复 ===== */
+  // 扰动借道 Spine-02 → Leaf-D 的共享分支：原有绿色业务链路升为黄色高负载态。
   const FAULT_GRPS = ['.disturbance-link-b'];
   function setFaultLinks(fault){
     FAULT_GRPS.forEach(sel=>{
       document.querySelectorAll(sel).forEach(l=>{
-        l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
-        l.classList.add(fault ? 'link-fault' : (optimized ? 'link-opt' : (l.classList.contains('link-s0') ? 'link-warn' : 'link-normal')));
+        l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','link-disturbed','path-group-lit','path-group-selected');
+        l.classList.add(fault ? 'link-disturbed' : (optimized ? 'link-opt' : (l.classList.contains('link-s0') ? 'link-warn' : 'link-normal')));
       });
     });
   }
   function toggleFault(){
     const btn = document.getElementById('faultBtn');
     if (!faultActive) {
-      // 注入故障：Spine-1 部分链路失效（2组：上排左侧+下排右侧）
+      // 扰动进入共享链路：绿链路先转黄，再以粒子对冲和掉落表达争用丢包。
       faultActive = true;
       disturbanceResolved = false;
       btn.textContent = '停止扰动';
@@ -4430,7 +4437,7 @@
     optStageStatus.classList.remove('live');
     // 重置链路负载：Spine-0 → heavy（过载），Spine-1 → warn（中负载）
     document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
-      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal','path-group-lit','path-group-selected');
+      l.classList.remove('link-opt','link-fault','link-idle','link-heavy','link-warn','link-normal','link-disturbed','path-group-lit','path-group-selected');
       l.classList.add(l.classList.contains('link-s0') ? 'link-warn' : 'link-normal');
     });
     // 重置算法浮窗
