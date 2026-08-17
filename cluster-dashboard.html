@@ -300,9 +300,10 @@
     position: absolute; top: 38px; bottom: 14px; pointer-events: none;
     border: 0; background: transparent;
   }
-  .zone-prefill { left: 1%; width: 47%; top: 35%; }
-  .zone-network { left: 1%; right: 1%; top: 38px; bottom: auto; height: 32%; }
-  .zone-decode { right: 1%; width: 47%; top: 35%; }
+  /* 采集高亮层与当前 SVG 卡片边界一一对应：左右 POD、中央融合组网及 KV 池。 */
+  .zone-prefill { left: 1.8%; width: 28.2%; top: 12.5%; bottom: 6.25%; }
+  .zone-network { left: 31.8%; width: 36.4%; top: 12.5%; bottom: 6.25%; }
+  .zone-decode { left: 70%; width: 28.2%; top: 12.5%; bottom: 6.25%; }
   .zone.collecting { animation: zoneCollect 1.35s ease-out; }
   @keyframes zoneCollect { 0% { box-shadow: inset 0 0 0 0 transparent; } 35% { box-shadow: inset 0 0 28px var(--zone-collect, var(--brand)), 0 0 16px var(--zone-collect, var(--brand)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
   .domain-collector {
@@ -556,9 +557,9 @@
   .pod-switch-wall-label { fill:#FFD07C; font:700 5.8px var(--font-mono); }
   .switch-board-primary .pod-switch-wall { fill:rgba(255,181,71,.15); stroke:rgba(255,214,132,.9); stroke-width:1; }
   .switch-board-rear { opacity:.42; }
-  .pod-contact-stub { stroke:rgba(255,209,117,.94); stroke-width:1.8; stroke-linecap:round; filter:drop-shadow(0 0 1.8px rgba(255,197,82,.62)); }
-  .union-d-link { fill:none; stroke:rgba(255,207,111,.56); stroke-width:.5; stroke-linecap:round; }
-  .union-d-link.union-primary { stroke:rgba(255,222,151,.86); stroke-width:.75; filter:drop-shadow(0 0 1.4px rgba(255,197,82,.54)); }
+  .pod-contact-stub { stroke:rgba(255,209,117,.72); stroke-width:.95; stroke-linecap:round; filter:drop-shadow(0 0 1.1px rgba(255,197,82,.42)); }
+  .union-d-link { fill:none; stroke:rgba(255,207,111,.42); stroke-width:.32; stroke-linecap:round; }
+  .union-d-link.union-primary { stroke:rgba(255,222,151,.72); stroke-width:.5; filter:drop-shadow(0 0 .9px rgba(255,197,82,.4)); }
   .union-d-link.union-rear { opacity:.28; }
   .pod-board-grid { fill: rgba(255,181,71,.72); }
   .pod-board-u2 { fill: #FFD07C; filter: drop-shadow(0 0 1.4px rgba(255,181,71,.78)); }
@@ -567,11 +568,11 @@
   .pod-board-even { stroke: rgba(45,212,168,.42); }
   .pod-board-label { fill: #FFE2A8; font: 700 5px var(--font-mono); }
   .ub-cabinet { fill: rgba(10,20,40,.84); stroke: rgba(100,180,255,.62); stroke-width: 1; }
-  .kv-cache-card { fill: rgba(12,21,42,.9); stroke: rgba(45,212,168,.62); stroke-width: 1; }
+  .kv-cache-card { fill: rgba(12,21,42,.9); stroke: rgba(86,199,255,.72); stroke-width: 1; }
   .fabric-layer-label { fill:#8FA0C7; font:700 5.6px var(--font-mono); letter-spacing:.13em; }
-  .kv-fabric-link { fill:none; stroke:rgba(45,212,168,.78); stroke-width:1.2; stroke-linecap:round; filter:drop-shadow(0 0 1.8px rgba(45,212,168,.45)); }
+  .kv-fabric-link { fill:none; stroke:rgba(86,199,255,.82); stroke-width:1.2; stroke-linecap:round; filter:drop-shadow(0 0 1.8px rgba(86,199,255,.48)); }
   .pod-uplink { stroke-width:1.05; }
-  .ddr-module { fill: rgba(45,212,168,.42); stroke: rgba(130,255,222,.72); stroke-width: .35; }
+  .ddr-module { fill: rgba(86,199,255,.44); stroke: rgba(166,225,255,.76); stroke-width: .35; }
   .ddr-module.alt { fill: rgba(139,123,255,.48); stroke: rgba(196,184,255,.74); }
   .ddr-bus { fill:none; stroke:rgba(45,212,168,.55); stroke-width:.7; stroke-dasharray:2 2; }
   .ddr-pool-shell { fill: rgba(45,212,168,.07); stroke: rgba(45,212,168,.58); stroke-width: .75; }
@@ -651,15 +652,15 @@
   /* KV 数据粒子 */
   .kv-particle { pointer-events: none; }
   /* 3D KV Cache 池：介质色与运行健康状态分离，页块亮度表达热度与占用。 */
-  #kvPool3d { transform-origin: 500px 475px; }
+  #kvPool3d { transform-origin: 500px 450px; }
   .kv-tier { transform-box: fill-box; transform-origin: center; }
   .kv-face-top { stroke-width: .75; }
   .kv-face-front, .kv-face-side { stroke-width: .65; }
   .kv-tier-hbm .kv-face-top { fill:rgba(139,123,255,.24); stroke:rgba(139,123,255,.78); }.kv-tier-hbm .kv-face-front { fill:rgba(46,34,86,.78); stroke:rgba(139,123,255,.62); }.kv-tier-hbm .kv-face-side { fill:rgba(28,20,61,.84); stroke:rgba(139,123,255,.5); }
-  .kv-tier-ddr .kv-face-top { fill:rgba(45,212,168,.18); stroke:rgba(45,212,168,.72); }.kv-tier-ddr .kv-face-front { fill:rgba(13,65,64,.76); stroke:rgba(45,212,168,.56); }.kv-tier-ddr .kv-face-side { fill:rgba(8,43,46,.84); stroke:rgba(45,212,168,.46); }
+  .kv-tier-ddr .kv-face-top { fill:rgba(86,199,255,.18); stroke:rgba(86,199,255,.76); }.kv-tier-ddr .kv-face-front { fill:rgba(14,48,78,.78); stroke:rgba(86,199,255,.6); }.kv-tier-ddr .kv-face-side { fill:rgba(8,31,57,.84); stroke:rgba(86,199,255,.5); }
   .kv-tier-label { fill:#E6ECFC; font:700 7.2px var(--font-sans); letter-spacing:.09em; pointer-events:none; }
   .kv-page { stroke:rgba(236,244,255,.34); stroke-width:.3; filter:drop-shadow(0 0 1.8px currentColor); transform-box:fill-box; transform-origin:center; }
-  .kv-tier-hbm .kv-page { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page { fill:#42DDB6; color:#42DDB6; }.kv-tier-ddr .ddr-module.alt { fill:rgba(139,123,255,.55); color:#9B8CFF; stroke:rgba(196,184,255,.74); }
+  .kv-tier-hbm .kv-page { fill:#9B8CFF; color:#9B8CFF; }.kv-tier-ddr .kv-page { fill:#56C7FF; color:#56C7FF; }.kv-tier-ddr .ddr-module.alt { fill:rgba(139,123,255,.55); color:#9B8CFF; stroke:rgba(196,184,255,.74); }
   .kv-page.hot { fill:#FF7AB6; color:#FF7AB6; }.kv-page.dim { opacity:.27; }
   .kv-tier-hbm { animation:kvTrayFloat 3.8s ease-in-out infinite; }.kv-tier-ddr { animation:kvTrayFloat 4.6s ease-in-out -.8s infinite; }
   .kv-page:nth-of-type(3n) { animation:kvPageBeat 1.8s ease-in-out infinite; }.kv-page:nth-of-type(4n) { animation-delay:-.7s; }
@@ -707,8 +708,8 @@
 
   /* ============ 链路负载状态 ============ */
   .link-heavy { stroke: var(--danger) !important; stroke-width: 2.2 !important; opacity: 0.85; }
-  .link-warn  { stroke: var(--warn) !important; stroke-width: 1.6 !important; opacity: 0.7; }
-  .link-normal { stroke: var(--accent) !important; stroke-width: 1.45 !important; opacity: 0.7; }
+  .link-warn  { stroke: var(--warn) !important; stroke-width: 1.3 !important; opacity: 0.46; }
+  .link-normal { stroke: var(--accent) !important; stroke-width: 1.2 !important; opacity: 0.4; }
   .link-idle  { stroke: var(--border) !important; stroke-width: 1 !important; opacity: 0.4; }
   .link-opt   { stroke: var(--accent) !important; stroke-width: 1.8 !important; opacity: 0.9;
                 filter: drop-shadow(0 0 2px rgba(45,212,168,0.5)); }
@@ -923,8 +924,8 @@
   .step-fx .fx-path-highlight {
     display:none;
   }
-  .topo-link.path-group-lit { stroke:#65B4FF !important; stroke-width:2.3 !important; opacity:1; filter:drop-shadow(0 0 4px rgba(101,180,255,.78)); animation:linkGroupLight .9s ease-out both; }
-  .topo-link.path-group-selected { stroke:var(--accent) !important; stroke-width:2 !important; opacity:.94; filter:drop-shadow(0 0 3px rgba(45,212,168,.62)); }
+  .topo-link.path-group-lit, .route-stage-link.path-group-lit { stroke:#65B4FF !important; stroke-width:2.3 !important; opacity:1; filter:drop-shadow(0 0 4px rgba(101,180,255,.78)); animation:linkGroupLight .9s ease-out both; }
+  .topo-link.path-group-selected, .route-stage-link.path-group-selected { stroke:#65B4FF !important; stroke-width:2.1 !important; opacity:1; filter:drop-shadow(0 0 4px rgba(101,180,255,.78)); }
   @keyframes linkGroupLight { 0% { opacity:.16; stroke-width:1.2; } 38% { opacity:1; stroke-width:2.8; } 100% { opacity:1; stroke-width:2.3; } }
 
   /* ============ KV 切分动画 ============ */
@@ -1022,7 +1023,7 @@
       <span class="cv-title-mark"></span>
       <div class="cv-title-copy">
         <span class="cv-title-main">AI 推理集群资源拓扑</span>
-        <span class="cv-title-sub">双 POD · 2 Spine / 2 Leaf UB Fabric · 独立 KV Cache 池</span>
+        <span class="cv-title-sub">双 POD · Scale-up / Scale-out 融合组网 · KV Cache 池</span>
       </div>
     </div>
     <div class="zone zone-prefill">
@@ -2462,7 +2463,7 @@
     const board=podSvg('g',{class:'pod-switch-board '+(index===1?'switch-board-primary':'switch-board-rear')},parent), width=72, height=396+(index-1)*4;
     podSvg('rect',{x,y,width,height,rx:3,class:'pod-switch-wall'},board);
     const labelX=mirror ? x+12 : x+width-12, labelAnchor=mirror?'start':'end';
-    podText(board,labelX,y+19,'Scale-up L1','pod-switch-wall-label',labelAnchor);
+    if(index===1) podText(board,labelX,y+19,'Scale-up L1','pod-switch-wall-label',labelAnchor);
     const u2=[[x+24,y+42],[x+48,y+42],[x+24,y+66],[x+48,y+66]];
     u2.forEach((point,i)=>{
       const node=podSvg('circle',{cx:point[0],cy:point[1],r:2.15,class:'pod-board-port','data-union':'U2.'+(i+1)},board);
@@ -2599,19 +2600,19 @@
     svg.querySelectorAll('.net-plane-top-p,.net-plane-front-p,.net-plane-side-p,.net-plane-grid-p,.net-plane-top-d,.net-plane-front-d,.net-plane-side-d,.net-plane-grid-d,.net-plane-top-s,.net-plane-front-s,.net-plane-side-s,.net-plane-grid-s,.net-plane-top-k,.net-plane-front-k,.net-plane-side-k,.net-plane-grid-k,.net-plane-label,.device-leaf,.device-spine,.topo-link,#legacyKvPool3d,#faultMarks').forEach(el=>el.style.display='none');
     document.getElementById('telemetryFabric').style.display='none'; document.getElementById('stepFx').style.display='none';
     const group=podSvg('g',{id:'ubCabinet'},svg);
-    const fabric={x:318,y:70,w:364,h:270}, cache={x:318,y:355,w:364,h:195};
+    const fabric={x:318,y:70,w:364,h:245}, cache={x:318,y:330,w:364,h:195};
     podSvg('rect',{x:fabric.x,y:fabric.y,width:fabric.w,height:fabric.h,rx:9,class:'ub-cabinet'},group);
     podText(group,330,92,'Scale-out 与 Scale-up 融合组网','pod-title','start').setAttribute('fill','#FFB547');
     podText(group,330,104,'Scale-up L2 · Scale-out L3 · KV Cache 逻辑互联','pod-subtitle','start');
-    podText(group,324,135,'Scale-up L2','fabric-layer-label','start');
-    podText(group,324,228,'Scale-out L3','fabric-layer-label','start');
+    podText(group,324,119,'Scale-up L2','fabric-layer-label','start');
+    podText(group,324,212,'Scale-out L3','fabric-layer-label','start');
 
-    const leafP1=addUbDevice(group,326,146,74,'','prefill',26);
-    const leafP2=addUbDevice(group,410,146,74,'','prefill',26);
-    const leafD1=addUbDevice(group,518,146,74,'','decode',26);
-    const leafD2=addUbDevice(group,602,146,74,'','decode',26);
-    const spineA=addUbDevice(group,370,240,110,'','spine',32);
-    const spineB=addUbDevice(group,520,240,110,'','spine',32);
+    const leafP1=addUbDevice(group,326,130,74,'','prefill',26);
+    const leafP2=addUbDevice(group,410,130,74,'','prefill',26);
+    const leafD1=addUbDevice(group,518,130,74,'','decode',26);
+    const leafD2=addUbDevice(group,602,130,74,'','decode',26);
+    const spineA=addUbDevice(group,370,224,110,'','spine',32);
+    const spineB=addUbDevice(group,520,224,110,'','spine',32);
     const curve=(from,to,classes,bend=30)=>podSvg('path',{d:'M '+from[0]+' '+from[1]+' C '+from[0]+' '+(from[1]+bend)+', '+to[0]+' '+(to[1]-bend)+', '+to[0]+' '+to[1],class:'topo-link '+classes},group);
     const sideCurve=(from,to,classes,bend=58)=>{
       const direction=to[0]<from[0]?-1:1;
@@ -2629,25 +2630,25 @@
     sideCurve([leafD2.right[0],leafD2.right[1]+4],podPorts.decode.u2[3],'link-normal pod-uplink',42);
 
     podSvg('rect',{x:cache.x,y:cache.y,width:cache.w,height:cache.h,rx:9,class:'kv-cache-card'},group);
-    podText(group,330,377,'KV Cache 池','pod-title','start').setAttribute('fill','#42DDB6');
-    podText(group,330,389,'HBM 热数据 · DDR 温数据 · 统一资源池','pod-subtitle','start');
+    podText(group,330,352,'KV Cache 池','pod-title','start').setAttribute('fill','#56C7FF');
+    podText(group,330,364,'HBM 热数据 · DDR 温数据 · 统一资源池','pod-subtitle','start');
     const tier=podSvg('g',{id:'kvPool3d'},group);
     const hbm=podSvg('g',{class:'kv-tier kv-tier-hbm'},tier), ddr=podSvg('g',{class:'kv-tier kv-tier-ddr'},tier);
-    podSvg('polygon',{points:'340,410 660,410 672,399 352,399',class:'kv-face-top'},hbm);
-    podSvg('polygon',{points:'340,410 660,410 660,438 340,438',class:'kv-face-front'},hbm);
-    podSvg('polygon',{points:'660,410 672,399 672,427 660,438',class:'kv-face-side'},hbm);
-    podText(hbm,500,427,'HBM · 热数据层','kv-tier-label','middle');
-    for(let i=0;i<9;i++) podSvg('rect',{x:352+i*34,y:432,width:24,height:4,rx:1,class:'kv-page '+(i%3===0?'hot':'')},hbm);
-    podSvg('polygon',{points:'330,470 670,470 682,457 342,457',class:'kv-face-top'},ddr);
-    podSvg('polygon',{points:'330,470 670,470 670,528 330,528',class:'kv-face-front'},ddr);
-    podSvg('polygon',{points:'670,470 682,457 682,515 670,528',class:'kv-face-side'},ddr);
-    podText(ddr,500,489,'DDR · 统一 KV 资源池','kv-tier-label','middle');
+    podSvg('polygon',{points:'340,385 660,385 672,374 352,374',class:'kv-face-top'},hbm);
+    podSvg('polygon',{points:'340,385 660,385 660,413 340,413',class:'kv-face-front'},hbm);
+    podSvg('polygon',{points:'660,385 672,374 672,402 660,413',class:'kv-face-side'},hbm);
+    podText(hbm,500,402,'HBM · 热数据层','kv-tier-label','middle');
+    for(let i=0;i<9;i++) podSvg('rect',{x:352+i*34,y:407,width:24,height:4,rx:1,class:'kv-page '+(i%3===0?'hot':'')},hbm);
+    podSvg('polygon',{points:'330,445 670,445 682,432 342,432',class:'kv-face-top'},ddr);
+    podSvg('polygon',{points:'330,445 670,445 670,503 330,503',class:'kv-face-front'},ddr);
+    podSvg('polygon',{points:'670,445 682,432 682,490 670,503',class:'kv-face-side'},ddr);
+    podText(ddr,500,464,'DDR · 统一 KV 资源池','kv-tier-label','middle');
     for(let i=0;i<10;i++){
-      const module=podSvg('rect',{x:344+i*30,y:513,width:22,height:7,rx:1,class:'kv-page ddr-module '+(i%3===2?'alt':'')},ddr);
+      const module=podSvg('rect',{x:344+i*30,y:488,width:22,height:7,rx:1,class:'kv-page ddr-module '+(i%3===2?'alt':'')},ddr);
       podSvg('title',{},module).textContent='DDR-'+String(i+1).padStart(2,'0');
     }
     // KV Cache 与融合组网以双逻辑出口关联，不暴露具体接入设备或实现方式。
-    podSvg('path',{d:'M 448 340 C 448 346, 454 350, 462 355 M 552 340 C 552 346, 546 350, 538 355',class:'kv-fabric-link'},group);
+    podSvg('path',{d:'M 448 315 C 448 321, 454 325, 462 330 M 552 315 C 552 321, 546 325, 538 330',class:'kv-fabric-link route-stage-link'},group);
   }
   buildUbCabinet();
 
@@ -2690,19 +2691,19 @@
     return cubicPoints(from,[from[0]+direction*bend,from[1]],[to[0]-direction*bend,to[1]],to);
   };
   // Spine 内部收敛至融合组网的逻辑出口；图面只呈现卡片级 KV Cache 互联。
-  const kvPathA=cubicPoints([425,272],[425,292],[437,322],[448,340]);
-  const kvPathB=cubicPoints([575,272],[575,292],[563,322],[552,340]);
-  const poolPathA=cubicPoints([448,340],[448,346],[454,350],[462,355]);
-  const poolPathB=cubicPoints([552,340],[552,346],[546,350],[538,355]);
+  const kvPathA=cubicPoints([425,256],[425,276],[437,302],[448,315]);
+  const kvPathB=cubicPoints([575,256],[575,276],[563,302],[552,315]);
+  const poolPathA=cubicPoints([448,315],[448,321],[454,325],[462,330]);
+  const poolPathB=cubicPoints([552,315],[552,321],[546,325],[538,330]);
   const PATHS = [
-    joinPoints(reversePoints(sideCurvePoints([326,155],[218,162],42)),topoCurvePoints([363,172],[425,240],20),kvPathA,poolPathA),
-    joinPoints(reversePoints(sideCurvePoints([410,163],[242,162],42)),topoCurvePoints([447,172],[575,240],20),kvPathB,poolPathB),
-    joinPoints(reversePoints(sideCurvePoints([326,155],[218,162],42)),topoCurvePoints([363,172],[425,240],20),kvPathA,poolPathA),
-    joinPoints(reversePoints(sideCurvePoints([410,163],[242,162],42)),topoCurvePoints([447,172],[575,240],20),kvPathB,poolPathB),
-    joinPoints(reversePoints(poolPathA),reversePoints(kvPathA),reversePoints(topoCurvePoints([555,172],[425,240],20)),sideCurvePoints([592,155],[758,186],42)),
-    joinPoints(reversePoints(poolPathA),reversePoints(kvPathA),reversePoints(topoCurvePoints([555,172],[425,240],20)),sideCurvePoints([592,155],[758,186],42)),
-    joinPoints(reversePoints(poolPathB),reversePoints(kvPathB),reversePoints(topoCurvePoints([639,172],[575,240],20)),sideCurvePoints([676,163],[782,186],42)),
-    joinPoints(reversePoints(poolPathB),reversePoints(kvPathB),reversePoints(topoCurvePoints([639,172],[575,240],20)),sideCurvePoints([676,163],[782,186],42)),
+    joinPoints(reversePoints(sideCurvePoints([326,139],[218,162],42)),topoCurvePoints([363,156],[425,224],20),kvPathA,poolPathA),
+    joinPoints(reversePoints(sideCurvePoints([410,147],[242,162],42)),topoCurvePoints([447,156],[575,224],20),kvPathB,poolPathB),
+    joinPoints(reversePoints(sideCurvePoints([326,139],[218,162],42)),topoCurvePoints([363,156],[425,224],20),kvPathA,poolPathA),
+    joinPoints(reversePoints(sideCurvePoints([410,147],[242,162],42)),topoCurvePoints([447,156],[575,224],20),kvPathB,poolPathB),
+    joinPoints(reversePoints(poolPathA),reversePoints(kvPathA),reversePoints(topoCurvePoints([555,156],[425,224],20)),sideCurvePoints([592,139],[758,186],42)),
+    joinPoints(reversePoints(poolPathA),reversePoints(kvPathA),reversePoints(topoCurvePoints([555,156],[425,224],20)),sideCurvePoints([592,139],[758,186],42)),
+    joinPoints(reversePoints(poolPathB),reversePoints(kvPathB),reversePoints(topoCurvePoints([639,156],[575,224],20)),sideCurvePoints([676,147],[782,186],42)),
+    joinPoints(reversePoints(poolPathB),reversePoints(kvPathB),reversePoints(topoCurvePoints([639,156],[575,224],20)),sideCurvePoints([676,147],[782,186],42)),
   ].map(pts => {
     const segs=[]; let total=0;
     for (let i=0;i<pts.length-1;i++){
@@ -2714,11 +2715,11 @@
   });
   // 外部扰动借道 Spine-Leaf Fabric，不进入 POD 芯片或 KV Cache 池。
   const DISTURBANCE_PATH = joinPoints(
-    cubicPoints([664,86],[678,102],[652,128],[639,146]),
-    [[639,146],[639,172]],
-    topoCurvePoints([639,172],[575,240],20),
-    [[575,240],[575,272]],
-    cubicPoints([575,272],[606,278],[642,284],[674,296])
+    cubicPoints([664,86],[678,98],[652,116],[639,130]),
+    [[639,130],[639,156]],
+    topoCurvePoints([639,156],[575,224],20),
+    [[575,224],[575,256]],
+    cubicPoints([575,256],[606,262],[642,268],[674,280])
   ).reduce((path, point, index, array) => {
     if(index === 0) return { segs:[], total:0, points:array };
     const [x1,y1]=array[index-1],[x2,y2]=point,len=Math.hypot(x2-x1,y2-y1);
@@ -2736,11 +2737,11 @@
     const last=DISTURBANCE_PATH.segs[DISTURBANCE_PATH.segs.length-1], lastStart=last.acc/DISTURBANCE_PATH.total;
     if(progress<edge){
       const t=progress/edge, u=1-t;
-      return [u*u*u*664 + 3*u*u*t*678 + 3*u*t*t*652 + t*t*t*639, u*u*u*86 + 3*u*u*t*102 + 3*u*t*t*128 + t*t*t*146];
+      return [u*u*u*664 + 3*u*u*t*678 + 3*u*t*t*652 + t*t*t*639, u*u*u*86 + 3*u*u*t*98 + 3*u*t*t*116 + t*t*t*130];
     }
     if(progress>lastStart){
       const t=(progress-lastStart)/(1-lastStart), u=1-t;
-      return [u*u*u*575 + 3*u*u*t*606 + 3*u*t*t*642 + t*t*t*674, u*u*u*272 + 3*u*u*t*278 + 3*u*t*t*284 + t*t*t*296];
+      return [u*u*u*575 + 3*u*u*t*606 + 3*u*t*t*642 + t*t*t*674, u*u*u*256 + 3*u*u*t*262 + 3*u*t*t*268 + t*t*t*280];
     }
     return ptAt(DISTURBANCE_PATH,progress);
   }
@@ -2753,11 +2754,11 @@
   disturbanceLayer.setAttribute('id','disturbanceLayer'); svg.appendChild(disturbanceLayer);
   const disturbanceSource = document.createElementNS(SVGNS,'g');
   disturbanceSource.setAttribute('class','disturbance-source');
-  disturbanceSource.innerHTML='<path class="source-link" d="M 664 86 C 678 102 652 128 639 146"/><path class="source-link" d="M 575 272 C 606 278 642 284 674 296"/>';
+  disturbanceSource.innerHTML='<path class="source-link" d="M 664 86 C 678 98 652 116 639 130"/><path class="source-link" d="M 575 256 C 606 262 642 268 674 280"/>';
   disturbanceLayer.appendChild(disturbanceSource);
   const disturbanceParticles = [], dropParticles = [];
   const DISTURBANCE_IMPACTS = [
-    { point:[606,212], paths:[6,7] }
+    { point:[606,196], paths:[6,7] }
   ];
   let disturbanceTimer = null;
   function spawnDrop(x, y, color, count){
@@ -3916,19 +3917,24 @@
     }, 400));
   }
 
-  /* === 步骤4 画布动效：单 Spine 柜内双 Rail 选路高亮 === */
+  /* === 步骤4 画布动效：接入组 → 核心组 → KV 出口，分组亮起并收敛为一条策略路径 === */
   function fxStep4(){
     const core0=Array.from(svg.querySelectorAll('#ubCabinet .link-s0'));
     const core1=Array.from(svg.querySelectorAll('#ubCabinet .link-s1'));
-    const groups=[core0.slice(0,3),core1.slice(0,3),[...core0.slice(3),...core1.slice(3)]];
-    document.querySelectorAll('.topo-link.path-group-lit,.topo-link.path-group-selected').forEach(link=>link.classList.remove('path-group-lit','path-group-selected'));
+    const ingress=Array.from(svg.querySelectorAll('#ubCabinet .pod-uplink'));
+    const kvExit=Array.from(svg.querySelectorAll('#ubCabinet .route-stage-link'));
+    const groups=[ingress,[...core0,...core1],kvExit];
+    document.querySelectorAll('.topo-link.path-group-lit,.topo-link.path-group-selected,.route-stage-link.path-group-lit,.route-stage-link.path-group-selected').forEach(link=>link.classList.remove('path-group-lit','path-group-selected'));
     groups.forEach((group,index)=>{
-      optimizeTimers.push(setTimeout(()=>group.forEach(link=>link.classList.add('path-group-lit')),index*620));
+      optimizeTimers.push(setTimeout(()=>group.forEach(link=>link.classList.add('path-group-lit')),index*680));
     });
     optimizeTimers.push(setTimeout(()=>{
-      const preferred=faultActive ? groups[1] : groups[0];
-      preferred.forEach(link=>link.classList.add('path-group-selected'));
-    },2050));
+      const preferredCore=faultActive ? core1 : core0;
+      [...ingress,...preferredCore,...kvExit].forEach(link=>{
+        link.classList.remove('path-group-lit');
+        link.classList.add('path-group-selected');
+      });
+    },2240));
   }
 
   /* === 步骤5 动效：负载预测曲线 + 链路实施 === */
@@ -4056,12 +4062,12 @@
     pool.classList.remove('rebalanced'); pool.classList.add('rebalancing');
     // 从 DDR 统一资源池抽取块并切分，随后汇入融合组网与 KV Cache 的逻辑互联入口。
     const moves=[
-      {from:[354,513],cut:[370,443],egress:[448,340],color:'#42DDB6',delay:0},
-      {from:[384,513],cut:[390,439],egress:[454,344],color:'#8B7BFF',delay:220},
-      {from:[414,513],cut:[410,443],egress:[462,355],color:'#42DDB6',delay:440},
-      {from:[564,513],cut:[570,443],egress:[552,340],color:'#42DDB6',delay:660},
-      {from:[594,513],cut:[600,439],egress:[546,344],color:'#8B7BFF',delay:880},
-      {from:[624,513],cut:[630,443],egress:[538,355],color:'#42DDB6',delay:1100}
+      {from:[354,488],cut:[370,418],egress:[448,315],color:'#42DDB6',delay:0},
+      {from:[384,488],cut:[390,414],egress:[454,319],color:'#8B7BFF',delay:220},
+      {from:[414,488],cut:[410,418],egress:[462,330],color:'#42DDB6',delay:440},
+      {from:[564,488],cut:[570,418],egress:[552,315],color:'#42DDB6',delay:660},
+      {from:[594,488],cut:[600,414],egress:[546,319],color:'#8B7BFF',delay:880},
+      {from:[624,488],cut:[630,418],egress:[538,330],color:'#42DDB6',delay:1100}
     ];
     moves.forEach(move=>{
       const group=document.createElementNS(SVGNS,'g'), block=document.createElementNS(SVGNS,'rect');
@@ -4249,7 +4255,7 @@
   // 优化后受扰共享段保留为黄色高流量实线，其他业务链路切换为绿色。
   function selectOptLinks(){
     document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
-      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','link-disturbed','path-group-lit','path-group-selected');
+      l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','link-disturbed','path-group-lit');
       if (faultActive && l.classList.contains('disturbance-link-b')) l.classList.add('link-warn');
       else l.classList.add('link-opt');
     });
@@ -4306,6 +4312,7 @@
       btn.textContent = '停止扰动';
       btn.classList.remove('danger');
       document.getElementById('faultMarks').style.display = 'none';
+      document.querySelectorAll('#ubCabinet .path-group-lit,#ubCabinet .path-group-selected').forEach(link=>link.classList.remove('path-group-lit','path-group-selected'));
       setFaultLinks(true);
       startDisturbanceFlow();
       // 让一批已在网络中的业务流到达碰撞点，清晰呈现脱轨与掉落。
