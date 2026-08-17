@@ -67,7 +67,7 @@
   .opt-stage-status { margin-left: auto; color: var(--text-dim); font: 700 10px var(--font-mono); }
   .opt-stage-status.live { color: var(--accent); }
   .opt-step-grid { height: calc(100% - 34px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; padding-top: 8px; }
-  .opt-step-card { --step-color: var(--brand); position: relative; min-width: 0; padding: 9px 11px; border: 1px solid rgba(111,134,184,.2); background: rgba(13,22,42,.62); overflow: visible; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
+  .opt-step-card { --step-color: var(--brand); position: relative; isolation:isolate; min-width: 0; padding: 9px 11px; border: 1px solid rgba(111,134,184,.2); background: rgba(13,22,42,.62); overflow: visible; opacity: .32; transition: opacity .28s, border-color .28s, background .28s, box-shadow .28s; }
   .opt-step-grid > .opt-step-card:first-child { display:none; }
   .opt-step-card:nth-child(2) { --step-color: var(--warn); }.opt-step-card:nth-child(3) { --step-color: var(--pink); }.opt-step-card:nth-child(4) { --step-color: #65B4FF; }.opt-step-card:nth-child(5) { --step-color: var(--accent); }
   .opt-step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--step-color); transform:scaleX(.08); transform-origin:left; }
@@ -75,6 +75,9 @@
   .opt-step-card.running { opacity:1; border-color:color-mix(in srgb, var(--step-color) 68%, var(--border)); background:color-mix(in srgb, var(--step-color) 8%, rgba(12,20,39,.7)); box-shadow:0 0 14px color-mix(in srgb, var(--step-color) 22%, transparent); }
   .opt-step-card.input-target { opacity:.72; border-color:rgba(216,226,250,.42); box-shadow:0 0 13px rgba(216,226,250,.16); }
   .opt-step-card.running::before { animation: stepTrace 1s linear infinite; }.opt-step-card.done { opacity:.56; border-color:color-mix(in srgb, var(--step-color) 34%, var(--border)); background:rgba(13,22,42,.46); }.opt-step-card.done::before { transform:scaleX(1); }
+  .opt-card-outline { position:absolute; inset:-1px; z-index:3; pointer-events:none; border:1px solid transparent; opacity:0; transition:opacity .24s, border-color .24s, box-shadow .24s; }
+  .opt-step-card.running .opt-card-outline { opacity:1; border-color:color-mix(in srgb, var(--step-color) 88%, #F4F7FF); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--step-color) 34%, transparent), 0 0 12px color-mix(in srgb, var(--step-color) 30%, transparent); animation:cardContourPulse 1.15s ease-in-out infinite; }
+  .opt-step-card.done .opt-card-outline { opacity:.38; border-color:color-mix(in srgb, var(--step-color) 48%, transparent); box-shadow:none; }
   .opt-step-num { color:var(--step-color); font:700 10px var(--font-mono); }.opt-step-name { margin-left:6px; color:var(--text); font-size:13px; font-weight:700; }.opt-step-state { position:relative; z-index:1; margin-top:6px; color:var(--text-muted); font-size:10px; font-weight:600; }
   .model-solved { display:none; margin-left:5px; color:var(--accent); font:700 8px var(--font-mono); letter-spacing:.03em; }
   .opt-step-card[data-opt-step="1"].done .model-solved { display:inline; }
@@ -99,6 +102,7 @@
   .forecast-band { fill:var(--accent); opacity:.1; }.forecast-range { fill:var(--step-color); opacity:.13; }.forecast-line { stroke:var(--step-color); fill:none; stroke-width:1.25; }.forecast-target { stroke:var(--accent); stroke-width:.7; stroke-dasharray:2 2; }.forecast-dot { fill:var(--step-color); opacity:0; }.opt-step-card.running .forecast-range { animation: rangeClose 1.25s ease-in-out infinite; transform-origin:62px 22px; }.opt-step-card.running .forecast-line { animation: forecastDraw 1.25s linear infinite; stroke-dasharray:80; }.opt-step-card.running .forecast-dot { animation: solutionPulse 1.25s ease-in-out infinite; }.opt-step-card.done .forecast-range { fill:var(--accent); opacity:.18; }.opt-step-card.done .forecast-line, .opt-step-card.done .forecast-dot { stroke:var(--accent); fill:var(--accent); opacity:1; }
   .collection-particle-canvas { position:fixed; inset:0; z-index:80; pointer-events:none; mix-blend-mode:screen; }
   @keyframes stepTrace { 0% { transform:scaleX(.08); } 70% { transform:scaleX(1); } 100% { transform:scaleX(.35); } }
+  @keyframes cardContourPulse { 50% { border-color:#F4F7FF; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--step-color) 56%, transparent), 0 0 18px color-mix(in srgb, var(--step-color) 42%, transparent); } }
   @keyframes portReceive { 50% { opacity:1; filter:drop-shadow(0 0 2px var(--step-color)); } } @keyframes fpScan { from { transform:translateX(-15px); opacity:0; } 20% { opacity:.9; } to { transform:translateX(106px); opacity:0; } }
   @keyframes constraintSweep { 50% { stroke-dashoffset:-12; opacity:.9; } } @keyframes feasibleSet { 50% { transform:scale(.74); opacity:.22; } } @keyframes solutionPulse { 40% { opacity:1; filter:drop-shadow(0 0 3px var(--step-color)); } }
   @keyframes kvDissolve { 45% { opacity:.75; } 80%,100% { opacity:.08; } } @keyframes kvSettle { 0%,35% { opacity:0; } 72%,100% { opacity:.74; } } @keyframes kvTransfer { 35% { opacity:0; stroke-dashoffset:0; } 65% { opacity:1; stroke-dashoffset:-12; } 100% { opacity:0; stroke-dashoffset:-24; } }
@@ -530,6 +534,10 @@
   .pod-board-even { stroke: rgba(45,212,168,.42); }
   .pod-board-label { fill: #FFE2A8; font: 700 5px var(--font-mono); }
   .ub-cabinet { fill: rgba(10,20,40,.84); stroke: rgba(100,180,255,.62); stroke-width: 1; }
+  .kv-cache-card { fill: rgba(12,21,42,.9); stroke: rgba(45,212,168,.62); stroke-width: 1; }
+  .fabric-layer-label { fill:#8FA0C7; font:700 5.6px var(--font-mono); letter-spacing:.13em; }
+  .kv-fabric-link { fill:none; stroke:rgba(45,212,168,.5); stroke-width:.75; stroke-linecap:round; }
+  .pod-uplink { stroke-width:1.05; }
   .ddr-module { fill: rgba(45,212,168,.42); stroke: rgba(130,255,222,.72); stroke-width: .35; }
   .ddr-module.alt { fill: rgba(139,123,255,.48); stroke: rgba(196,184,255,.74); }
   .ddr-bus { fill:none; stroke:rgba(45,212,168,.55); stroke-width:.7; stroke-dasharray:2 2; }
@@ -610,7 +618,7 @@
   /* KV 数据粒子 */
   .kv-particle { pointer-events: none; }
   /* 3D KV Cache 池：介质色与运行健康状态分离，页块亮度表达热度与占用。 */
-  #kvPool3d { transform-origin: 500px 134px; }
+  #kvPool3d { transform-origin: 822px 150px; }
   .kv-tier { transform-box: fill-box; transform-origin: center; }
   .kv-face-top { stroke-width: .75; }
   .kv-face-front, .kv-face-side { stroke-width: .65; }
@@ -974,7 +982,7 @@
       <span class="cv-title-mark"></span>
       <div class="cv-title-copy">
         <span class="cv-title-main">AI 推理集群资源拓扑</span>
-        <span class="cv-title-sub">双 POD · 华为灵衢总线 UB 网络柜 · DDR 资源池</span>
+        <span class="cv-title-sub">双 POD · 2 Spine / 2 Leaf UB Fabric · 独立 KV Cache 池</span>
       </div>
     </div>
     <div class="zone zone-prefill">
@@ -991,7 +999,7 @@
         <div class="zm-item"><div class="zm-val danger" id="zmMigLat">--<span class="zu">ms</span></div><div class="zm-lbl">迁移延迟</div></div>
         <div class="zm-item"><div class="zm-val accent" id="zmPktLoss">--<span class="zu">‱</span></div><div class="zm-lbl">丢包率</div></div>
       </div>
-      <div class="domain-collector network" id="dcNetwork"><div class="dc-head"><span>域内归约 · 5808 / DDR 模块 / 峰值</span><span class="dc-count">0 / 14</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
+      <div class="domain-collector network" id="dcNetwork"><div class="dc-head"><span>域内归约 · Spine / Leaf / KV 模块</span><span class="dc-count">0 / 14</span></div><div class="dc-progress"><i></i></div><div class="dc-chips"></div></div>
     </div>
     <div class="zone zone-decode">
       <div class="zone-metrics" id="zmDecode" data-stage="Σ THROUGHPUT · P95 QUEUE">
@@ -1997,10 +2005,12 @@
     { idle:['等待策略收益校验', '尚未形成预测结论'], running:['推演负载与关键路径时延', '正在收敛预测不确定性'], done:['预测结果已进入目标窗口', '策略收益验证通过'] }
   ];
   const cardCanvases = decisionCards.map((card, index) => {
+    const outline = document.createElement('span');
+    outline.className = 'opt-card-outline'; outline.setAttribute('aria-hidden', 'true');
     const canvas = document.createElement('canvas');
     canvas.className = 'opt-card-canvas'; canvas.setAttribute('aria-hidden', 'true');
     const note = document.createElement('div'); note.className = 'opt-step-note';
-    card.append(canvas, note);
+    card.prepend(outline); card.append(canvas, note);
     return { card, canvas, note, index, startedAt:0 };
   });
   let cardRenderFrame = null;
@@ -2472,47 +2482,72 @@
   svg.querySelectorAll('.npu-card,.npu-side-p,.npu-front-p,.npu-side-d,.npu-front-d,.npu-id,.fullmesh-group,.inter-node-group,.node-server-p,.node-server-d,.plane-side-p,.plane-front-p,.plane-top-p,.plane-side-d,.plane-front-d,.plane-top-d,.plane-grid-p,.plane-grid-d,.node-name').forEach(el=>el.style.display='none');
   buildPod('left',true); buildPod('right',false);
 
-  /* ===== UB 网络柜：两台 5808 液冷设备上联两个 POD 的交换板 1，DDR 直接插入柜内 ===== */
+  /* ===== UB Fabric：双 Spine / 双 Leaf，右侧独立 KV Cache 池 ===== */
   function addUbDevice(parent, x, y, width, name, role, height){
     const deviceHeight=height || 18;
-    const group=podSvg('g',{class:role==='spine'?'device-spine':'device-leaf '+(role==='prefill'?'leaf-p':'leaf-d')},parent);
+    const leafClass=role==='prefill'?'leaf-p':role==='decode'?'leaf-d':'leaf-kv';
+    const group=podSvg('g',{class:role==='spine'?'device-spine':'device-leaf '+leafClass},parent);
     podSvg('polygon',{points:(x+5)+','+y+' '+(x+width)+','+y+' '+(x+width+5)+','+(y-5)+' '+(x+10)+','+(y-5),class:'device-top'},group);
     podSvg('polygon',{points:(x+width)+','+y+' '+(x+width+5)+','+(y-5)+' '+(x+width+5)+','+(y+deviceHeight-5)+' '+(x+width)+','+(y+deviceHeight),class:'device-side'},group);
     podSvg('rect',{x,y,width,height:deviceHeight,rx:2,class:'device-body'},group);
     podSvg('rect',{x:x+6,y:y+7,width:17,height:6,rx:.8,class:'device-screen'},group);
     podSvg('circle',{cx:x+31,cy:y+10,r:1.25,class:'device-led'},group);
     for(let i=0;i<8;i++) podSvg('rect',{x:x+width/2-31+i*8.5,y:y+deviceHeight-8,width:4.4,height:4,rx:.5,class:'device-port '+(i<5?'active':'')},group);
-    podText(group,x+width/2,y-9,name,'device-name','middle'); return {x:x+width/2,y:y+deviceHeight/2};
-    podText(group,x+width/2,y-8,name,'device-name','middle'); return {x:x+width/2,y:y+9};
+    podText(group,x+width/2,y-9,name,'device-name','middle');
+    return {x:x+width/2,y:y+deviceHeight/2,top:[x+width/2,y],bottom:[x+width/2,y+deviceHeight],left:[x,y+deviceHeight/2],right:[x+width,y+deviceHeight/2]};
   }
   function buildUbCabinet(){
     const oldKv=document.getElementById('kvPool3d'); if(oldKv) oldKv.id='legacyKvPool3d';
     svg.querySelectorAll('.net-plane-top-p,.net-plane-front-p,.net-plane-side-p,.net-plane-grid-p,.net-plane-top-d,.net-plane-front-d,.net-plane-side-d,.net-plane-grid-d,.net-plane-top-s,.net-plane-front-s,.net-plane-side-s,.net-plane-grid-s,.net-plane-top-k,.net-plane-front-k,.net-plane-side-k,.net-plane-grid-k,.net-plane-label,.device-leaf,.device-spine,.topo-link,#legacyKvPool3d,#faultMarks').forEach(el=>el.style.display='none');
     document.getElementById('telemetryFabric').style.display='none'; document.getElementById('stepFx').style.display='none';
-    const group=podSvg('g',{id:'ubCabinet'},svg), cabinet={x:18,y:62,w:964,h:197};
-    podSvg('rect',{x:cabinet.x,y:cabinet.y,width:cabinet.w,height:cabinet.h,rx:9,class:'ub-cabinet'},group);
-    podText(group,cabinet.x+12,84,'华为灵衢总线 · UB 网络柜','pod-title','start').setAttribute('fill','#FFB547');
-    podText(group,cabinet.x+12,96,'2 × 5808 液冷  ·  双 POD 上联  ·  DDR 统一资源池','pod-subtitle','start');
-    const liquidA=addUbDevice(group,235,190,220,'5808 液冷-A','spine',28);
-    const liquidB=addUbDevice(group,545,190,220,'5808 液冷-B','spine',28);
-    const curve=(from,to,classes)=>podSvg('path',{d:'M '+from[0]+' '+from[1]+' C '+from[0]+' '+(from[1]+34)+', '+to[0]+' '+(to[1]-34)+', '+to[0]+' '+to[1],class:'topo-link '+classes},group);
-    // 两台 5808 分别上联两个 POD 的交换板 1，端点精确落在 U2 外联层的 Union 节点。
-    curve([liquidA.x-25,218],podPorts.prefill.u2[0],'link-s0 link-warn disturbance-link-b');
-    curve([liquidB.x-25,218],podPorts.prefill.u2[1],'link-s1 link-normal');
-    curve([liquidA.x+25,218],podPorts.decode.u2[2],'link-s1 link-normal');
-    curve([liquidB.x+25,218],podPorts.decode.u2[3],'link-s0 link-warn disturbance-link-a');
-    const tier=podSvg('g',{id:'kvPool3d',class:'kv-tier kv-tier-ddr'},group);
-    podSvg('rect',{x:190,y:108,width:620,height:52,rx:6,class:'ddr-pool-shell'},tier);
-    podSvg('polygon',{points:'196,108 804,108 810,102 202,102',class:'ddr-pool-cap'},tier);
-    podText(tier,500,123,'DDR 池 · 统一缓存资源','ddr-pool-label','middle');
-    for(let i=0;i<12;i++){
-      const mx=260+i*40, my=138;
-      const module=podSvg('rect',{x:mx,y:my,width:34,height:9,rx:1.5,class:'kv-page ddr-module ddr-pool-cell '+(i%3===2?'alt':'')},tier);
+    const group=podSvg('g',{id:'ubCabinet'},svg);
+    const fabric={x:18,y:62,w:628,h:197}, cache={x:662,y:62,w:320,h:197};
+    podSvg('rect',{x:fabric.x,y:fabric.y,width:fabric.w,height:fabric.h,rx:9,class:'ub-cabinet'},group);
+    podText(group,30,84,'华为灵衢总线 · UB 交换网络','pod-title','start').setAttribute('fill','#FFB547');
+    podText(group,30,96,'2 SPINE · 2 LEAF · ECMP 双路径编排','pod-subtitle','start');
+    podText(group,52,110,'SPINE 核心层','fabric-layer-label','start');
+    podText(group,52,183,'LEAF 接入层','fabric-layer-label','start');
+
+    const spineA=addUbDevice(group,150,120,130,'Spine-01','spine',24);
+    const spineB=addUbDevice(group,365,120,130,'Spine-02','spine',24);
+    const leafP=addUbDevice(group,220,196,130,'Leaf-P','prefill',22);
+    const leafD=addUbDevice(group,450,196,130,'Leaf-D','decode',22);
+    const curve=(from,to,classes,bend=30)=>podSvg('path',{d:'M '+from[0]+' '+from[1]+' C '+from[0]+' '+(from[1]+bend)+', '+to[0]+' '+(to[1]-bend)+', '+to[0]+' '+to[1],class:'topo-link '+classes},group);
+    // K2,2 Fabric：任一 Leaf 都同时上联两个 Spine，供路径编排在两条等价路径间切换。
+    curve(spineA.bottom,leafP.top,'link-s0 link-warn',25);
+    curve(spineA.bottom,leafD.top,'link-s0 link-warn disturbance-link-a',25);
+    curve(spineB.bottom,leafP.top,'link-s1 link-normal',25);
+    curve(spineB.bottom,leafD.top,'link-s1 link-normal disturbance-link-b',25);
+    // POD 下联精确落在各自交换板 1 的 U2 外联节点。
+    curve([leafP.x-28,leafP.bottom[1]],podPorts.prefill.u2[0],'link-normal pod-uplink',38);
+    curve([leafP.x+28,leafP.bottom[1]],podPorts.prefill.u2[1],'link-normal pod-uplink',38);
+    curve([leafD.x-28,leafD.bottom[1]],podPorts.decode.u2[2],'link-normal pod-uplink',38);
+    curve([leafD.x+28,leafD.bottom[1]],podPorts.decode.u2[3],'link-normal pod-uplink',38);
+
+    podSvg('rect',{x:cache.x,y:cache.y,width:cache.w,height:cache.h,rx:9,class:'kv-cache-card'},group);
+    podText(group,674,84,'KV Cache 池','pod-title','start').setAttribute('fill','#42DDB6');
+    podText(group,674,96,'HBM 热数据 · DDR 温数据 · 双网关','pod-subtitle','start');
+    const tier=podSvg('g',{id:'kvPool3d'},group);
+    const hbm=podSvg('g',{class:'kv-tier kv-tier-hbm'},tier), ddr=podSvg('g',{class:'kv-tier kv-tier-ddr'},tier);
+    podSvg('polygon',{points:'698,117 946,117 957,108 709,108',class:'kv-face-top'},hbm);
+    podSvg('polygon',{points:'698,117 946,117 946,140 698,140',class:'kv-face-front'},hbm);
+    podSvg('polygon',{points:'946,117 957,108 957,130 946,140',class:'kv-face-side'},hbm);
+    podText(hbm,822,129,'HBM · 热数据层','kv-tier-label','middle');
+    for(let i=0;i<9;i++) podSvg('rect',{x:710+i*25,y:132,width:18,height:4,rx:1,class:'kv-page '+(i%3===0?'hot':'')},hbm);
+    podSvg('polygon',{points:'684,158 960,158 972,147 696,147',class:'kv-face-top'},ddr);
+    podSvg('polygon',{points:'684,158 960,158 960,184 684,184',class:'kv-face-front'},ddr);
+    podSvg('polygon',{points:'960,158 972,147 972,173 960,184',class:'kv-face-side'},ddr);
+    podText(ddr,822,171,'DDR · 统一 KV 资源池','kv-tier-label','middle');
+    for(let i=0;i<10;i++){
+      const module=podSvg('rect',{x:696+i*25,y:176,width:18,height:5,rx:1,class:'kv-page ddr-module '+(i%3===2?'alt':'')},ddr);
       podSvg('title',{},module).textContent='DDR-'+String(i+1).padStart(2,'0');
     }
-    podSvg('path',{d:'M 345 160 C 345 172, 345 180, 345 190 M 655 160 C 655 172, 655 180, 655 190',class:'ddr-pool-link'},tier);
-    podSvg('circle',{cx:345,cy:173,r:2.2,class:'kv-pool-dot ddr'},tier);
-    podSvg('circle',{cx:655,cy:173,r:2.2,class:'kv-pool-dot ddr'},tier);
+    const gatewayA=addUbDevice(group,690,222,112,'KV 网关-A','kv',20);
+    const gatewayB=addUbDevice(group,840,222,112,'KV 网关-B','kv',20);
+    podSvg('path',{d:'M 748 184 C 748 197, 746 208, '+gatewayA.top[0]+' '+gatewayA.top[1]+' M 896 184 C 896 197, 896 208, '+gatewayB.top[0]+' '+gatewayB.top[1],class:'ddr-pool-link'},tier);
+    // Spine 与 KV 网关均从设备侧面出线；两条缓存通路沿资源池外围绕行，避开核心设备与缓存托盘。
+    podSvg('path',{d:'M '+spineA.right[0]+' '+spineA.right[1]+' C 360 102, 570 102, 674 112 C 680 146, 674 204, '+gatewayA.left[0]+' '+gatewayA.left[1],class:'kv-fabric-link'},group);
+    podSvg('path',{d:'M '+spineB.right[0]+' '+spineB.right[1]+' C 600 102, 850 102, 970 118 C 978 160, 975 214, '+gatewayB.right[0]+' '+gatewayB.right[1],class:'kv-fabric-link'},group);
   }
   buildUbCabinet();
 
@@ -2541,17 +2576,28 @@
 
   /* ===== 2. KV Cache 容量条已移至独立 KV Cache 池卡片 ===== */
 
-  /* ===== 3. 网络数据粒子流（POD → 5808 液冷 → 柜内 DDR 池） ===== */
+  /* ===== 3. 网络数据粒子流（POD → Leaf → Spine → KV 网关 → DDR 池） ===== */
   /* 8 条逻辑路径：[0-3]写入 DDR 池，[4-7]从 DDR 池读回 Decode POD。 */
+  const cubicPoints=(a,b,c,d,steps=12)=>Array.from({length:steps+1},(_,i)=>{
+    const t=i/steps, u=1-t;
+    return [u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0],u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1]];
+  });
+  const joinPoints=(...parts)=>parts.reduce((all,part)=>all.length?all.concat(part.slice(1)):part,[]);
+  const reversePoints=points=>points.slice().reverse();
+  const topoCurvePoints=(from,to,bend)=>cubicPoints(from,[from[0],from[1]+bend],[to[0],to[1]-bend],to);
+  const kvPathA=joinPoints(cubicPoints([280,132],[360,102],[570,102],[674,112]),cubicPoints([674,112],[680,146],[674,204],[690,232]));
+  const kvPathB=joinPoints(cubicPoints([495,132],[600,102],[850,102],[970,118]),cubicPoints([970,118],[978,160],[975,214],[952,232]));
+  const poolPathA=cubicPoints([748,184],[748,197],[746,208],[746,222]);
+  const poolPathB=cubicPoints([896,184],[896,197],[896,208],[896,222]);
   const PATHS = [
-    [[390,332],[374,310],[348,270],[324,226],[320,218],[345,190],[345,160],[500,145]],
-    [[409,332],[456,310],[548,270],[626,226],[630,218],[655,190],[655,160],[500,145]],
-    [[390,332],[374,310],[348,270],[324,226],[320,218],[345,190],[345,160],[500,145]],
-    [[409,332],[456,310],[548,270],[626,226],[630,218],[655,190],[655,160],[500,145]],
-    [[500,145],[345,160],[345,190],[370,218],[407,226],[490,270],[558,310],[596,332]],
-    [[500,145],[345,160],[345,190],[370,218],[407,226],[490,270],[558,310],[596,332]],
-    [[500,145],[655,160],[655,190],[680,218],[665,226],[640,270],[622,310],[615,332]],
-    [[500,145],[655,160],[655,190],[680,218],[665,226],[640,270],[622,310],[615,332]],
+    joinPoints(reversePoints(topoCurvePoints([257,218],[390,332],38)),reversePoints(topoCurvePoints([215,144],[285,196],25)),kvPathA,reversePoints(poolPathA)),
+    joinPoints(reversePoints(topoCurvePoints([313,218],[409,332],38)),reversePoints(topoCurvePoints([430,144],[285,196],25)),kvPathB,reversePoints(poolPathB)),
+    joinPoints(reversePoints(topoCurvePoints([257,218],[390,332],38)),reversePoints(topoCurvePoints([215,144],[285,196],25)),kvPathA,reversePoints(poolPathA)),
+    joinPoints(reversePoints(topoCurvePoints([313,218],[409,332],38)),reversePoints(topoCurvePoints([430,144],[285,196],25)),kvPathB,reversePoints(poolPathB)),
+    joinPoints(poolPathA,reversePoints(kvPathA),topoCurvePoints([215,144],[515,196],25),topoCurvePoints([487,218],[596,332],38)),
+    joinPoints(poolPathA,reversePoints(kvPathA),topoCurvePoints([215,144],[515,196],25),topoCurvePoints([487,218],[596,332],38)),
+    joinPoints(poolPathB,reversePoints(kvPathB),topoCurvePoints([430,144],[515,196],25),topoCurvePoints([543,218],[615,332],38)),
+    joinPoints(poolPathB,reversePoints(kvPathB),topoCurvePoints([430,144],[515,196],25),topoCurvePoints([543,218],[615,332],38)),
   ].map(pts => {
     const segs=[]; let total=0;
     for (let i=0;i<pts.length-1;i++){
@@ -2561,8 +2607,16 @@
     }
     return {segs,total};
   });
-  // 外部流从 Decode 接入叶交换机借道核心 Fabric，再到 Prefill 接入叶；不进入 PD 或 KV Cache。
-  const DISTURBANCE_PATH = [[744,54],[726,86],[700,138],[655,204],[345,204],[300,138],[274,86],[256,54]].map((point,index,array)=>point).reduce((path, point, index, array) => {
+  // 外部扰动借道 Spine-Leaf Fabric，不进入 POD 芯片或 KV Cache 池。
+  const DISTURBANCE_PATH = joinPoints(
+    cubicPoints([610,76],[630,82],[610,92],[590,100]),
+    cubicPoints([590,100],[560,110],[462,112],[430,120]),
+    [[430,120],[430,144]],
+    topoCurvePoints([430,144],[515,196],25),
+    [[515,196],[580,207]],
+    cubicPoints([580,207],[610,220],[632,234],[650,242]),
+    cubicPoints([650,242],[704,244],[744,236],[780,218])
+  ).reduce((path, point, index, array) => {
     if(index === 0) return { segs:[], total:0, points:array };
     const [x1,y1]=array[index-1],[x2,y2]=point,len=Math.hypot(x2-x1,y2-y1);
     path.segs.push({x1,y1,x2,y2,len,acc:path.total}); path.total+=len; return path;
@@ -2579,11 +2633,11 @@
     const last=DISTURBANCE_PATH.segs[DISTURBANCE_PATH.segs.length-1], lastStart=last.acc/DISTURBANCE_PATH.total;
     if(progress<edge){
       const t=progress/edge, u=1-t;
-      return [u*u*u*744 + 3*u*u*t*772 + 3*u*t*t*702 + t*t*t*726, u*u*u*54 + 3*u*u*t*64 + 3*u*t*t*76 + t*t*t*86];
+      return [u*u*u*610 + 3*u*u*t*630 + 3*u*t*t*610 + t*t*t*590, u*u*u*76 + 3*u*u*t*82 + 3*u*t*t*92 + t*t*t*100];
     }
     if(progress>lastStart){
       const t=(progress-lastStart)/(1-lastStart), u=1-t;
-      return [u*u*u*274 + 3*u*u*t*246 + 3*u*t*t*316 + t*t*t*256, u*u*u*86 + 3*u*u*t*76 + 3*u*t*t*64 + t*t*t*54];
+      return [u*u*u*710 + 3*u*u*t*734 + 3*u*t*t*760 + t*t*t*780, u*u*u*240 + 3*u*u*t*240 + 3*u*t*t*228 + t*t*t*218];
     }
     return ptAt(DISTURBANCE_PATH,progress);
   }
@@ -2596,12 +2650,11 @@
   disturbanceLayer.setAttribute('id','disturbanceLayer'); svg.appendChild(disturbanceLayer);
   const disturbanceSource = document.createElementNS(SVGNS,'g');
   disturbanceSource.setAttribute('class','disturbance-source');
-  disturbanceSource.innerHTML='<path class="source-link" d="M 744 54 C 772 68 720 112 700 138 S 676 188 655 204"/><path class="source-link" d="M 345 204 C 324 188 300 164 300 138 S 242 68 256 54"/>';
+  disturbanceSource.innerHTML='<path class="source-link" d="M 610 76 C 630 82 610 92 590 100 S 462 112 430 120"/><path class="source-link" d="M 580 207 C 610 220 632 234 650 242 S 744 240 780 218"/>';
   disturbanceLayer.appendChild(disturbanceSource);
   const disturbanceParticles = [], dropParticles = [];
   const DISTURBANCE_IMPACTS = [
-    { point:[625,204], paths:[2,7] },
-    { point:[375,204], paths:[0,5] }
+    { point:[470,170], paths:[6,7] }
   ];
   let disturbanceTimer = null;
   function spawnDrop(x, y, color, count){
@@ -2619,7 +2672,7 @@
     const dot=document.createElementNS(SVGNS,'circle');
     dot.setAttribute('r','2.55');dot.setAttribute('fill','#FF5C7A');dot.style.filter='drop-shadow(0 0 4px #FF5C7A)';
     disturbanceLayer.appendChild(dot);
-    disturbanceParticles.push({el:dot,progress:0,speed:.00058,dropAt:Math.random()<.52?0:1});
+    disturbanceParticles.push({el:dot,progress:0,speed:.00058,dropAt:0});
   }
   function startDisturbanceFlow(){
     disturbanceSource.classList.remove('resolved'); disturbanceSource.classList.add('active');
@@ -2844,10 +2897,10 @@
 
   let faultActive = false;      // 是否处于故障态（提前声明避免 TDZ）
   let disturbanceResolved = false;
-  // 判断粒子是否在故障链路上（Spine-1 路径：写路径 2,3 和读路径 6,7）
+  // 扰动借道 Spine-02 → Leaf-D，对应两条读取候选路径。
   function isParticleOnFaultPath(p){
     if (!faultActive) return false;
-    return p.pi === 1 || p.pi === 5;
+    return p.pi === 6 || p.pi === 7;
   }
   function pointProgressOnPath(path, point){
     let best={distance:Infinity, progress:.5};
@@ -3397,7 +3450,7 @@
     clearCollectionSurface();
     const scanPlan = [
       { key:'prefill', total:64, color:'#8B7BFF', nodes:npuState.filter(s => s.isP).map(s => s.card), chips:['16 芯片 · 3.1k/s','32 芯片 · 6.4k/s','48 芯片 · 9.3k/s','64 芯片 · 12.4k/s'] },
-      { key:'network', total:14, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #kvPool3d .ddr-module')), chips:['2 台 5808 · 链路已发现','6 个模块 · DDR 已发现','12 个模块 · KV 命中 92%','14 个资源 · P95 45ms'] },
+      { key:'network', total:14, color:'#FFB547', nodes:Array.from(svg.querySelectorAll('#ubCabinet .device-spine, #ubCabinet .device-leaf, #kvPool3d .ddr-module')), chips:['2 Spine · 核心已发现','2 Leaf · 上联已发现','10 DDR · KV 命中 92%','14 资源 · P95 45ms'] },
       { key:'decode', total:64, color:'#2DD4A8', nodes:npuState.filter(s => !s.isP).map(s => s.card), chips:['16 芯片 · 0.8k/s','32 芯片 · 1.6k/s','48 芯片 · 2.4k/s','64 芯片 · 3.2k/s'] }
     ];
     scanPlan.forEach((plan, zoneIndex) => {
@@ -3898,14 +3951,14 @@
     const pool=document.getElementById('kvPool3d'); if(!pool) return;
     const run=++kvPoolRun;
     pool.classList.remove('rebalanced'); pool.classList.add('rebalancing');
-    // 从 DDR 池抽取 KV 块，切分后分别下发到两台 5808 液冷设备。
+    // 从独立 DDR KV 池抽取块，切分后分别下发到两台 KV 网关。
     const moves=[
-      {from:[277,142],cut:[300,176],gateway:[300,204],color:'#42DDB6',delay:0},
-      {from:[317,142],cut:[323,180],gateway:[345,204],color:'#8B7BFF',delay:220},
-      {from:[357,142],cut:[345,176],gateway:[390,204],color:'#42DDB6',delay:440},
-      {from:[637,142],cut:[655,176],gateway:[610,204],color:'#42DDB6',delay:660},
-      {from:[677,142],cut:[677,180],gateway:[655,204],color:'#8B7BFF',delay:880},
-      {from:[717,142],cut:[700,176],gateway:[700,204],color:'#42DDB6',delay:1100}
+      {from:[706,176],cut:[720,202],gateway:[736,232],color:'#42DDB6',delay:0},
+      {from:[731,176],cut:[740,205],gateway:[758,232],color:'#8B7BFF',delay:220},
+      {from:[756,176],cut:[760,202],gateway:[780,232],color:'#42DDB6',delay:440},
+      {from:[856,176],cut:[860,202],gateway:[870,232],color:'#42DDB6',delay:660},
+      {from:[881,176],cut:[890,205],gateway:[892,232],color:'#8B7BFF',delay:880},
+      {from:[906,176],cut:[915,202],gateway:[914,232],color:'#42DDB6',delay:1100}
     ];
     moves.forEach(move=>{
       const group=document.createElementNS(SVGNS,'g'), block=document.createElementNS(SVGNS,'rect');
@@ -4094,7 +4147,7 @@
   function selectOptLinks(){
     document.querySelectorAll('#ubCabinet .link-s0, #ubCabinet .link-s1').forEach(l=>{
       l.classList.remove('link-heavy','link-warn','link-normal','link-idle','link-opt','link-fault','path-group-lit','path-group-selected');
-      if (faultActive && (l.classList.contains('disturbance-link-a') || l.classList.contains('disturbance-link-b'))) l.classList.add('link-warn');
+      if (faultActive && l.classList.contains('disturbance-link-b')) l.classList.add('link-warn');
       else l.classList.add('link-opt');
     });
   }
@@ -4131,8 +4184,8 @@
   let collected=false;
 
   /* ===== 注入故障 / 故障恢复（部分链路故障，符合实际场景） ===== */
-  // 可故障链路组：Spine-1 上排左侧 + 下排右侧（2组，部分故障）
-  const FAULT_GRPS = ['.disturbance-link-a', '.disturbance-link-b'];
+  // 扰动只借道 Spine-02 → Leaf-D 这一条 Fabric 分支。
+  const FAULT_GRPS = ['.disturbance-link-b'];
   function setFaultLinks(fault){
     FAULT_GRPS.forEach(sel=>{
       document.querySelectorAll(sel).forEach(l=>{
@@ -4153,7 +4206,7 @@
       setFaultLinks(true);
       startDisturbanceFlow();
       // 让一批已在网络中的业务流到达碰撞点，清晰呈现脱轨与掉落。
-      for(let i=0;i<14;i++) setTimeout(()=>spawn([1,5][i%2], { speed:.00042 + (i%3)*.00005, r:1.8 }), i*95);
+      for(let i=0;i<14;i++) setTimeout(()=>spawn([6,7][i%2], { speed:.00042 + (i%3)*.00005, r:1.8 }), i*95);
       // 新扰动会让既有策略失效，真实指标应立即进入劣化态；等待下一次优化完成后再恢复。
       if (collected) {
         optimized = false;
